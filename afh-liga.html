@@ -502,6 +502,19 @@
     document.body.appendChild(overlay);
     setTimeout(()=>overlay.remove(),5000);
   }
+  function showLoginWelcome(username){
+    document.getElementById('accountCreatedOverlay')?.remove();
+    const overlay=document.createElement('div');overlay.id='accountCreatedOverlay';overlay.className='account-created-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+    const card=document.createElement('div');card.className='account-created-card';
+    const image=document.createElement('img');image.src='EDITABLE_HF.png';image.alt='HFA';
+    const title=document.createElement('div');title.className='account-created-title';title.textContent='INICIO DE SESIÓN CONFIRMADO';
+    const welcome=document.createElement('div');welcome.className='hfa-modal-text';welcome.textContent='Bienvenido, '+username;
+    const close=document.createElement('button');close.type='button';close.className='account-created-close';close.textContent='Continuar';
+    card.append(image,title,welcome,close);overlay.append(card);
+    overlay.addEventListener('click',event=>{if(event.target===overlay||event.target.closest('.account-created-close'))overlay.remove()});
+    document.body.appendChild(overlay);
+    setTimeout(()=>overlay.remove(),5000);
+  }
 
   async function storageGetJSON(key, fallback, shared){
     try{
@@ -1349,6 +1362,7 @@
         localStorage.setItem('hfa:session', JSON.stringify(session));
         if (session.role === 'admin') localStorage.setItem('hfa:adminAuth', account.passHash); else localStorage.removeItem('hfa:adminAuth');
         renderAll();
+        showLoginWelcome(session.username);
       }
       return;
     }
@@ -1526,6 +1540,8 @@
   (async function init(){
     await loadState();
     renderAll();
+    const welcomeName=localStorage.getItem('hfa:loginWelcome');
+    if(welcomeName){localStorage.removeItem('hfa:loginWelcome');showLoginWelcome(welcomeName)}
   })();
 })();
 </script>
