@@ -373,6 +373,7 @@
 @keyframes acFade{from{opacity:0}to{opacity:1}}
 @keyframes acPop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
 </style>
+<script src="flags.js"></script>
 </head>
 <body>
 
@@ -922,7 +923,7 @@
           <button class="btn btn-primary" id="authSubmitBtn">${authMode==='login' ? 'Entrar' : 'Crear cuenta'}</button>
         </div>
         <div class="admin-hint" id="authHint"></div>
-        <p class="empty-note" style="display:block; margin-top:14px;">La cuenta queda ligada a tu usuario de Habbo.es y la contraseña se guarda cifrada (SHA-256). El rol (Administrador o Árbitro) lo asigna después un administrador desde el panel — la primera cuenta que se registre en toda la asociación se vuelve administradora automáticamente.</p>
+        <p class="empty-note" style="display:block; margin-top:14px;">La cuenta queda ligada a tu usuario de Habbo.es y la contraseña se guarda cifrada (SHA-256). El rol (Administrador o Árbitro) lo asigna después un administrador desde el panel.</p>
       </div>`;
   }
 
@@ -1330,7 +1331,7 @@
         if (state.accounts.some(a => a.username.toLowerCase() === username.toLowerCase())){
           hint.textContent = 'Ese usuario ya está registrado, inicia sesión.'; hint.style.color = 'var(--red)'; return;
         }
-        const role = state.accounts.length === 0 ? 'admin' : 'pendiente';
+        const role = 'pendiente';
         const passHash = await sha256(password);
         state.accounts.push({username, passHash, role});
         await storageSetJSON('accounts', state.accounts, true);
@@ -1346,12 +1347,13 @@
         if (passHash !== account.passHash){ hint.textContent = 'Contraseña incorrecta.'; hint.style.color = 'var(--red)'; return; }
         session = {username: account.username, role: account.role};
         localStorage.setItem('hfa:session', JSON.stringify(session));
+        if (session.role === 'admin') localStorage.setItem('hfa:adminAuth', account.passHash); else localStorage.removeItem('hfa:adminAuth');
         renderAll();
       }
       return;
     }
 
-    if (e.target.id === 'navLogoutBtn' || e.target.closest('#navLogoutBtn')){ session = null; localStorage.removeItem('hfa:session'); renderAll(); return; }
+    if (e.target.id === 'navLogoutBtn' || e.target.closest('#navLogoutBtn')){ session = null; localStorage.removeItem('hfa:session'); localStorage.removeItem('hfa:adminAuth'); renderAll(); return; }
 
     const adminTabBtn = e.target.closest('[data-admin-tab]');
     if (adminTabBtn){ adminTab = adminTabBtn.dataset.adminTab; renderAdminPanel(); return; }
@@ -1527,5 +1529,6 @@
   })();
 })();
 </script>
+<script src="chat.js" defer></script>
 </body>
 </html>

@@ -21,6 +21,7 @@
   .table-wrap{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:#0d1218;box-shadow:0 16px 40px rgba(0,0,0,.22)}table{width:100%;border-collapse:collapse;font-size:13px}thead tr{background:#101720}th{text-align:left;padding:15px 14px;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-low);font-weight:600}th.center,td.center{text-align:center}td{padding:13px 14px;border-top:1px solid var(--border)}tbody tr{transition:background .12s}tbody tr:hover{background:var(--panel-2)}tbody tr.qualify{background:rgba(52,232,143,.035)}.pos{font-family:'Oswald',sans-serif;font-size:17px;color:var(--text-mid);display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px}.pos.medal{border-radius:50%;font-size:16px;color:#111820;font-weight:700}.pos.gold{background:#ffd84d}.pos.silver{background:#d5dbe2}.pos.bronze{background:#c1844c}.team-cell{display:flex;align-items:center;gap:10px;font-weight:600}.team-crest{width:32px;height:32px;border-radius:50%;background:var(--panel-2);border:1px solid var(--border);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;color:var(--text-mid);font-size:11px;flex-shrink:0}.team-name{white-space:nowrap}.pts-cell{font-family:'Oswald',sans-serif;font-size:19px;font-weight:700;color:var(--green)}.empty{padding:24px 16px;color:var(--text-low);font-size:12px;font-style:italic}.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:15px;color:var(--text-low);font-size:11px}.legend span{display:flex;align-items:center;gap:6px}.legend i{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block}.back{color:var(--green);font-size:12px;font-weight:600}footer{border-top:1px solid var(--border);padding:30px 28px;text-align:center;color:var(--text-low);font-size:11.5px}
   @media(max-width:700px){header{padding:12px 16px}nav{display:none}main{padding:52px 18px 70px}.title-row{align-items:start;flex-direction:column}.table-wrap{overflow:hidden}table{min-width:0;font-size:12px}th,td{padding:11px 6px}th:nth-child(7),td:nth-child(7){display:none}.team-cell{gap:7px}.team-name{max-width:112px;overflow:hidden;text-overflow:ellipsis}.team-crest{width:30px;height:30px}.pos{width:27px;height:27px}}
 </style>
+<script src="flags.js"></script>
 </head>
 <body>
 <header>
@@ -111,5 +112,6 @@
   (async function init(){state.teams=await getJSON('teams',[]);state.matches=await getJSON('matches',[]);state.tournaments=await getJSON('tournaments',[]);try{activeTournamentId=localStorage.getItem('hfa:activeTournament')||state.tournaments[0]?.id||'default'}catch(error){}render('1')})();
 })();
 </script>
+<script src="chat.js" defer></script>
 </body>
 </html>
