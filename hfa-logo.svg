@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="HFA">
+  <defs>
+    <linearGradient id="field" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#39ef91"/><stop offset="1" stop-color="#087044"/></linearGradient>
+    <linearGradient id="shield" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#17252b"/><stop offset="1" stop-color="#061116"/></linearGradient>
+  </defs>
+  <path d="M60 4 108 20v39c0 29-19 48-48 57C31 107 12 88 12 59V20Z" fill="url(#shield)" stroke="#e9e0c5" stroke-width="3"/>
+  <path d="M18 62h84v29H18z" fill="url(#field)" opacity=".95"/>
+  <path d="M25 79h70v19H25zM60 62v36M31 62v36M89 62v36" fill="none" stroke="#e9e0c5" stroke-width="1.5" opacity=".85"/>
+  <circle cx="60" cy="39" r="22" fill="#f4f7f4" stroke="#39ef91" stroke-width="3"/>
+  <path d="m60 25 8 6-3 10h-10l-3-10zM42 34l10 2 3 9-8 6-8-7zM78 34l-10 2-3 9 8 6 8-7zM48 57l7-8h10l7 8-12 5z" fill="#08705a"/>
+  <text x="60" y="78" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" font-weight="900" fill="#f7f7f4" letter-spacing="-2">HFA</text>
+</svg>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HFA · Clasificación</title>
+<link rel="icon" type="image/png" href="EDITABLE_HF.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0f0d;--panel:#121a17;--panel-2:#16201c;--border:#22302a;--green:#34e88f;--green-dim:#1f7a52;--amber:#ff9d4d;--text-hi:#f2f6f4;--text-mid:#9fb3ac;--text-low:#5c706a;--radius:3px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{min-height:100vh;background:var(--bg);color:var(--text-hi);font-family:'Inter',sans-serif;background-image:radial-gradient(ellipse 900px 500px at 50% -10%,rgba(52,232,143,.1),transparent 60%);-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer}
+  header{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:rgba(10,15,13,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+  .brand{display:flex;align-items:center;gap:10px}.brand-mark{width:38px;height:38px;border-radius:11px;background:url('EDITABLE_HF.png') center/contain no-repeat;filter:drop-shadow(0 4px 10px rgba(52,232,143,.22));flex-shrink:0;font-size:0}.brand-name{font-family:'Oswald',sans-serif;font-weight:600;font-size:16px}.brand-name span{color:var(--green)}
+  nav{display:flex;align-items:center;gap:22px;font-size:13px;font-weight:500;color:var(--text-mid)}nav a{padding:6px 2px;border-bottom:2px solid transparent}nav a:hover,nav a.active{color:var(--text-hi);border-color:var(--green)}
+  .community-nav-wrap{position:relative;display:inline-flex;align-items:center}.community-nav-trigger{padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:transparent;color:var(--text-hi);font:600 12px 'Inter',sans-serif;cursor:pointer}.community-nav-trigger:hover,.community-nav-trigger.active{border-color:var(--green);background:rgba(52,232,143,.08);color:var(--green)}.community-nav-menu{position:absolute;top:calc(100% + 8px);left:0;display:none;flex-direction:column;gap:6px;min-width:180px;padding:8px;border:1px solid var(--border);border-radius:10px;background:var(--panel);box-shadow:0 18px 40px rgba(0,0,0,.35);z-index:20}.community-nav-wrap.open .community-nav-menu{display:flex}.community-nav-menu a{padding:9px 10px;border-radius:8px;color:var(--text-mid);font-size:12px;line-height:1.2;white-space:nowrap}.community-nav-menu a:hover{background:rgba(52,232,143,.08);color:var(--text-hi)}
+  .nav-right{display:flex;align-items:center;gap:12px}.nav-profile{display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:18px;padding:3px 9px 3px 4px;color:var(--text-hi)!important}.mini-avatar{width:25px;height:25px;object-fit:contain;border-radius:50%;background:var(--panel-2)}.nav-user{display:flex;align-items:center;gap:8px;padding:3px 8px;border:1px solid var(--border);border-radius:18px;background:rgba(18,26,23,.7);color:var(--text-hi)}.avatar{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green);color:#03140b;font-weight:700;font-size:10px}.nav-notification{font-size:17px;border:0;color:var(--text-hi)!important;padding:4px;background:transparent}main{max-width:1180px;margin:0 auto;padding:76px 28px 90px}.eyebrow{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--green);margin-bottom:12px}.title-row{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:14px}.title{font-family:'Oswald',sans-serif;font-size:clamp(38px,7vw,64px);line-height:1}.intro{max-width:560px;color:var(--text-mid);font-size:13.5px;line-height:1.7;margin-bottom:38px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}.tab-btn{padding:9px 17px;border-radius:20px;border:1px solid var(--border);background:var(--panel);color:var(--text-mid);font-size:12.5px;font-weight:600}.tab-btn:hover{border-color:var(--green-dim);color:var(--text-hi)}.tab-btn.active{background:var(--green);border-color:var(--green);color:#05130c}
+  .table-wrap{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:#0d1218;box-shadow:0 16px 40px rgba(0,0,0,.22)}table{width:100%;border-collapse:collapse;font-size:13px}thead tr{background:#101720}th{text-align:left;padding:15px 14px;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-low);font-weight:600}th.center,td.center{text-align:center}td{padding:13px 14px;border-top:1px solid var(--border)}tbody tr{transition:background .12s}tbody tr:hover{background:var(--panel-2)}tbody tr.qualify{background:rgba(52,232,143,.035)}.pos{font-family:'Oswald',sans-serif;font-size:17px;color:var(--text-mid);display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px}.pos.medal{border-radius:50%;font-size:16px;color:#111820;font-weight:700}.pos.gold{background:#ffd84d}.pos.silver{background:#d5dbe2}.pos.bronze{background:#c1844c}.team-cell{display:flex;align-items:center;gap:10px;font-weight:600}.team-crest{width:32px;height:32px;border-radius:50%;background:var(--panel-2);border:1px solid var(--border);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;color:var(--text-mid);font-size:11px;flex-shrink:0}.team-name{white-space:nowrap}.pts-cell{font-family:'Oswald',sans-serif;font-size:19px;font-weight:700;color:var(--green)}.empty{padding:24px 16px;color:var(--text-low);font-size:12px;font-style:italic}.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:15px;color:var(--text-low);font-size:11px}.legend span{display:flex;align-items:center;gap:6px}.legend i{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block}.back{color:var(--green);font-size:12px;font-weight:600}footer{border-top:1px solid var(--border);padding:30px 28px;text-align:center;color:var(--text-low);font-size:11.5px}
+  @media(max-width:700px){header{padding:12px 16px}nav{display:none}main{padding:52px 18px 70px}.title-row{align-items:start;flex-direction:column}.table-wrap{overflow:hidden}table{min-width:0;font-size:12px}th,td{padding:11px 6px}th:nth-child(7),td:nth-child(7){display:none}.team-cell{gap:7px}.team-name{max-width:112px;overflow:hidden;text-overflow:ellipsis}.team-crest{width:30px;height:30px}.pos{width:27px;height:27px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="afh-liga.html"><div class="brand-mark" aria-label="Logo HFA"></div><div class="brand-name">Habbo<span> </span>Fútbol<span> Asociación</span></div></a>
+  <nav id="classificationNav"></nav>
+</header>
+<main>
+  <div class="eyebrow">Competición oficial</div>
+  <div class="title-row"><h1 class="title">Clasificación</h1><a class="back" href="afh-liga.html">← Volver al inicio</a></div>
+  <p class="intro">Consulta la posición de cada equipo, sus partidos jugados, la diferencia de goles y los puntos acumulados en cada división.</p>
+  <div class="tabs" id="divisionTabs"><button class="tab-btn active" data-division="1">1D</button><button class="tab-btn" data-division="2">2D</button><button class="tab-btn" data-division="3">3D</button><button class="tab-btn" data-division="4">4D</button></div>
+  <div class="table-wrap"><table><thead><tr><th>#</th><th>Equipo</th><th class="center">PJ</th><th class="center">G</th><th class="center">E</th><th class="center">P</th><th class="center">DG</th><th class="center">Pts</th></tr></thead><tbody id="standingsBody"></tbody></table></div>
+  <div class="legend"><span><i></i> Puestos de clasificación</span><span>PJ: partidos jugados</span><span>DG: diferencia de goles</span><span>Pts: puntos</span></div>
+</main>
+<footer>HFA · Asociación de Fútbol Habbo.es</footer>
+<script>
+(function(){
+  const state={teams:[],matches:[],tournaments:[]};
+  let activeTournamentId='default';
+  function renderNav(){
+    let session=null;try{session=JSON.parse(localStorage.getItem('hfa:session')||'null')}catch(error){}
+    const links=session?
+      [['afh-liga.html','Inicio',''],['seccion.html?view=comunidad','Comunidad','comunidad'],['clasificacion.html','Clasificación','clasificacion'],['seccion.html?view=torneos','Torneos','torneos'],['seccion.html?view=estadisticas','Estadísticas','estadisticas'],['seccion.html?view=partidos','Partidos','partidos'],['seccion.html?view=album','Álbum','album'],['seccion.html?view=cuenta','Cuenta','cuenta'],['seccion.html?view=buzon','Buzón','buzon'],['seccion.html?view=admin','Admin','admin']]:
+      [['afh-liga.html','Inicio',''],['seccion.html?view=comunidad','Comunidad','comunidad'],['clasificacion.html','Clasificación','clasificacion'],['seccion.html?view=torneos','Torneos','torneos'],['seccion.html?view=estadisticas','Estadísticas','estadisticas'],['seccion.html?view=partidos','Partidos','partidos'],['seccion.html?view=album','Álbum','album'],['seccion.html?view=cuenta','Cuenta','cuenta'],['seccion.html?view=buzon','Buzón','buzon']];
+    const communityOpen = false;
+    const menu = links.map(item => {
+      if (item[1] === 'Comunidad') {
+        return '<div class="community-nav-wrap '+(communityOpen ? 'open' : '')+'"><button class="community-nav-trigger '+(communityOpen ? 'active ' : '')+'" type="button" data-community-menu>Comunidad</button><div class="community-nav-menu"><a href="seccion.html?view=comunidad&sub=palmares">Palmarés</a><a href="seccion.html?view=comunidad&sub=noticias">Noticias</a><a href="seccion.html?view=comunidad&sub=equipos">Equipos</a><a href="seccion.html?view=comunidad&sub=jugadores">Jugadores</a></div></div>';
+      }
+      return '<a class="'+(item[2]=== 'clasificacion' ? 'active ' : '')+(item[1]==='Admin'?'admin-link':'')+'" href="'+item[0]+'">'+item[1]+'</a>';
+    }).join('');
+    const user = session ? '<div class="nav-right"><button class="nav-notification" type="button" title="Notificaciones">🔔</button><a class="nav-profile" href="seccion.html?view=cuenta"><img class="mini-avatar" src="https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(session.username)+'&size=s&direction=2&head_direction=2&gesture=sml&action=std" alt=""><span>'+session.username+'</span></a><button class="tab-btn" type="button">Salir</button></div>' : '<a href="seccion.html?view=cuenta">Iniciar sesión</a>';
+    document.getElementById('classificationNav').innerHTML = menu + user;
+  }
+  function getTeam(id){return state.teams.find(team=>team.id===id)}
+  function matchTeam(match,side){const id=side==='A'?match.teamAId:match.teamBId;const name=side==='A'?match.home:match.away;return getTeam(id)||state.teams.find(team=>team.name?.toLowerCase()===String(name||'').trim().toLowerCase())}
+  async function getJSON(key,fallback){
+    try{const r=await fetch('/api/db?key='+encodeURIComponent(key),{cache:'no-store'});if(r.ok){const d=await r.json();if(d&&d.ok===true&&d.value!==null&&d.value!==undefined)return JSON.parse(d.value)}}catch(error){}
+    try{if(window.storage){const result=await window.storage.get(key,true);if(result&&result.value)return JSON.parse(result.value)}}catch(error){}
+    try{return JSON.parse(localStorage.getItem('hfa:'+key)||JSON.stringify(fallback))}catch(error){return fallback}
+  }
+  function teamBadge(team){
+    if(team&&team.crest)return '<div class="team-crest" style="background-image:url(\''+String(team.crest).replace(/'/g,'%27')+'\')"></div>';
+    const initials=team?String(team.name).slice(0,2).toUpperCase():'?';
+    return '<div class="team-crest">'+initials+'</div>';
+  }
+  function standings(division){
+    const rows=state.teams.filter(team=>team.division===division).map(team=>({team,pj:0,gf:0,ga:0,pts:0,wins:0,draws:0,losses:0}));
+    const byId={};rows.forEach(row=>byId[row.team.id]=row);
+    state.matches.filter(match=>(!match.tournamentId||match.tournamentId===activeTournamentId)&&match.division===division&&match.finished).forEach(match=>{
+      const homeTeam=matchTeam(match,'A'),awayTeam=matchTeam(match,'B');const home=homeTeam&&byId[homeTeam.id],away=awayTeam&&byId[awayTeam.id];if(!home||!away)return;
+      home.pj++;away.pj++;home.gf+=Number(match.scoreA)||0;home.ga+=Number(match.scoreB)||0;away.gf+=Number(match.scoreB)||0;away.ga+=Number(match.scoreA)||0;
+      if(match.scoreA>match.scoreB){home.pts+=3;home.wins++;away.losses++}else if(match.scoreB>match.scoreA){away.pts+=3;away.wins++;home.losses++}else{home.pts++;away.pts++;home.draws++;away.draws++}
+    });
+    return rows.map(row=>({...row,dg:row.gf-row.ga})).sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.team.name.localeCompare(b.team.name));
+  }
+  function render(division){
+    const rows=standings(division),body=document.getElementById('standingsBody');
+    body.innerHTML=rows.length?rows.map((row,index)=>{const medal=index===0?'gold':index===1?'silver':index===2?'bronze':'';const difference=row.dg>0?'+'+row.dg:row.dg;return `<tr class="${index<2?'qualify':''}"><td><span class="pos ${medal?'medal '+medal:''}">${index+1}</span></td><td><div class="team-cell">${teamBadge(row.team)}<span class="team-name">${String(row.team.name)}</span></div></td><td class="center">${row.pj}</td><td class="center">${row.wins}</td><td class="center">${row.draws}</td><td class="center">${row.losses}</td><td class="center">${difference}</td><td class="center pts-cell">${row.pts}</td></tr>`}).join(''):'<tr><td colspan="8"><div class="empty">Aún no hay equipos registrados en esta división.</div></td></tr>';
+  }
+  document.addEventListener('click', function (event) {
+    const communityTrigger = event.target.closest('[data-community-menu]');
+    if (communityTrigger) {
+      const wrap = communityTrigger.closest('.community-nav-wrap');
+      document.querySelectorAll('.community-nav-wrap').forEach(item => {
+        if (item !== wrap) {
+          item.classList.remove('open');
+          const btn = item.querySelector('[data-community-menu]');
+          if (btn) btn.classList.remove('active');
+        }
+      });
+      wrap.classList.toggle('open');
+      communityTrigger.classList.toggle('active', wrap.classList.contains('open'));
+      return;
+    }
+
+    if (!event.target.closest('.community-nav-wrap')) {
+      document.querySelectorAll('.community-nav-wrap').forEach(item => {
+        item.classList.remove('open');
+        const btn = item.querySelector('[data-community-menu]');
+        if (btn) btn.classList.remove('active');
+      });
+    }
+  });
+
+  document.getElementById('divisionTabs').addEventListener('click',function(event){const button=event.target.closest('[data-division]');if(!button)return;document.querySelectorAll('.tab-btn').forEach(item=>item.classList.remove('active'));button.classList.add('active');render(button.dataset.division)});
+  renderNav();
+  (async function init(){state.teams=await getJSON('teams',[]);state.matches=await getJSON('matches',[]);state.tournaments=await getJSON('tournaments',[]);try{activeTournamentId=localStorage.getItem('hfa:activeTournament')||state.tournaments[0]?.id||'default'}catch(error){}render('1')})();
+})();
+</script>
+</body>
+</html>
