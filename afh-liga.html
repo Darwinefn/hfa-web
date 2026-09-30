@@ -710,7 +710,7 @@
     const welcomeUser = session?.username;
     document.getElementById('heroWelcome').textContent = welcomeUser ? `Bienvenido, ${welcomeUser}` : 'Bienvenido';
     const adminEntry=document.querySelector('.hero-actions a[href="seccion.html?view=admin"]');
-    if(adminEntry)adminEntry.hidden=!session||!['admin','arbitro'].includes(session.role);
+    if(adminEntry)adminEntry.hidden=!session||!['admin','moderador','arbitro'].includes(session.role);
   }
   function renderMainNav(){
     const links = session ? [
@@ -728,7 +728,7 @@
           <a href="seccion.html?view=comunidad&sub=jugadores">Jugadores</a>
         </div>
       </div>`;
-    const navItems = links.filter(link => link[1] !== 'Inicio' && link[1] !== 'Clasificación' && (link[1] !== 'Admin' || ['admin','arbitro'].includes(session?.role))).map(link => `<a href="${link[0]}" class="${link[2]} ${link[1] === 'Admin' ? 'nav-admin' : ''}">${link[1]}</a>`).join('');
+    const navItems = links.filter(link => link[1] !== 'Inicio' && link[1] !== 'Clasificación' && (link[1] !== 'Admin' || ['admin','moderador','arbitro'].includes(session?.role))).map(link => `<a href="${link[0]}" class="${link[2]} ${link[1] === 'Admin' ? 'nav-admin' : ''}">${link[1]}</a>`).join('');
     document.getElementById('mainNav').innerHTML = session ? `<a href="#resumen" class="">Inicio</a>${communityMenu}<a href="clasificacion.html" class="">Clasificación</a>${navItems}` : navItems;
   }
   function renderNavAuth(){
@@ -750,7 +750,7 @@
         <div class="user-chip">
           <div class="avatar">${esc(session.username).replace('.','').slice(0,2).toUpperCase()}</div>
           <span class="user-name">${esc(session.username)}</span>
-          <span class="role-chip">${session.role === 'admin' ? 'Admin' : session.role === 'arbitro' ? 'Árbitro' : session.role === 'dueno' ? 'Dueño' : 'Sin rol'}</span>
+          <span class="role-chip">${session.role === 'admin' ? 'ADMIN' : session.role === 'moderador' ? 'Moderador' : session.role === 'arbitro' ? 'Árbitro' : session.role === 'dueno' ? 'Dueño' : 'Sin rol'}</span>
         </div>
         <button class="icon-btn" title="Cerrar sesión" id="navLogoutBtn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -954,12 +954,12 @@
       return;
     }
     locked.style.display = 'none'; panel.style.display = 'block';
-    const roleLabel = session.role === 'admin' ? 'Administrador' : session.role === 'arbitro' ? 'Árbitro' : 'Sin rol asignado';
+    const roleLabel = session.role === 'admin' ? 'Administrador' : session.role === 'moderador' ? 'Moderador' : session.role === 'arbitro' ? 'Árbitro' : 'Sin rol asignado';
     document.getElementById('sessionInfo').textContent = `Sesión: ${session.username} · ${roleLabel}`;
 
-    if (session.role !== 'admin' && session.role !== 'arbitro'){
+    if (!['admin','moderador','arbitro'].includes(session.role)){
       document.getElementById('adminSubTabs').innerHTML = '';
-      document.getElementById('adminContent').innerHTML = `<p class="empty-note" style="display:block;">Tu cuenta ya está creada pero todavía no tiene rol asignado. Pide a un administrador que te asigne el rol de Administrador o Árbitro desde la pestaña "Usuarios".</p>`;
+      document.getElementById('adminContent').innerHTML = `<p class="empty-note" style="display:block;">Tu cuenta ya está creada pero todavía no tiene rol asignado. Pide a un administrador que te asigne un rol desde el apartado "Roles".</p>`;
       return;
     }
 
@@ -1022,13 +1022,14 @@
 
   function renderUsersAdmin(){
     if (!state.accounts.length) return '<div class="empty-note">Aún no hay cuentas registradas.</div>';
-    const roleName = r => r === 'admin' ? 'Administrador' : r === 'arbitro' ? 'Árbitro' : 'Sin rol';
+    const roleName = r => r === 'admin' ? 'ADMIN' : r === 'moderador' ? 'Moderador' : r === 'arbitro' ? 'Árbitro' : 'Sin rol';
     return state.accounts.map(a => `
       <div class="result-item">
         <span class="r-teams">${esc(a.username)} <span class="tag">${roleName(a.role)}</span></span>
         <span style="display:flex; gap:8px; align-items:center;">
           <select class="input role-select" data-user="${esc(a.username)}" style="padding:6px 8px; font-size:12px;">
             <option value="pendiente" ${(!a.role || a.role==='pendiente')?'selected':''}>Sin rol</option>
+            <option value="moderador" ${a.role==='moderador'?'selected':''}>Moderador</option>
             <option value="arbitro" ${a.role==='arbitro'?'selected':''}>Árbitro</option>
             <option value="admin" ${a.role==='admin'?'selected':''}>Administrador</option>
           </select>

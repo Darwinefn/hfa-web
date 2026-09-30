@@ -724,7 +724,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   function hfaIpLabel(a){const ip=(a&&(a.ip||a.lastIp))||'';return ip?'IP: '+hfaEsc(ip):'IP: sin registrar'}
   function hfaDivTags(a){const list=(Array.isArray(a.assignedDivisions)&&a.assignedDivisions.length?a.assignedDivisions:(a.division?[String(a.division)]:[]));return list.length?list.map(function(d){return '<span class="hfa-tag div">D'+hfaEsc(d)+'</span>'}).join(''):'<span class="hfa-tag">Sin división</span>'}
   function hfaUserDetails(a,clones){
-    const roleName=a.role==='admin'?'Administrador':a.role==='arbitro'?'Árbitro':a.role==='dueno'?'Dueño de equipo':'Sin rol';
+    const roleName=a.role==='admin'?'ADMIN':a.role==='moderador'?'Moderador':a.role==='arbitro'?'Árbitro':a.role==='dueno'?'Dueño de equipo':'Sin rol';
     const others=clones[a.username];
     const fmt=function(v){try{return v?new Date(v).toLocaleString('es-ES'):'—'}catch(e){return '—'}};
     return '<div class="hfa-user-details"><div><strong>Rol:</strong> '+roleName+'</div><div><strong>IP de registro:</strong> '+hfaEsc(a.ip||'sin registrar')+'</div><div><strong>Última IP:</strong> '+hfaEsc(a.lastIp||'sin registrar')+'</div><div><strong>Registro:</strong> '+fmt(a.createdAt)+'</div>'+(others?'<div style="color:var(--red)"><strong style="color:var(--red)">⚠ Misma IP que:</strong> '+others.map(hfaEsc).join(', ')+'</div>':'')+'<button class="btn" type="button" data-admin-reset-pass="'+hfaEsc(a.username)+'">Restablecer contraseña</button></div>';
@@ -760,7 +760,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   async function setJSON(key,value){if(key==='accounts')await hfaMergeAccounts(value);const text=JSON.stringify(value);try{localStorage.setItem('hfa:'+key,text)}catch(error){}try{await hfaRemoteSet(key,text);return}catch(error){}try{if(window.storage)await window.storage.set(key,text,true)}catch(error){}}
   async function hashPassword(text){try{const buffer=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));return Array.from(new Uint8Array(buffer)).map(byte=>byte.toString(16).padStart(2,'0')).join('')}catch(error){return text}}
   function notificationMarkup(){const pending=state.offers.filter(offer=>offer.player.toLowerCase()===session.username.toLowerCase()&&offer.status==='pendiente').length;return '<div class="notification-wrap"><button class="nav-notification" id="sectionNotification" title="Notificaciones">🔔'+(pending?' '+pending:'')+'</button><div class="notification-panel" id="sectionNotificationPanel"><div class="notification-head">Notificaciones recientes</div><button class="notification-item" type="button" data-notification-target="seccion.html?view=partidos">⚽ <p>Novedades de partidos y juegos de la competición.</p></button><button class="notification-item" type="button" data-notification-target="seccion.html?view=estadisticas">🏷️ <p>Nuevas ofertas y promociones de la asociación.</p></button>'+(pending?'<button class="notification-item" type="button" data-notification-target="seccion.html?view=buzon">📄 <p>Tienes '+pending+' oferta(s) de contrato pendiente(s).</p></button>':'')+'</div></div>'}
-  function nav(){let links=session?[['afh-liga.html','Inicio',''],['seccion.html?view=comunidad','Comunidad','comunidad'],['clasificacion.html','Clasificación','clasificacion'],['seccion.html?view=torneos','Torneos','torneos'],['seccion.html?view=estadisticas','Estadísticas','estadisticas'],['seccion.html?view=partidos','Partidos','partidos'],['seccion.html?view=album','Álbum','album'],['seccion.html?view=cuenta','Cuenta','cuenta'],['seccion.html?view=buzon','Buzón','buzon'],['seccion.html?view=admin','Admin','admin']]:[['afh-liga.html','Inicio','']];if(!session||!['admin','arbitro'].includes(session.role))links=links.filter(item=>item[2]!=='admin');const isCommunityPage=view==='comunidad';const menu=links.map(item=>{
+  function nav(){let links=session?[['afh-liga.html','Inicio',''],['seccion.html?view=comunidad','Comunidad','comunidad'],['clasificacion.html','Clasificación','clasificacion'],['seccion.html?view=torneos','Torneos','torneos'],['seccion.html?view=estadisticas','Estadísticas','estadisticas'],['seccion.html?view=partidos','Partidos','partidos'],['seccion.html?view=album','Álbum','album'],['seccion.html?view=cuenta','Cuenta','cuenta'],['seccion.html?view=buzon','Buzón','buzon'],['seccion.html?view=admin','Admin','admin']]:[['afh-liga.html','Inicio','']];if(!session||!['admin','moderador','arbitro'].includes(session.role))links=links.filter(item=>item[2]!=='admin');const isCommunityPage=view==='comunidad';const menu=links.map(item=>{
     if(item[1]==='Comunidad'){
       return '<div class="community-nav-wrap '+(isCommunityPage?'open':'')+'"><button class="community-nav-trigger '+(isCommunityPage?'active ':'')+'" type="button" data-community-menu>Comunidad</button><div class="community-nav-menu"><a href="seccion.html?view=comunidad&sub=palmares">Palmarés</a><a href="seccion.html?view=comunidad&sub=noticias">Noticias</a><a href="seccion.html?view=comunidad&sub=equipos">Equipos</a><a href="seccion.html?view=comunidad&sub=jugadores">Jugadores</a></div></div>';
     }
@@ -881,7 +881,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     return sortable;
   }
   function torneos(){return '<div class="panel-grid">'+(state.tournaments.length?state.tournaments.map(item=>'<button class="panel-card" style="text-align:left;border:0;color:inherit" data-select-tournament="'+item.id+'"><div class="panel-label">'+(item.id===activeTournamentId?'Torneo activo':'Torneo')+'</div><div class="match-name">'+item.name+'</div></button>').join(''):'<div class="empty">Todavía no hay torneos creados.</div>')+'</div><div class="notice" style="margin-top:18px">El torneo activo sincroniza los partidos, la clasificación y las estadísticas.</div>'}
-  function content(){const el=document.getElementById('content');if(view==='torneos')el.innerHTML=torneos();else if(view==='comunidad')el.innerHTML=comunidad();else if(view==='equipos')el.innerHTML=teams();else if(view==='jugadores')el.innerHTML=playersSection();else if(view==='partidos')el.innerHTML=matches();else if(view==='album')el.innerHTML=album();else if(view==='cuenta')el.innerHTML=account();else if(view==='admin'){if(!session||!['admin','arbitro'].includes(session.role)){el.innerHTML='<div class="notice">El panel de administración es privado para administradores y árbitros autorizados.</div>';return}el.innerHTML=admin();if(session?.role==='admin'&&!document.getElementById('newTeamCrest')){const crestInput=document.createElement('input');crestInput.type='hidden';crestInput.id='newTeamCrest';const crestFile=document.createElement('input');crestFile.type='file';crestFile.accept='image/*';crestFile.className='input';crestFile.id='newTeamCrestFile';crestFile.title='Subir escudo desde el PC';crestFile.addEventListener('change',function(){const file=crestFile.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{crestInput.value=reader.result};reader.readAsDataURL(file)});document.getElementById('addTeam')?.before(crestFile);document.getElementById('addTeam')?.before(crestInput);const matchCard=document.getElementById('createMatch')?.closest('.content-card');if(matchCard){matchCard.insertAdjacentHTML('beforebegin',ownerManagement());matchCard.insertAdjacentHTML('afterend',adminMatchList())}}setupAdminSections()}else el.innerHTML=stats()}
+  function content(){const el=document.getElementById('content');if(view==='torneos')el.innerHTML=torneos();else if(view==='comunidad')el.innerHTML=comunidad();else if(view==='equipos')el.innerHTML=teams();else if(view==='jugadores')el.innerHTML=playersSection();else if(view==='partidos')el.innerHTML=matches();else if(view==='album')el.innerHTML=album();else if(view==='cuenta')el.innerHTML=account();else if(view==='admin'){if(!session||!['admin','moderador','arbitro'].includes(session.role)){el.innerHTML='<div class="notice">El panel de administración es privado para administradores y árbitros autorizados.</div>';return}el.innerHTML=admin();if(session?.role==='admin'&&!document.getElementById('newTeamCrest')){const crestInput=document.createElement('input');crestInput.type='hidden';crestInput.id='newTeamCrest';const crestFile=document.createElement('input');crestFile.type='file';crestFile.accept='image/*';crestFile.className='input';crestFile.id='newTeamCrestFile';crestFile.title='Subir escudo desde el PC';crestFile.addEventListener('change',function(){const file=crestFile.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{crestInput.value=reader.result};reader.readAsDataURL(file)});document.getElementById('addTeam')?.before(crestFile);document.getElementById('addTeam')?.before(crestInput);const matchCard=document.getElementById('createMatch')?.closest('.content-card');if(matchCard){matchCard.insertAdjacentHTML('beforebegin',ownerManagement());matchCard.insertAdjacentHTML('afterend',adminMatchList())}}setupAdminSections()}else el.innerHTML=stats()}
   function teamProfile(item){const players=item.players||[];const crest=item.crest?'<img class="team-crest-image" src="'+item.crest+'" alt="Escudo de '+item.name+'">':'';return '<div class="content-card" style="margin-top:18px">'+crest+'<div class="admin-title" style="display:inline-block">'+item.name+'</div><div class="muted">Jugadores de '+divisionLabel(item.division)+'</div><div class="panel-grid" style="margin-top:14px">'+(players.length?players.map(player=>'<div class="panel-card"><img class="profile-avatar" style="width:64px;height:82px" src="https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(player)+'&size=m&direction=2&head_direction=2&gesture=sml&action=std" alt="Keko de '+player+'"><div class="match-name" style="margin-top:8px">'+player+'</div></div>').join(''):'<div class="empty">Este equipo todavía no tiene jugadores registrados.</div>')+'</div></div>'}
   function teams(){return '<div class="panel-grid">'+['1','2','3','4'].map(division=>{const list=state.teams.filter(item=>String(item.division||'')===division);return '<div class="panel-card"><div class="panel-label">'+divisionLabel(division)+'</div>'+(list.length?list.map(item=>'<button class="match-row" style="width:100%;text-align:left;border:0;color:inherit" data-team-id="'+item.id+'">'+(item.crest?'<img class="team-crest-image" src="'+item.crest+'" alt="">':'')+'<span class="match-name">'+item.name+'</span><span class="tag">Ver jugadores</span></button>').join(''):'<div class="empty">Todavía no hay equipos en esta división.</div>')+'</div>'}).join('')+'</div><div id="teamDetail"></div>'}
   function normalizePlayerAccount(account){
@@ -906,7 +906,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     [...rosterPlayers.map(username=>({username,role:'pendiente'})), ...accounts.filter(Boolean)]
       .map(normalizePlayerAccount)
       .filter(Boolean)
-      .filter(account=>!['admin','arbitro'].includes(String(account.role||'').toLowerCase()))
+      .filter(account=>!['admin','moderador','arbitro'].includes(String(account.role||'').toLowerCase()))
       .forEach(account=>{
         const key=toPlayerKey(account.username);
         if(!key) return;
@@ -932,7 +932,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     [...rosterPlayers.map(username=>({username,role:'pendiente'})), ...accounts.filter(Boolean)]
       .map(normalizePlayerAccount)
       .filter(Boolean)
-      .filter(account=>!['admin','arbitro'].includes(String(account.role||'').toLowerCase()))
+      .filter(account=>!['admin','moderador','arbitro'].includes(String(account.role||'').toLowerCase()))
       .forEach(account=>{
         const key=toPlayerKey(account.username);
         if(!key) return;
@@ -1202,7 +1202,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const profilePositions=positions.length?positions.join(' · '):'Sin registrar';
     const profileDivisions=enabledDivisions.length?enabledDivisions.map(item=>String(item)+'D').join(', '):'Ninguna';
     const offers='<div class="content-card mailbox-panel"><div class="mailbox-title"><span>📜</span> BUZÓN</div>'+(pendingOffers.length?pendingOffers.map(offer=>{const offerTeam=team(offer.teamId),currentAccount=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(session.username));return '<div class="contract-offer-row"><img class="contract-offer-avatar" src="https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(session.username)+'&size=m&direction=2&head_direction=2&gesture=sml&action=std" alt="Keko de '+session.username+'"><div class="contract-offer-copy"><div class="contract-offer-title">📄 Contrato · '+(offerTeam?.name||'equipo')+'</div><div class="contract-offer-terms">'+offer.terms+' · '+(Array.isArray(currentAccount?.position)?currentAccount.position.join(' · '):(currentAccount?.position||'Posición sin registrar'))+'</div></div><button class="btn btn-primary contract-offer-button" data-open-contract="'+offer.id+'">Ver contrato</button></div>'}).join(''):'<div class="muted" style="margin-top:12px">No tienes contratos pendientes.</div>')+'</div><button class="free-agent-block" type="button" data-free-agent><span><strong>AGENTE LIBRE</strong><small>Ver tu estado y tus contratos disponibles</small></span><b>→</b></button>';
-    const roleLabel=account.role==='admin'?'Administrador':account.role==='arbitro'?'Árbitro':'Registrado';
+    const roleLabel=account.role==='admin'?'ADMIN':account.role==='moderador'?'Moderador':account.role==='arbitro'?'Árbitro':'Registrado';
     const profileStats=[
       {label:'Goles',value:'—',highlight:true},
       {label:'Asistencias',value:'—'},
@@ -1268,7 +1268,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     return position||'MED';
   }
   function openActaPlayerMenu(player,side){
-    if(!session||!['admin','arbitro'].includes(session.role))return;
+    if(!session||!['admin','moderador','arbitro'].includes(session.role))return;
     closeActaPlayerMenu();
     const backdrop=document.createElement('div');backdrop.className='acta-player-menu-backdrop';backdrop.innerHTML='<div class="acta-player-menu" role="dialog" aria-modal="true"><h3>'+player+'</h3><p>Selecciona una acción para añadirla al acta.</p><div class="acta-player-menu-actions"><button type="button" data-player-action="goal">⚽ Gol</button><button type="button" data-player-action="card">🟨 Tarjeta</button><button type="button" data-player-action="assist">🅰 Asistencia</button><button type="button" data-player-action="sub">↔ Cambio</button><button type="button" data-player-action="mvp">🏆 MVP</button><button type="button" data-player-action="mention">⭐ Mención</button></div><button class="close-player-menu" type="button" data-close-player-menu>Cerrar</button></div>';
     backdrop.dataset.player=player;backdrop.dataset.side=side;document.body.appendChild(backdrop);
@@ -1292,7 +1292,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const playerPosition=item=>{const saved=normalizePosition(item.pos),registered=registeredPositions(playerName(item));return registered.includes(saved)?saved:(registered[0]||saved)};
     const playerMarkup=(player,side)=>{const name=playerName(player),position=playerPosition(player),tone=position==='BANDA'?'position-band':position==='MED'?'position-med':position==='GK'?'position-gk':'position-del',tag=readOnly?'div':'button';return '<'+tag+' class="acta-field-player '+(side==='A'?'field-home':'field-away')+' '+tone+'"'+(readOnly?'':' type="button" draggable="'+(canDrag?'true':'false')+'" data-drag-player="'+encodeURIComponent(name)+'" data-drag-side="'+side+'" data-acta-player="'+encodeURIComponent(name)+'" data-acta-side="'+side+'" data-acta-match="'+(match?.id||'')+'" title="Arrastra para cambiar a otra posición registrada"')+'><img src="https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(name)+'&size=m&headonly=1&direction=2&head_direction=2&gesture=sml&action=std" alt="Cara de '+name+'"><span>'+name+'</span><small>'+position+'</small></'+tag+'>'};
     const playersAt=(lineup,position)=>lineup.filter(item=>playerPosition(item)===position).sort((a,b)=>(Number(a.slot)||0)-(Number(b.slot)||0));
-    const canDrag=session&&['admin','arbitro'].includes(session.role);
+    const canDrag=session&&['admin','moderador','arbitro'].includes(session.role);
     const slot=(lineup,position,side,className,index=0)=>{const player=playersAt(lineup,position)[index];const slotClass='acta-slot '+className+(readOnly?' readonly-slot':'');const attributes=readOnly?'':' data-drop-player-side="'+side+'" data-drop-position="'+position+'" data-drop-index="'+index+'" data-acta-match="'+(match?.id||'')+'"';const removeButton=player&&!readOnly?'<button class="remove-lineup-player" type="button" data-remove-lineup-player="'+encodeURIComponent(playerName(player))+'" data-remove-lineup-side="'+side+'" data-remove-lineup-match="'+(match?.id||'')+'" title="Quitar jugador del campo" aria-label="Quitar '+playerName(player)+' del campo">×</button>':'';return '<div class="'+slotClass+'"'+attributes+'>'+(player?playerMarkup(player,side):(readOnly?'':'<span class="field-empty">+</span>'))+removeButton+'</div>'};
     const lineup=(lineupData,side)=>'<div class="acta-team-lineup '+(side==='A'?'acta-team-home':'acta-team-away')+'">'+slot(lineupData,'GK',side,'slot-gk')+slot(lineupData,'BANDA',side,'slot-band-left',0)+slot(lineupData,'BANDA',side,'slot-band-right',1)+slot(lineupData,'MED',side,'slot-med',0)+'</div>';
     const roster=(teamRecord,side,lineupData)=>{const players=[...(teamRecord?.players||[])].map(playerName).filter(Boolean),positionRank={GK:0,BANDA:1,MED:2},positionOf=name=>{const account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(name));const positions=(Array.isArray(account?.position)?account.position:[account?.position].filter(Boolean)).map(normalizeActaPosition);return positions.sort((a,b)=>(positionRank[a]??99)-(positionRank[b]??99))[0]||'MED'},orderedPlayers=players.sort((a,b)=>(positionRank[positionOf(a)]??99)-(positionRank[positionOf(b)]??99)||a.localeCompare(b,'es'));return '<div class="acta-roster-pool '+(side==='A'?'roster-home':'roster-away')+'"><strong>'+(teamRecord?.name||(side==='A'?'Local':'Visitante'))+'</strong><div class="acta-roster-players">'+(orderedPlayers.length?orderedPlayers.map(name=>{const position=positionOf(name);return '<div class="acta-roster-player '+(lineupData.some(item=>toPlayerKey(playerName(item))===toPlayerKey(name))?'is-starting':'')+'" draggable="'+(canDrag?'true':'false')+'" data-drag-player="'+encodeURIComponent(name)+'" data-drag-side="'+side+'" data-acta-roster-player="'+encodeURIComponent(name)+'" data-acta-roster-side="'+side+'" title="Pulsa para añadir una acción al acta"><img src="https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(name)+'&size=m&headonly=1&direction=2&head_direction=2&gesture=sml&action=std"><span>'+name+'</span><b class="acta-roster-position">'+position+'</b>'+(canDrag?'<button type="button" class="place-player-btn" data-select-lineup-player="'+encodeURIComponent(name)+'" data-select-lineup-side="'+side+'">Colocar</button>':'')+'</div>'}).join(''):'<span class="muted">Sin jugadores</span>')+'</div></div>'};
@@ -1335,6 +1335,19 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   function userManagement(){const roleName=role=>role==='admin'?'Administrador':role==='arbitro'?'Árbitro':role==='dueno'?'Dueño de equipo':'Sin rol';const rows=accounts.length?accounts.map(account=>{const assigned=String(account.division||''),enabled=Array.isArray(account.enabledDivisions)?account.enabledDivisions:(assigned?[assigned]:[]);return '<div class="admin-player-row" data-admin-player="'+account.username.toLowerCase()+'"><div class="admin-player-head"><div><div class="match-name">'+account.username+'</div><div class="muted">Rol actual: '+roleName(account.role)+'</div></div><button class="btn btn-primary" data-save-user-role="'+account.username+'">Guardar cambios</button></div><select class="input admin-player-role" data-user-role="'+account.username+'"><option value="pendiente" '+(account.role==='pendiente'?'selected':'')+'>Sin rol</option><option value="arbitro" '+(account.role==='arbitro'?'selected':'')+'>Árbitro</option><option value="dueno" '+(account.role==='dueno'?'selected':'')+'>Dueño de equipo</option><option value="admin" '+(account.role==='admin'?'selected':'')+'>Administrador</option></select><div class="admin-division-group"><span class="panel-label">Asignación deportiva</span><div class="admin-section-note">Elige la división principal y las divisiones en las que el jugador puede participar.</div></div><div class="admin-division-group"><span class="panel-label">División principal</span><div class="admin-division-buttons">'+['1','2','3','4'].map(value=>'<button class="admin-division-button '+(assigned===value?'active':'')+'" type="button" data-user-division-choice="'+account.username+'" data-division="'+value+'">D'+value+'</button>').join('')+'</div></div><div class="admin-division-group"><span class="panel-label">Divisiones habilitadas <span class="muted">(puedes elegir varias)</span></span><div class="admin-division-buttons">'+['1','2','3','4'].map(value=>'<button class="admin-division-button '+(enabled.includes(value)?'active':'')+'" type="button" data-user-enabled-choice="'+account.username+'" data-division="'+value+'">D'+value+'</button>').join('')+'</div></div></div>'}).join(''):'<div class="empty">Todavía no hay usuarios registrados.</div>';return '<div class="content-card" id="userManagement"><div class="admin-title">Usuarios y roles</div><div class="admin-section-note">Administra el rol de cada cuenta y su acceso deportivo por divisiones.</div><input class="input" id="adminPlayerSearch" placeholder="Buscar usuario por nombre"><div class="admin-player-list">'+rows+'</div></div>'}
   function roleManagement(){const roleName=role=>role==='admin'?'Administrador':role==='arbitro'?'Árbitro':role==='dueno'?'Dueño de equipo':'Sin rol';const rows=accounts.length?accounts.map(account=>'<div class="admin-player-row" data-admin-player="'+account.username.toLowerCase()+'"><div class="admin-player-head"><div><div class="match-name">'+account.username+'</div><div class="muted">Rol actual: '+roleName(account.role)+'</div></div><button class="btn btn-primary" data-save-user-role="'+account.username+'">Guardar cambios</button></div><select class="input admin-player-role" data-user-role="'+account.username+'"><option value="pendiente" '+(account.role==='pendiente'?'selected':'')+'>Sin rol</option><option value="arbitro" '+(account.role==='arbitro'?'selected':'')+'>Árbitro</option><option value="dueno" '+(account.role==='dueno'?'selected':'')+'>Dueño de equipo</option><option value="admin" '+(account.role==='admin'?'selected':'')+'>Administrador</option></select></div>').join(''):'<div class="empty">Todavía no hay usuarios registrados.</div>';return '<div class="content-card" id="userManagement"><div class="admin-title">Usuarios y roles</div><div class="admin-section-note">Administra únicamente el rol de cada cuenta.</div><input class="input" id="adminPlayerSearch" placeholder="Buscar usuario por nombre"><div class="admin-player-list">'+rows+'</div></div>'}
   function divisionManagement(){const rows=accounts.length?accounts.map(account=>{const assigned=String(account.division||''),enabled=Array.isArray(account.enabledDivisions)?account.enabledDivisions:(assigned?[assigned]:[]);return '<div class="admin-player-row" data-admin-player="'+account.username.toLowerCase()+'"><div class="admin-player-head"><div><div class="match-name">'+account.username+'</div><div class="muted">Asignación deportiva</div></div><button class="btn btn-primary" data-save-user-division="'+account.username+'">Guardar divisiones</button></div><div class="admin-division-group"><span class="panel-label">División principal</span><div class="admin-division-buttons">'+['1','2','3','4'].map(value=>'<button class="admin-division-button '+(assigned===value?'active':'')+'" type="button" data-user-division-choice="'+account.username+'" data-division="'+value+'">D'+value+'</button>').join('')+'</div></div><div class="admin-division-group"><span class="panel-label">Divisiones habilitadas <span class="muted">(puedes elegir varias)</span></span><div class="admin-division-buttons">'+['1','2','3','4'].map(value=>'<button class="admin-division-button '+(enabled.includes(value)?'active':'')+'" type="button" data-user-enabled-choice="'+account.username+'" data-division="'+value+'">D'+value+'</button>').join('')+'</div></div></div>'}).join(''):'<div class="empty">Todavía no hay usuarios registrados.</div>';return '<div class="content-card" id="divisionManagement"><div class="admin-title">Asignación deportiva</div><div class="admin-section-note">Asigna la división principal y habilita una o varias divisiones para cada jugador.</div><input class="input" id="adminDivisionSearch" placeholder="Buscar jugador por nombre"><div class="admin-player-list">'+rows+'</div></div>'}
+  function adminRolesPanel(){
+    const labels={admin:'ADMIN · Acceso total',moderador:'Moderador · IP y resultados',arbitro:'Árbitro · Resultados',dueno:'Dueño de equipo',pendiente:'Sin rol'};
+    const rows=accounts.length?accounts.map(account=>{
+      const role=String(account.role||'pendiente').toLowerCase();
+      return '<div class="admin-player-row"><div class="admin-player-head"><div><div class="match-name">'+hfaEsc(account.username)+'</div><div class="muted">Rol actual: '+(labels[role]||labels.pendiente)+'</div></div><button class="btn btn-primary" type="button" data-save-user-role="'+hfaEsc(account.username)+'">Guardar</button></div><select class="input admin-player-role" data-user-role="'+hfaEsc(account.username)+'"><option value="pendiente" '+(role==='pendiente'?'selected':'')+'>Sin rol</option><option value="admin" '+(role==='admin'?'selected':'')+'>ADMIN · Acceso total</option><option value="moderador" '+(role==='moderador'?'selected':'')+'>Moderador · IP y resultados</option><option value="arbitro" '+(role==='arbitro'?'selected':'')+'>Árbitro · Resultados</option><option value="dueno" '+(role==='dueno'?'selected':'')+'>Dueño de equipo</option></select></div>';
+    }).join(''):'<div class="empty">Todavía no hay usuarios registrados.</div>';
+    return '<div class="content-card" id="roleManagement"><div class="admin-title">Roles</div><div class="admin-section-note">ADMIN gestiona todo; Moderador consulta IP y registra resultados; Árbitro solo registra resultados.</div><input class="input" id="adminRoleSearch" placeholder="Buscar usuario por nombre"><div class="admin-player-list">'+rows+'</div></div>';
+  }
+  function moderatorIpPanel(){
+    const clones=hfaCloneMap(),roleName=role=>role==='admin'?'ADMIN':role==='moderador'?'Moderador':role==='arbitro'?'Árbitro':role==='dueno'?'Dueño de equipo':'Sin rol';
+    const rows=accounts.length?accounts.map(account=>{const ips=hfaAccountIps(account),others=clones[account.username]||[];return '<div class="admin-player-row" data-moderator-ip-user="'+hfaEsc(account.username.toLowerCase())+'"><div class="admin-player-head"><div><div class="match-name">'+hfaEsc(account.username)+'</div><div class="muted">'+roleName(account.role)+'</div></div></div><div class="muted">IP de registro: '+hfaEsc(account.ip||'Sin registrar')+'</div><div class="muted">Última IP: '+hfaEsc(account.lastIp||'Sin registrar')+'</div><div class="muted">IPs conocidas: '+hfaEsc(ips.join(', ')||'Sin registrar')+'</div>'+(others.length?'<div class="muted" style="color:var(--red)"><strong>⚠ Misma IP que:</strong> '+others.map(hfaEsc).join(', ')+'</div>':'')+'</div>'}).join(''):'<div class="empty">Todavía no hay cuentas registradas.</div>';
+    return '<div class="content-card" id="moderatorIpManagement"><div class="admin-match-heading"><div><div class="admin-title">Direcciones IP · '+accounts.length+' usuarios</div><div class="admin-section-note">IP de registro, última IP, historial conocido y cuentas que comparten direcciones.</div></div><button class="btn" type="button" data-refresh-moderator-ips>Actualizar</button></div><input class="input" id="moderatorIpSearch" placeholder="Buscar usuario o dirección IP"><div class="admin-player-list">'+rows+'</div></div>';
+  }
   function communityAdmin(){
     const palmaresRows=state.palmares.map(item=>'<div class="match-row"><div><div class="match-name">'+profileText(item.title)+'</div><div class="muted">'+profileText(item.category)+' · '+profileText(item.team||item.player||'')+'</div></div><button class="btn" data-delete-palmares="'+item.id+'">Eliminar</button></div>').join('')||'<div class="empty">No hay reconocimientos agregados.</div>';
     const newsRows=state.news.map(item=>'<div class="match-row"><div><div class="match-name">'+profileText(item.title)+'</div><div class="muted">'+profileText(item.description)+'</div></div><button class="btn" data-delete-news="'+item.id+'">Eliminar</button></div>').join('')||'<div class="empty">No hay noticias agregadas.</div>';
@@ -1360,10 +1373,33 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   }
   function setupAdminSections(){
     const tools=document.querySelector('.admin-tools');if(!tools||tools.closest('.admin-section-layout'))return;
+    const isAdmin=session?.role==='admin';
+    const isModerator=session?.role==='moderador';
+    if(isAdmin&&!tools.querySelector('#roleManagement'))tools.insertAdjacentHTML('afterbegin',adminRolesPanel());
+    if(isModerator&&!tools.querySelector('#moderatorIpManagement'))tools.insertAdjacentHTML('afterbegin',moderatorIpPanel());
+    if(isModerator&&!tools.querySelector('#adminMatchList')){
+      tools.insertAdjacentHTML('beforeend',adminMatchList());
+      tools.querySelector('#adminMatchList [data-new-admin-match]')?.remove();
+      tools.querySelectorAll('#adminMatchList [data-delete-match]').forEach(button=>button.remove());
+    }
     const cards=[...tools.querySelectorAll(':scope > .content-card')];
-    const sectionNav=document.createElement('aside');sectionNav.className='admin-section-nav';sectionNav.innerHTML='<div class="admin-section-nav-title">Competición</div><button type="button" class="active" data-admin-section="competition">▦ Jornadas y partidos</button><button type="button" data-admin-section="tournaments">▣ Temporadas y torneos</button><div class="admin-section-nav-title">Plantilla</div><button type="button" data-admin-section="teams">♟ Equipos y jugadores</button><button type="button" data-admin-section="users">♙ Usuarios y divisiones</button><div class="admin-section-nav-title">Comunidad</div><button type="button" data-admin-section="community">★ Palmarés y noticias</button><button type="button" data-admin-section="sponsors">⚑ Patrocinadores</button><div class="admin-section-nav-title">Actas</div><button type="button" data-admin-section="acts">▤ Editar y finalizar actas</button>';
+    const sectionNav=document.createElement('aside');sectionNav.className='admin-section-nav';
+    sectionNav.innerHTML=isAdmin?'<div class="admin-section-nav-title">Competición</div><button type="button" class="active" data-admin-section="competition">▦ Jornadas y partidos</button><button type="button" data-admin-section="matches">⚽ Gestión de partidos</button><button type="button" data-admin-section="tournaments">▣ Temporadas y torneos</button><div class="admin-section-nav-title">Plantilla</div><button type="button" data-admin-section="teams">♟ Equipos y jugadores</button><button type="button" data-admin-section="users">♙ Usuarios y divisiones</button><button type="button" data-admin-section="roles">♙ Roles</button><div class="admin-section-nav-title">Comunidad</div><button type="button" data-admin-section="community">★ Palmarés y noticias</button><button type="button" data-admin-section="sponsors">⚑ Patrocinadores</button><div class="admin-section-nav-title">Actas</div><button type="button" data-admin-section="acts">▤ Editar y finalizar actas</button>':isModerator?'<div class="admin-section-nav-title">Moderación</div><button type="button" data-admin-section="ips">Direcciones IP</button><button type="button" data-admin-section="matches">⚽ Gestión de partidos</button><button type="button" data-admin-section="acts">Registrar resultados</button>':'<div class="admin-section-nav-title">Actas</div><button type="button" data-admin-section="acts">Registrar resultados</button>';
     const sectionContent=document.createElement('main');sectionContent.className='admin-section-content';
-    cards.forEach(card=>{const title=card.querySelector('.admin-title')?.textContent.toLowerCase()||'',id=card.id||'';let section='competition';if(id==='adminActiveTournamentCard')section='competition';else if(id==='tournamentManagement'||title.includes('torneo'))section='tournaments';else if(id==='ownerManagement'||id==='rosterManagement'||title.includes('equipo y jugadores')||title.includes('asignar dueño')||title.includes('plantillas'))section='teams';else if(id==='userManagement'||id==='divisionManagement'||title.includes('usuarios'))section='users';else if(title.includes('palmarés')||title.includes('noticias'))section='community';else if(title.includes('sponsor'))section='sponsors';else if(title.includes('acta'))section='acts';card.dataset.adminSection=section;sectionContent.appendChild(card)});
+    cards.forEach(card=>{
+      const title=card.querySelector('.admin-title')?.textContent.toLowerCase()||'',id=card.id||'';
+      let section=id==='adminMatchList'?'matches':id==='roleManagement'?'roles':id==='moderatorIpManagement'?'ips':'competition';
+      if(id==='moderatorIpManagement')section='ips';
+      else if(id==='adminActiveTournamentCard')section='competition';
+      else if(id==='tournamentManagement'||title.includes('torneo'))section='tournaments';
+      else if(id==='ownerManagement'||id==='rosterManagement'||title.includes('equipo y jugadores')||title.includes('asignar dueño')||title.includes('plantillas'))section='teams';
+      else if(id==='userManagement'||id==='divisionManagement'||title.includes('usuarios'))section='users';
+      else if(title.includes('palmarés')||title.includes('noticias'))section='community';
+      else if(title.includes('sponsor'))section='sponsors';
+      else if(title.includes('acta'))section='acts';
+      card.dataset.adminSection=section;
+      sectionContent.appendChild(card);
+    });
     const layout=document.createElement('div');layout.className='admin-section-layout';layout.append(sectionNav,sectionContent);tools.replaceWith(layout);
     const titleRow=document.querySelector('.title-row');
     if(titleRow&&!titleRow.querySelector('[data-open-admin-tutorial]')){
@@ -1462,7 +1498,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       accounts.forEach(account=>{
         const username=String(account?.username||account?.name||'').trim();
         const role=String(account?.role||'').trim().toLocaleLowerCase('es');
-        if(username&&!['admin','arbitro'].includes(role))candidates.set(toPlayerKey(username),{username,account});
+        if(username&&!['admin','moderador','arbitro'].includes(role))candidates.set(toPlayerKey(username),{username,account});
       });
       const matches=[...candidates.values()].filter(candidate=>normalizeRosterSearch(candidate.username).includes(term));
       if(!matches.length){results.textContent='No encontramos "'+searchName+'" entre los jugadores registrados en la web.';return}
@@ -1835,7 +1871,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       const remove=event.target.closest('[data-delete-acta]');
       if(!save&&!finalize&&!remove)return;
       event.preventDefault();event.stopPropagation();
-      if(!session||!['admin','arbitro'].includes(session.role))return;
+      if(!session||!['admin','moderador','arbitro'].includes(session.role))return;
       const id=(save||finalize||remove).dataset.saveActa||(save||finalize||remove).dataset.finalizeActa||(save||finalize||remove).dataset.deleteActa;
       const match=state.matches.find(item=>String(item.id)===String(id));
       if(!match)return;
@@ -1852,6 +1888,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const matchCard=document.getElementById('createMatch')?.closest('.content-card');
     if(matchCard){matchCard.id='adminMatchBuilder';matchCard.classList.remove('admin-match-builder-hidden')}
     const show=section=>{sectionNav.querySelectorAll('[data-admin-section]').forEach(button=>button.classList.toggle('active',button.dataset.adminSection===section));sectionContent.querySelectorAll('.content-card').forEach(card=>card.classList.toggle('admin-section-visible',card.dataset.adminSection===section))};
+    if(!cards.some(card=>card.dataset.adminSection===adminSection))adminSection=isAdmin?'competition':isModerator?'matches':'acts';
     show(adminSection);
   }
   function adminTutorialMarkup(){
@@ -1887,7 +1924,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   }
   function admin(){
     if(!session)return '<div class="notice">🔒 El panel de administración es privado. <a class="back" href="seccion.html?view=cuenta">Inicia sesión</a> para continuar.</div>';
-    if(session.role!=='admin'&&session.role!=='arbitro')return '<div class="notice">No tienes permisos para acceder al panel de actas. Los árbitros pueden subir actas y los administradores gestionan toda la competición.</div>';
+    if(session.role!=='admin'&&session.role!=='moderador'&&session.role!=='arbitro')return '<div class="notice">No tienes permisos para acceder al panel de actas. Los árbitros pueden subir actas y los administradores gestionan toda la competición.</div>';
     const isAdmin=session.role==='admin';
     const activeTournamentOptions=state.tournaments.map(item=>'<option value="'+profileText(item.id)+'" '+(String(item.id)===String(activeTournamentId)?'selected':'')+'>'+profileText(item.name)+'</option>').join('');
     if(!selectedActaMatchId&&state.matches.length)selectedActaMatchId=state.matches[0].id;
@@ -1918,7 +1955,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     if(deleteGoal){
       event.preventDefault();
       event.stopPropagation();
-      if(!session||!['admin','arbitro'].includes(session.role))return;
+      if(!session||!['admin','moderador','arbitro'].includes(session.role))return;
       const match=state.matches.find(item=>String(item.id)===String(deleteGoal.dataset.deleteGoal));
       const goalIndex=Number(deleteGoal.dataset.goalIndex);
       if(!match||!Number.isInteger(goalIndex)||goalIndex<0||goalIndex>=(match.goals||[]).length)return;
@@ -1937,7 +1974,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     if(removeLineupPlayer){
       event.preventDefault();
       event.stopPropagation();
-      if(!session||!['admin','arbitro'].includes(session.role))return;
+      if(!session||!['admin','moderador','arbitro'].includes(session.role))return;
       const match=state.matches.find(item=>String(item.id)===String(removeLineupPlayer.dataset.removeLineupMatch));
       const side=removeLineupPlayer.dataset.removeLineupSide;
       const player=decodeURIComponent(removeLineupPlayer.dataset.removeLineupPlayer||'');
@@ -1950,7 +1987,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     }
     const actionPlayer=event.target.closest('[data-acta-roster-player], [data-acta-player]');
     if(!actionPlayer||event.target.closest('[data-select-lineup-player]'))return;
-    if(!session||!['admin','arbitro'].includes(session.role))return;
+    if(!session||!['admin','moderador','arbitro'].includes(session.role))return;
     event.preventDefault();
     event.stopPropagation();
     const matchBoard=actionPlayer.closest('[data-acta-match]');
@@ -1982,7 +2019,9 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     }
     const publicRoundButton=event.target.closest('[data-public-round]');
     if(publicRoundButton){publicMatchRound=publicRoundButton.dataset.publicRound;content();return}
-    const adminSectionButton=event.target.closest('[data-admin-section]');
+    const refreshModeratorIps=event.target.closest('[data-refresh-moderator-ips]');
+    if(refreshModeratorIps){if(session?.role!=='moderador')return;accounts=await getJSON('accounts',accounts);content();return}
+    const adminSectionButton=event.target.closest('.admin-section-nav [data-admin-section]');
     if(adminSectionButton){
       const layout=adminSectionButton.closest('.admin-section-layout'),section=adminSectionButton.dataset.adminSection;
       adminSection=section;
@@ -2010,20 +2049,20 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       return;
     }
     const selectLineupPlayer=event.target.closest('[data-select-lineup-player]');
-    if(selectLineupPlayer){if(!session||!['admin','arbitro'].includes(session.role))return;document.querySelectorAll('.acta-roster-player.selected-for-pitch').forEach(item=>item.classList.remove('selected-for-pitch'));selectLineupPlayer.closest('.acta-roster-player')?.classList.add('selected-for-pitch');selectedLineupPlayer={name:decodeURIComponent(selectLineupPlayer.dataset.selectLineupPlayer),side:selectLineupPlayer.dataset.selectLineupSide};highlightLineupSlots(selectedLineupPlayer.name,selectLineupPlayer.side,selectLineupPlayer.closest('[data-acta-match]'));return}
+    if(selectLineupPlayer){if(!session||!['admin','moderador','arbitro'].includes(session.role))return;document.querySelectorAll('.acta-roster-player.selected-for-pitch').forEach(item=>item.classList.remove('selected-for-pitch'));selectLineupPlayer.closest('.acta-roster-player')?.classList.add('selected-for-pitch');selectedLineupPlayer={name:decodeURIComponent(selectLineupPlayer.dataset.selectLineupPlayer),side:selectLineupPlayer.dataset.selectLineupSide};highlightLineupSlots(selectedLineupPlayer.name,selectLineupPlayer.side,selectLineupPlayer.closest('[data-acta-match]'));return}
     const rosterActionPlayer=event.target.closest('[data-acta-roster-player]');
     if(rosterActionPlayer&&!event.target.closest('[data-select-lineup-player]')){
-      if(!session||!['admin','arbitro'].includes(session.role))return;
+      if(!session||!['admin','moderador','arbitro'].includes(session.role))return;
       selectedActaMatchId=rosterActionPlayer.closest('[data-acta-match]')?.dataset.actaMatch||selectedActaMatchId;
       openActaPlayerMenu(decodeURIComponent(rosterActionPlayer.dataset.actaRosterPlayer),rosterActionPlayer.dataset.actaRosterSide);
       return;
     }
     const rosterPlayer=event.target.closest('[data-drag-player]');
-    if(rosterPlayer&&!event.target.closest('[data-acta-player]')&&!event.target.closest('[data-acta-roster-player]')){if(!session||!['admin','arbitro'].includes(session.role))return;document.querySelectorAll('.acta-roster-player.selected-for-pitch').forEach(item=>item.classList.remove('selected-for-pitch'));rosterPlayer.classList.add('selected-for-pitch');selectedLineupPlayer={name:decodeURIComponent(rosterPlayer.dataset.dragPlayer),side:rosterPlayer.dataset.dragSide};highlightLineupSlots(selectedLineupPlayer.name,selectedLineupPlayer.side,rosterPlayer.closest('[data-acta-match]'));return}
+    if(rosterPlayer&&!event.target.closest('[data-acta-player]')&&!event.target.closest('[data-acta-roster-player]')){if(!session||!['admin','moderador','arbitro'].includes(session.role))return;document.querySelectorAll('.acta-roster-player.selected-for-pitch').forEach(item=>item.classList.remove('selected-for-pitch'));rosterPlayer.classList.add('selected-for-pitch');selectedLineupPlayer={name:decodeURIComponent(rosterPlayer.dataset.dragPlayer),side:rosterPlayer.dataset.dragSide};highlightLineupSlots(selectedLineupPlayer.name,selectedLineupPlayer.side,rosterPlayer.closest('[data-acta-match]'));return}
     const pitchSlot=event.target.closest('[data-drop-player-side]');
-    if(pitchSlot&&selectedLineupPlayer){if(!session||!['admin','arbitro'].includes(session.role))return;const placed=await placeLineupPlayer(selectedLineupPlayer.name,selectedLineupPlayer.side,pitchSlot);if(placed)selectedLineupPlayer=null;return}
+    if(pitchSlot&&selectedLineupPlayer){if(!session||!['admin','moderador','arbitro'].includes(session.role))return;const placed=await placeLineupPlayer(selectedLineupPlayer.name,selectedLineupPlayer.side,pitchSlot);if(placed)selectedLineupPlayer=null;return}
     const fieldPlayer=event.target.closest('[data-acta-player]');
-    if(fieldPlayer){if(!session||!['admin','arbitro'].includes(session.role))return;selectedActaMatchId=fieldPlayer.dataset.actaMatch||selectedActaMatchId;openActaPlayerMenu(decodeURIComponent(fieldPlayer.dataset.actaPlayer),fieldPlayer.dataset.actaSide);return}
+    if(fieldPlayer){if(!session||!['admin','moderador','arbitro'].includes(session.role))return;selectedActaMatchId=fieldPlayer.dataset.actaMatch||selectedActaMatchId;openActaPlayerMenu(decodeURIComponent(fieldPlayer.dataset.actaPlayer),fieldPlayer.dataset.actaSide);return}
     if(event.target.closest('[data-close-player-menu]')||event.target.classList.contains('acta-player-menu-backdrop')){closeActaPlayerMenu();return}
     const backPlayerMenu=event.target.closest('[data-back-player-menu]');
     if(backPlayerMenu){const menu=backPlayerMenu.closest('.acta-player-menu-backdrop');if(menu)openActaPlayerMenu(menu.dataset.player,menu.dataset.side);return}
@@ -2168,8 +2207,9 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     }
     const saveRoleButton=event.target.closest('[data-save-user-role]');
     if(saveRoleButton){
-      const username=saveRoleButton.dataset.saveUserRole,roleSelect=document.querySelector('[data-user-role="'+CSS.escape(username)+'"]'),row=saveRoleButton.closest('.admin-player-row'),divisionButton=row?.querySelector('[data-user-division-choice].active'),account=accounts.find(item=>item.username===username);
-      if(account&&roleSelect){account.role=roleSelect.value;account.division=divisionButton?.dataset.division||'';account.enabledDivisions=[...row.querySelectorAll('[data-user-enabled-choice].active')].map(button=>button.dataset.division);await setJSON('accounts',accounts);if(session?.username===username){session.role=account.role;localStorage.setItem('hfa:session',JSON.stringify(session));nav()}content();prepareAdminDivisions()}
+      if(session?.role!=='admin')return;
+      const username=saveRoleButton.dataset.saveUserRole,roleSelect=document.querySelector('[data-user-role="'+CSS.escape(username)+'"]'),row=saveRoleButton.closest('.admin-player-row'),account=accounts.find(item=>item.username===username);
+      if(account&&roleSelect){account.role=roleSelect.value;if(row?.querySelector('[data-user-division-choice]')){const divisionButton=row.querySelector('[data-user-division-choice].active');account.division=divisionButton?.dataset.division||'';account.enabledDivisions=[...row.querySelectorAll('[data-user-enabled-choice].active')].map(button=>button.dataset.division)}await setJSON('accounts',accounts);if(session?.username===username){session.role=account.role;localStorage.setItem('hfa:session',JSON.stringify(session));if(session.role==='admin')localStorage.setItem('hfa:adminAuth',account.passHash);else localStorage.removeItem('hfa:adminAuth');nav()}content();prepareAdminDivisions()}
       return;
     }
     const saveDivisionButton=event.target.closest('[data-save-user-division]');
@@ -2284,32 +2324,32 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     if(actaTabButton){actaTab=actaTabButton.dataset.actaTab;adminSection='acts';content();prepareAdminDivisions();return}
     if(event.target.id==='addActaPlayer')return;
     if(event.target.id==='addGoal'){
-      if(!session||!['admin','arbitro'].includes(session.role))return;
+      if(!session||!['admin','moderador','arbitro'].includes(session.role))return;
       const match=state.matches.find(item=>item.id===selectedActaMatchId),player=document.getElementById('goalPlayer').value,assist=document.getElementById('goalAssist').value,minute=document.getElementById('goalMinute').value,side=document.getElementById('goalSide').value;
       if(match&&player&&minute!==''){match.goals=match.goals||[];match.goals.push({player,assist,minute,side});await setJSON('matches',state.matches);content()}
       return;
     }
     if(event.target.id==='addCard'){
-      if(!session||!['admin','arbitro'].includes(session.role))return;
+      if(!session||!['admin','moderador','arbitro'].includes(session.role))return;
       const match=state.matches.find(item=>item.id===selectedActaMatchId),player=document.getElementById('cardPlayer').value,type=document.getElementById('cardType').value,minute=document.getElementById('cardMinute').value,side=document.getElementById('cardSide').value;
       if(match&&player){match.cards=match.cards||[];match.cards.push({player,type,minute,side});await setJSON('matches',state.matches);content()}
       return;
     }
     if(event.target.id==='addSub'){
-      if(!session||!['admin','arbitro'].includes(session.role))return;
+      if(!session||!['admin','moderador','arbitro'].includes(session.role))return;
       const match=state.matches.find(item=>item.id===selectedActaMatchId),minute=document.getElementById('subMinute').value,side=document.getElementById('subSide').value,out=document.getElementById('subOut').value,entering=document.getElementById('subIn').value;
       if(match&&out&&entering){match.subs=match.subs||[];match.subs.push({minute,side,out,in:entering});await setJSON('matches',state.matches);content()}
       return;
     }
     if(event.target.id==='addLineup'){
-      if(!session||!['admin','arbitro'].includes(session.role))return;
+      if(!session||!['admin','moderador','arbitro'].includes(session.role))return;
       const match=state.matches.find(item=>item.id===selectedActaMatchId),player=document.getElementById('lineupPlayer').value,side=document.getElementById('lineupSide').value,pos=normalizeActaPosition(document.getElementById('lineupPos').value),account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(player)),registered=(Array.isArray(account?.position)?account.position:[account?.position].filter(Boolean)).map(normalizeActaPosition);
       const teamPlayers=side==='A'?(matchTeam(match,'A')?.players||[]):(matchTeam(match,'B')?.players||[]);
       if(match&&player&&teamPlayers.some(item=>toPlayerKey(playerName(item))===toPlayerKey(player))&&registered.includes(pos)){const key=side==='A'?'lineupA':'lineupB';match[key]=match[key]||[];if(match[key].length>=4)return;if(!match[key].some(item=>playerName(item).toLowerCase()===player.toLowerCase()))match[key].push({name:player,pos});await setJSON('matches',state.matches);content()}
       return;
     }
     if(event.target.id==='addMention'){
-      if(!session||!['admin','arbitro'].includes(session.role))return;
+      if(!session||!['admin','moderador','arbitro'].includes(session.role))return;
       const match=state.matches.find(item=>item.id===selectedActaMatchId),player=document.getElementById('mentionPlayer').value;
       if(match&&player){match.mentions=match.mentions||[];match.mentions.push(player);await setJSON('matches',state.matches);content()}
       return;
@@ -2318,7 +2358,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     if(editActaButton){const matchId=editActaButton.dataset.editActa;if(selectedActaMatchId===matchId){return}selectedActaMatchId=matchId;actaTab='goals';adminSection='acts';content();return}
     const saveActaButton=event.target.closest('[data-save-acta]');
     if(saveActaButton){
-      if(!session||!['admin','arbitro'].includes(session.role))return;
+      if(!session||!['admin','moderador','arbitro'].includes(session.role))return;
       const match=state.matches.find(item=>item.id===saveActaButton.dataset.saveActa);
       if(match){
         match.mvp=document.getElementById('mvpInput')?.value.trim()||'';
@@ -2331,10 +2371,10 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       return;
     }
     const deleteActaButton=event.target.closest('[data-delete-acta]');
-    if(deleteActaButton){if(!session||!['admin','arbitro'].includes(session.role))return;if(!confirm('¿Eliminar todos los datos de esta acta?'))return;const match=state.matches.find(item=>item.id===deleteActaButton.dataset.deleteActa);if(match){match.goals=[];match.cards=[];match.subs=[];match.mentions=[];match.lineupA=[];match.lineupB=[];match.mvp='';match.acta='';match.scoreA=0;match.scoreB=0;match.finished=false;    await setJSON('matches',state.matches);selectedActaMatchId=null;adminSection='acts';content()}return}
+    if(deleteActaButton){if(!session||!['admin','moderador','arbitro'].includes(session.role))return;if(!confirm('¿Eliminar todos los datos de esta acta?'))return;const match=state.matches.find(item=>item.id===deleteActaButton.dataset.deleteActa);if(match){match.goals=[];match.cards=[];match.subs=[];match.mentions=[];match.lineupA=[];match.lineupB=[];match.mvp='';match.acta='';match.scoreA=0;match.scoreB=0;match.finished=false;    await setJSON('matches',state.matches);selectedActaMatchId=null;adminSection='acts';content()}return}
     const finalizeActaButton=event.target.closest('[data-finalize-acta]');
     if(finalizeActaButton){
-      if(!session||!['admin','arbitro'].includes(session.role))return;
+      if(!session||!['admin','moderador','arbitro'].includes(session.role))return;
       const match=state.matches.find(item=>item.id===finalizeActaButton.dataset.finalizeActa);
       if(match){
         match.mvp=document.getElementById('mvpInput')?.value.trim()||match.mvp||'';
@@ -2386,7 +2426,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const empty=document.getElementById('countryEmpty');if(empty)empty.hidden=visible>0;
   });
   document.addEventListener('dragstart',function(event){
-    if(!session||!['admin','arbitro'].includes(session.role))return;
+    if(!session||!['admin','moderador','arbitro'].includes(session.role))return;
     const player=event.target.closest('[data-drag-player]');
     if(player){const payload=JSON.stringify({name:decodeURIComponent(player.dataset.dragPlayer),side:player.dataset.dragSide});event.dataTransfer.setData('application/x-hfa-player',payload);event.dataTransfer.setData('text/plain',payload);event.dataTransfer.effectAllowed='move';return}
     const item=event.target.closest('[data-drag-team]');
@@ -2402,7 +2442,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     });
   }
   async function placeLineupPlayer(playerNameValue,playerSide,playerSlot){
-    if(!session||!['admin','arbitro'].includes(session.role))return false;
+    if(!session||!['admin','moderador','arbitro'].includes(session.role))return false;
     const board=playerSlot.closest('[data-acta-match]'),match=state.matches.find(item=>item.id===board?.dataset.actaMatch),side=playerSlot.dataset.dropPlayerSide,position=playerSlot.dataset.dropPosition,index=Number(playerSlot.dataset.dropIndex)||0;
     if(!match)return false;
     const account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(playerNameValue));
@@ -2436,7 +2476,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     if(slot)slot.classList.remove('over');
   });
   document.addEventListener('drop',async function(event){
-    if(!session||!['admin','arbitro'].includes(session.role))return;
+    if(!session||!['admin','moderador','arbitro'].includes(session.role))return;
     const playerSlot=event.target.closest('[data-drop-player-side]');
     if(playerSlot){
       event.preventDefault();playerSlot.classList.remove('drop-target');
@@ -2481,6 +2521,8 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   document.addEventListener('input',function(event){
     if(event.target.id==='playerDirectorySearch'){playerSearch=event.target.value;renderPlayersDirectory();return}
     if(event.target.id==='adminPlayerSearch'){const query=event.target.value.toLowerCase();document.querySelectorAll('[data-admin-player]').forEach(row=>row.style.display=row.dataset.adminPlayer.includes(query)?'':'none');return}
+    if(event.target.id==='adminRoleSearch'){const query=event.target.value.toLowerCase();document.querySelectorAll('#roleManagement .admin-player-row').forEach(row=>row.style.display=row.textContent.toLowerCase().includes(query)?'':'');return}
+    if(event.target.id==='moderatorIpSearch'){const query=event.target.value.toLowerCase().trim();document.querySelectorAll('#moderatorIpManagement [data-moderator-ip-user]').forEach(row=>row.style.display=row.textContent.toLowerCase().includes(query)?'':'none');return}
     if(event.target.id==='adminDivisionSearch'){const query=event.target.value.toLowerCase().trim();document.querySelectorAll('#divisionManagement [data-admin-player]').forEach(row=>row.style.display=!query||row.dataset.adminPlayer.includes(query)?'':'none');return}
     if(event.target.id==='registeredPlayerSearch'){
       const query=event.target.value.toLowerCase();
