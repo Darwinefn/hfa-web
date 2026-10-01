@@ -643,6 +643,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
 <script src="flags.js"></script>
 </head>
 <body>
+<script src="loading.js"></script>
 <header><a class="brand" href="afh-liga.html"><div class="brand-mark" aria-label="Logo HFA"></div><div class="brand-name">Habbo<span> </span>Fútbol<span> Asociación</span></div></a><nav id="nav"></nav></header>
 <main><div class="eyebrow" id="eyebrow">Competición oficial</div><div class="title-row"><h1 class="title" id="title">Sección</h1><a class="back" href="afh-liga.html">← Volver al inicio</a></div><p class="intro" id="intro"></p><div id="content"></div></main>
 <footer>HFA · Asociación de Fútbol Habbo.es</footer>
@@ -2537,9 +2538,23 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const players=[...new Set(owned.flatMap(item=>item.players||[]))].filter(player=>player.toLowerCase().includes(query));
     document.getElementById('playerResults').innerHTML=playerCards(players);
   });
-  function normalizeDivisionLabels(root){const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);nodes.forEach(node=>{node.nodeValue=node.nodeValue.replace(/DIVISIÓN\s+([1-4])/gi,'$1D').replace(/DIVISION\s+([1-4])/gi,'$1D')})}
-  function syncAttendanceAvatars(root){root.querySelectorAll('.attendance-row img.mini-avatar').forEach(image=>{try{const username=new URL(image.src).searchParams.get('user');if(username)image.src='https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(username)+'&size=m&headonly=1&direction=2&head_direction=2&gesture=sml&action=std'}catch(error){}})}
-  const divisionLabelObserver=new MutationObserver(()=>{normalizeDivisionLabels(document.body);syncAttendanceAvatars(document);});divisionLabelObserver.observe(document.body,{childList:true,subtree:true});
+  function normalizeDivisionLabels(root){
+    const normalize=node=>{node.nodeValue=node.nodeValue.replace(/DIVISIÓN\s+([1-4])/gi,'$1D').replace(/DIVISION\s+([1-4])/gi,'$1D')};
+    if(root.nodeType===Node.TEXT_NODE){normalize(root);return}
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    while(walker.nextNode())normalize(walker.currentNode);
+  }
+  function syncAttendanceAvatars(root){
+    if(!root||!root.querySelectorAll)return;
+    const selector='.attendance-row img.mini-avatar',images=[];
+    if(root.nodeType===Node.ELEMENT_NODE&&root.matches(selector))images.push(root);
+    images.push(...root.querySelectorAll(selector));
+    images.forEach(image=>{try{const username=new URL(image.src).searchParams.get('user');if(!username)return;const source='https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(username)+'&size=m&headonly=1&direction=2&head_direction=2&gesture=sml&action=std';if(image.src!==source)image.src=source}catch(error){}});
+  }
+  const divisionLabelObserver=new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(node=>{
+    if(node.nodeType===Node.TEXT_NODE||node.nodeType===Node.ELEMENT_NODE||node.nodeType===Node.DOCUMENT_FRAGMENT_NODE){normalizeDivisionLabels(node);syncAttendanceAvatars(node)}
+  })));
+  divisionLabelObserver.observe(document.body,{childList:true,subtree:true});
   const communitySubTitle = { palmares:'Palmarés', noticias:'Noticias', equipos:'Equipos', jugadores:'Jugadores' };
   const communitySubDescription = {
     palmares:'Consulta los resultados más destacados y los duelos clave de la asociación.',
@@ -2550,7 +2565,17 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   const activeTitle = view === 'comunidad' && params.get('sub') ? (communitySubTitle[params.get('sub')] || 'Comunidad') : (labels[view] || 'Sección');
   const activeIntro = view === 'comunidad' && params.get('sub') ? (communitySubDescription[params.get('sub')] || descriptions[view] || '') : (descriptions[view] || '');
   document.title='HFA · '+activeTitle;document.getElementById('title').textContent=activeTitle;document.getElementById('intro').textContent='';nav();
-  (async function init(){accounts=await getJSON('accounts',[]);state.teams=await getJSON('teams',[]);state.matches=await getJSON('matches',[]);state.competition=await getJSON('competition','Competición AFH');state.sponsors=await getJSON('sponsors',[]);state.offers=await getJSON('offers',[]);state.palmares=await getJSON('palmares',[]);state.news=await getJSON('news',[]);state.tournaments=await getJSON('tournaments',[{id:'default',name:state.competition,season:'Temporada actual'}]);try{activeTournamentId=localStorage.getItem('hfa:activeTournament')||String(state.tournaments[0]?.id||'');session=JSON.parse(localStorage.getItem('hfa:session')||'null')}catch(error){}nav();content();if(view==='buzon')document.getElementById('content').innerHTML=mailboxPage();prepareAccountForm();prepareAdminDivisions();if(session&&view==='cuenta'){await hydrateProfile();if(params.get('tab')==='buzon'){document.querySelector('.profile-layout')?.style.setProperty('display','none');document.querySelector('.mailbox-panel')?.classList.add('mailbox-visible');document.querySelector('.free-agent-block')?.classList.add('mailbox-visible')}}})();
+  (async function init(){
+    const [loadedAccounts,teams,matches,competition,sponsors,offers,palmares,news,tournaments]=await Promise.all([
+      getJSON('accounts',[]),getJSON('teams',[]),getJSON('matches',[]),getJSON('competition','Competición AFH'),getJSON('sponsors',[]),getJSON('offers',[]),getJSON('palmares',[]),getJSON('news',[]),getJSON('tournaments',null)
+    ]);
+    accounts=loadedAccounts;state.teams=teams;state.matches=matches;state.competition=competition;state.sponsors=sponsors;state.offers=offers;state.palmares=palmares;state.news=news;
+    state.tournaments=tournaments===null||tournaments===undefined?[{id:'default',name:state.competition,season:'Temporada actual'}]:tournaments;
+    try{activeTournamentId=localStorage.getItem('hfa:activeTournament')||String(state.tournaments[0]?.id||'');session=JSON.parse(localStorage.getItem('hfa:session')||'null')}catch(error){}
+    nav();content();if(view==='buzon')document.getElementById('content').innerHTML=mailboxPage();prepareAccountForm();prepareAdminDivisions();
+    if(session&&view==='cuenta'){await hydrateProfile();if(params.get('tab')==='buzon'){document.querySelector('.profile-layout')?.style.setProperty('display','none');document.querySelector('.mailbox-panel')?.classList.add('mailbox-visible');document.querySelector('.free-agent-block')?.classList.add('mailbox-visible')}}
+    window.hfaLoadingReady?.();
+  })();
 })();
 
 </script>

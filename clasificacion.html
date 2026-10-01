@@ -24,6 +24,7 @@
 <script src="flags.js"></script>
 </head>
 <body>
+<script src="loading.js"></script>
 <header>
   <a class="brand" href="afh-liga.html"><div class="brand-mark" aria-label="Logo HFA"></div><div class="brand-name">Habbo<span> </span>Fútbol<span> Asociación</span></div></a>
   <nav id="classificationNav"></nav>
@@ -109,7 +110,7 @@
 
   document.getElementById('divisionTabs').addEventListener('click',function(event){const button=event.target.closest('[data-division]');if(!button)return;document.querySelectorAll('.tab-btn').forEach(item=>item.classList.remove('active'));button.classList.add('active');render(button.dataset.division)});
   renderNav();
-  (async function init(){state.teams=await getJSON('teams',[]);state.matches=await getJSON('matches',[]);state.tournaments=await getJSON('tournaments',[]);try{activeTournamentId=localStorage.getItem('hfa:activeTournament')||state.tournaments[0]?.id||'default'}catch(error){}render('1')})();
+  (async function init(){[state.teams,state.matches,state.tournaments]=await Promise.all([getJSON('teams',[]),getJSON('matches',[]),getJSON('tournaments',[])]);try{activeTournamentId=localStorage.getItem('hfa:activeTournament')||state.tournaments[0]?.id||'default'}catch(error){}render('1');window.hfaLoadingReady?.()})();
 })();
 </script>
 <script src="chat.js" defer></script>

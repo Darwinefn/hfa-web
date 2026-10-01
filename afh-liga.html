@@ -376,6 +376,7 @@
 <script src="flags.js"></script>
 </head>
 <body>
+<script src="loading.js"></script>
 
 <header>
   <div class="nav-left">
@@ -561,13 +562,22 @@
   let activeNewsIndex = 0;
 
   async function loadState(){
-    state.accounts = await storageGetJSON('accounts', [], true);
-    state.divisions = await storageGetJSON('divisions', defaultDivisions(), true);
-    state.teams = await storageGetJSON('teams', [], true);
-    state.matches = await storageGetJSON('matches', [], true);
-    state.tournaments = await storageGetJSON('tournaments', [], true);
-    state.sponsors = await storageGetJSON('sponsors', [], true);
-    state.news = await storageGetJSON('news', [], true);
+    const [accounts, divisions, teams, matches, tournaments, sponsors, news] = await Promise.all([
+      storageGetJSON('accounts', [], true),
+      storageGetJSON('divisions', defaultDivisions(), true),
+      storageGetJSON('teams', [], true),
+      storageGetJSON('matches', [], true),
+      storageGetJSON('tournaments', [], true),
+      storageGetJSON('sponsors', [], true),
+      storageGetJSON('news', [], true)
+    ]);
+    state.accounts = accounts;
+    state.divisions = divisions;
+    state.teams = teams;
+    state.matches = matches;
+    state.tournaments = tournaments;
+    state.sponsors = sponsors;
+    state.news = news;
     try{
       const savedSession = JSON.parse(localStorage.getItem('hfa:session') || 'null');
       if (savedSession && savedSession.username){
@@ -1543,6 +1553,7 @@
     renderAll();
     const welcomeName=localStorage.getItem('hfa:loginWelcome');
     if(welcomeName){localStorage.removeItem('hfa:loginWelcome');showLoginWelcome(welcomeName)}
+    window.hfaLoadingReady?.();
   })();
 })();
 </script>
