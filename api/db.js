@@ -188,6 +188,27 @@ async function recordLogin(username, req) {
   return true;
 }
 
+// El admin cambia el rol de una cuenta desde la web. Se verifica que quien lo pide sea admin
+// (usuario + hash de contraseña) y se guarda el rol en MongoDB (cuenta + asignaciones de rol).
+async function setRole(body) {
+  if (!process.env.MONGODB_URI) return false;
+  const adminId = String(body.adminUser || '').trim().toLowerCase();
+  const targetId = String(body.username || '').trim().toLowerCase();
+  const role = String(body.role || '').trim().toLowerCase();
+  if (!adminId || !targetId || ROLES.indexOf(role) === -1) return false;
+  const collection = await mongoAccountsCollection();
+  const admin = await collection.findOne({ _id: adminId });
+  if (!admin || normalizeRole(admin.role) !== 'admin') return false;
+  if (!admin.passHash || String(admin.passHash) !== String(body.adminHash || '')) return false;
+  const result = await collection.updateOne({ _id: targetId }, { $set: { role: role } });
+  if (!result.matchedCount) return false;
+  try {
+    await (await mongoDb()).collection('role_assignments').updateOne(
+      { _id: targetId }, { $set: { role: role, updatedAt: new Date() } }, { upsert: true });
+  } catch (e) {}
+  return true;
+}
+
 async function getMongoAccounts() {
   const collection = await mongoAccountsCollection();
   const accounts = await collection.find({}, { projection: { _id: 0 } }).sort({ username: 1 }).toArray();
@@ -254,6 +275,10 @@ module.exports = async (req, res) => {
     }
     if (req.method === 'POST') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      if (body.action === 'setRole') {
+        const ok = await setRole(body);
+        return res.status(ok ? 200 : 403).json({ ok: ok });
+      }
       if (body.action === 'login') {
         const ok = await recordLogin(body.username, req);
         return res.status(200).json({ ok: ok });
