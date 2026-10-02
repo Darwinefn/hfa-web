@@ -162,7 +162,7 @@
       { sel: '.public-match-toolbar', title: 'Filtros de partidos', text: 'Filtra por torneo y división para encontrar un partido.' },
       { sel: '.public-match-rounds', title: 'Jornadas', text: 'Salta a una jornada concreta o ve todas.' },
       { sel: '.fixtures-list', title: 'Lista de partidos', text: 'Cada tarjeta es un partido con fecha, hora y resultado.' },
-      { sel: '.attendance-rosters', title: 'Dar presente', text: 'Si juegas, pulsa «Presente» junto a tu nombre. Te preguntaremos si entras con conexión normal, ExitLag o VPN; los administradores lo verán.' },
+      { sel: '.attendance-rosters', title: 'Dar presente', text: 'Si juegas, pulsa «Presente» junto a tu nombre. Te preguntaremos si entras con conexión normal, ExitLag o VPN, y además la web comprueba si tu conexión parece una VPN. Los administradores lo verán.' },
       { sel: '.fixture-prediction', title: 'Predicción', text: 'Vota quién crees que ganará el partido.' },
       { sel: '[data-view-summary]', title: 'Resumen del partido', text: 'En partidos terminados verás el acta: goles, tarjetas, alineaciones y premios.' }
     ],
