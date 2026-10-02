@@ -653,6 +653,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
 .roster-player-results>.roster-eligible-teams{grid-column:1/-1}
 .admin-section-layout>*{min-width:0}.admin-section-content{min-width:0;max-width:100%}.admin-match-card{min-width:0;max-width:100%}.admin-match-table-wrap{max-width:100%;overflow-x:auto}
 .hfa-att-risk>td{background:rgba(255,122,122,.07)}
+.hfa-att-detail>td{padding:0 !important;background:var(--panel-2)}.hfa-att-detail .hfa-att-box{margin:10px;border:0;background:transparent}.hfa-att-pending{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);color:var(--text-mid);font-size:12px;line-height:1.5}.hfa-att-table{min-width:0 !important;table-layout:auto}.hfa-att-table th,.hfa-att-table td{padding:8px 8px}.hfa-att-table td{vertical-align:middle}.hfa-att-detail .hfa-att-row{padding:6px 4px}.hfa-att-table .btn-sm{white-space:nowrap}
 .hfa-att-list{display:grid;gap:2px}.hfa-att-list .hfa-conn-badge{white-space:normal;line-height:1.3}.hfa-att-cell .hfa-att-list{min-width:260px}
 .hfa-conn-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);font:600 11px Inter;white-space:nowrap}
 .hfa-conn-badge.exitlag{color:#ffb84d;border-color:#ffb84d;background:rgba(255,184,77,.10)}
@@ -1452,6 +1453,35 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const entries=hfaAttendanceEntries(match);
     return '<div class="hfa-att-box"><b>👥 Presentes ('+entries.length+') · conexión</b>'+(entries.length?hfaAttendanceRowsHtml(entries):'<div class="muted">Todavía nadie ha dado presente.</div>')+'</div>';
   }
+  function hfaMatchRisk(match){return hfaAttendanceEntries(match).filter(entry=>entry.conn==='exitlag'||entry.conn==='vpn'||(entry.detected&&entry.detected.checked&&(entry.detected.vpn||entry.detected.proxy||entry.detected.datacenter))).length}
+  function hfaAttendanceTableInner(){
+    const tournamentOptions='<option value="">Todas las temporadas</option>'+state.tournaments.map(item=>'<option value="'+item.id+'">'+profileText(item.name)+'</option>').join('');
+    const divisionOptions='<option value="">Todas las divisiones</option><option value="1">1D</option><option value="2">2D</option><option value="3">3D</option><option value="4">4D</option>';
+    const roundOptions=[...new Set(state.matches.map(item=>Number(item.round)||1))].sort((a,b)=>a-b).map(round=>'<option value="'+round+'">J'+round+' · Jornada '+round+'</option>').join('');
+    const rows=state.matches.length?state.matches.map(match=>{
+      const home=match.home||team(match.teamAId)?.name||'Equipo A',away=match.away||team(match.teamBId)?.name||'Equipo B';
+      const round=Number(match.round)||1;
+      const division=divisionCode(match.division||team(match.teamAId)?.division||team(match.teamBId)?.division);
+      const entries=hfaAttendanceEntries(match),risk=hfaMatchRisk(match);
+      const presentNames=new Set(entries.map(entry=>entry.name.toLowerCase()));
+      const rosterNames=[...(matchTeam(match,'A')?.players||[]),...(matchTeam(match,'B')?.players||[])].map(playerName).filter(Boolean);
+      const pending=[...new Set(rosterNames)].filter(name=>!presentNames.has(name.toLowerCase()));
+      const detail='<div class="hfa-att-box">'+(entries.length?hfaAttendanceRowsHtml(entries):'<div class="muted">Todavía nadie ha dado presente.</div>')+(pending.length?'<div class="hfa-att-pending"><b>Pendientes ('+pending.length+'):</b> '+pending.map(name=>hfaEsc(name)).join(', ')+'</div>':'')+'</div>';
+      return '<tr class="'+(risk?'hfa-att-risk':'')+'" data-att-row="'+match.id+'" data-att-tournament="'+(match.tournamentId||'')+'" data-att-division="'+division+'" data-att-round="'+round+'" data-att-risk="'+(risk?'1':'0')+'"><td>'+profileText(home)+'</td><td>'+profileText(away)+'</td><td>'+profileText(match.date||'—')+(match.time?' '+profileText(match.time):'')+'</td><td>J'+round+'</td><td><span class="admin-match-status '+(match.finished?'finished':'scheduled')+'">'+(match.finished?'Finalizado':'Programado')+'</span></td><td><b>'+entries.length+'</b> / '+rosterNames.length+'</td><td>'+(risk?'<span class="hfa-conn-badge vpn">⚠ '+risk+' con VPN/ExitLag</span>':(entries.length?'<span class="hfa-conn-badge normal">✓ Sin alertas</span>':'<span class="muted">—</span>'))+'</td><td><button class="btn btn-sm" type="button" data-att-toggle="'+match.id+'">Ver presentes</button></td></tr><tr class="hfa-att-detail" data-att-detail="'+match.id+'" data-att-tournament="'+(match.tournamentId||'')+'" data-att-division="'+division+'" data-att-round="'+round+'" data-att-risk="'+(risk?'1':'0')+'" hidden><td colspan="8">'+detail+'</td></tr>';
+    }).join(''):'<tr><td colspan="8"><div class="empty">No hay partidos creados.</div></td></tr>';
+    return '<div class="admin-match-heading"><div><div class="admin-title">👥 Presentes por partido</div><div class="admin-match-subtitle">Quién ha dado presente en cada partido y si lo hizo con ExitLag o VPN (declarado por el jugador o detectado automáticamente).</div></div><button class="btn" type="button" data-att-refresh>↻ Actualizar</button></div><div class="admin-match-filters"><label class="admin-match-filter"><span>Temporada</span><select class="input" id="attTournamentFilter">'+tournamentOptions+'</select></label><label class="admin-match-filter"><span>División</span><select class="input" id="attDivisionFilter">'+divisionOptions+'</select></label><label class="admin-match-filter"><span>Jornada</span><select class="input" id="attRoundFilter"><option value="">Todas las jornadas</option>'+roundOptions+'</select></label><label class="admin-match-filter"><span>Mostrar</span><select class="input" id="attRiskFilter"><option value="">Todos los partidos</option><option value="1">Solo con VPN / ExitLag</option></select></label></div><div class="admin-match-table-wrap"><table class="admin-match-table hfa-att-table"><thead><tr><th>Local</th><th>Visitante</th><th>Fecha</th><th>Jornada</th><th>Estado</th><th>Presentes</th><th>Alertas</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }
+  function adminAttendanceList(){return '<div class="content-card admin-match-card" id="adminAttendanceList">'+hfaAttendanceTableInner()+'</div>'}
+  function hfaApplyAttendanceFilters(){
+    const value=id=>document.getElementById(id)?.value||'';
+    const tournament=value('attTournamentFilter'),division=value('attDivisionFilter'),round=value('attRoundFilter'),risk=value('attRiskFilter');
+    document.querySelectorAll('#adminAttendanceList tr[data-att-row]').forEach(row=>{
+      const show=(!tournament||row.dataset.attTournament===tournament)&&(!division||row.dataset.attDivision===division)&&(!round||row.dataset.attRound===round)&&(!risk||row.dataset.attRisk==='1');
+      row.style.display=show?'':'none';
+      const detail=document.querySelector('#adminAttendanceList tr[data-att-detail="'+row.dataset.attRow+'"]');
+      if(detail&&!show)detail.hidden=true;
+    });
+  }
   function adminMatchList(){
     const tournamentOptions='<option value="">Todas las temporadas</option>'+state.tournaments.map(item=>'<option value="'+item.id+'">'+profileText(item.name)+'</option>').join('');
     const divisionOptions='<option value="">Todas las divisiones</option><option value="1">1D</option><option value="2">2D</option><option value="3">3D</option><option value="4">4D</option>';
@@ -1476,13 +1506,14 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       tools.querySelector('#adminMatchList [data-new-admin-match]')?.remove();
       tools.querySelectorAll('#adminMatchList [data-delete-match]').forEach(button=>button.remove());
     }
+    if((isAdmin||isModerator)&&!tools.querySelector('#adminAttendanceList'))tools.insertAdjacentHTML('beforeend',adminAttendanceList());
     const cards=[...tools.querySelectorAll(':scope > .content-card')];
     const sectionNav=document.createElement('aside');sectionNav.className='admin-section-nav';
-    sectionNav.innerHTML=isAdmin?'<div class="admin-section-nav-title">Competición</div><button type="button" class="active" data-admin-section="competition">▦ Jornadas y partidos</button><button type="button" data-admin-section="matches">⚽ Gestión de partidos</button><button type="button" data-admin-section="tournaments">▣ Temporadas y torneos</button><div class="admin-section-nav-title">Plantilla</div><button type="button" data-admin-section="teams">♟ Equipos y jugadores</button><button type="button" data-admin-section="users">♙ Usuarios y divisiones</button><button type="button" data-admin-section="roles">♙ Roles</button><div class="admin-section-nav-title">Comunidad</div><button type="button" data-admin-section="community">★ Palmarés y noticias</button><button type="button" data-admin-section="sponsors">⚑ Patrocinadores</button><div class="admin-section-nav-title">Actas</div><button type="button" data-admin-section="acts">▤ Editar y finalizar actas</button>':isModerator?'<div class="admin-section-nav-title">Moderación</div><button type="button" data-admin-section="ips">Direcciones IP</button><button type="button" data-admin-section="matches">⚽ Gestión de partidos</button><button type="button" data-admin-section="acts">Registrar resultados</button>':'<div class="admin-section-nav-title">Actas</div><button type="button" data-admin-section="acts">Registrar resultados</button>';
+    sectionNav.innerHTML=isAdmin?'<div class="admin-section-nav-title">Competición</div><button type="button" class="active" data-admin-section="competition">▦ Jornadas y partidos</button><button type="button" data-admin-section="matches">⚽ Gestión de partidos</button><button type="button" data-admin-section="attendance">👥 Presentes por partido</button><button type="button" data-admin-section="tournaments">▣ Temporadas y torneos</button><div class="admin-section-nav-title">Plantilla</div><button type="button" data-admin-section="teams">♟ Equipos y jugadores</button><button type="button" data-admin-section="users">♙ Usuarios y divisiones</button><button type="button" data-admin-section="roles">♙ Roles</button><div class="admin-section-nav-title">Comunidad</div><button type="button" data-admin-section="community">★ Palmarés y noticias</button><button type="button" data-admin-section="sponsors">⚑ Patrocinadores</button><div class="admin-section-nav-title">Actas</div><button type="button" data-admin-section="acts">▤ Editar y finalizar actas</button>':isModerator?'<div class="admin-section-nav-title">Moderación</div><button type="button" data-admin-section="ips">Direcciones IP</button><button type="button" data-admin-section="matches">⚽ Gestión de partidos</button><button type="button" data-admin-section="attendance">👥 Presentes por partido</button><button type="button" data-admin-section="acts">Registrar resultados</button>':'<div class="admin-section-nav-title">Actas</div><button type="button" data-admin-section="acts">Registrar resultados</button>';
     const sectionContent=document.createElement('main');sectionContent.className='admin-section-content';
     cards.forEach(card=>{
       const title=card.querySelector('.admin-title')?.textContent.toLowerCase()||'',id=card.id||'';
-      let section=id==='adminMatchList'?'matches':id==='roleManagement'?'roles':id==='moderatorIpManagement'?'ips':'competition';
+      let section=id==='adminAttendanceList'?'attendance':id==='adminMatchList'?'matches':id==='roleManagement'?'roles':id==='moderatorIpManagement'?'ips':'competition';
       if(id==='moderatorIpManagement')section='ips';
       else if(id==='adminActiveTournamentCard')section='competition';
       else if(id==='tournamentManagement'||title.includes('torneo'))section='tournaments';
@@ -1645,6 +1676,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       if(event.target.id==='rosterPlayerSearch')renderRosterSearch(event.target.value);
     });
     layout.addEventListener('change',event=>{
+      if(event.target.closest('#attTournamentFilter,#attDivisionFilter,#attRoundFilter,#attRiskFilter')){hfaApplyAttendanceFilters();return}
       if(!event.target.closest('#adminTournamentFilter')&&!event.target.closest('#adminDivisionFilter')&&!event.target.closest('#adminRoundFilter'))return;
       const tournament=document.getElementById('adminTournamentFilter')?.value||'',division=document.getElementById('adminDivisionFilter')?.value||'',round=document.getElementById('adminRoundFilter')?.value||'';
       document.querySelectorAll('[data-admin-match-row]').forEach(row=>{row.style.display=(!tournament||row.dataset.matchTournament===tournament)&&(!division||row.dataset.matchDivision===division)&&(!round||row.dataset.matchRound===round)?'':'none'});
@@ -1958,6 +1990,10 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       }
     });
     layout.addEventListener('click',async event=>{
+      const attToggle=event.target.closest('[data-att-toggle]');
+      if(attToggle){const detail=document.querySelector('#adminAttendanceList tr[data-att-detail="'+attToggle.dataset.attToggle+'"]');if(detail){detail.hidden=!detail.hidden;attToggle.textContent=detail.hidden?'Ver presentes':'Ocultar'}return}
+      const attRefresh=event.target.closest('[data-att-refresh]');
+      if(attRefresh){attRefresh.disabled=true;attRefresh.textContent='Actualizando...';try{state.matches=await getJSON('matches',state.matches);accounts=await getJSON('accounts',accounts)}catch(error){}const card=document.getElementById('adminAttendanceList');if(card){card.innerHTML=hfaAttendanceTableInner()}return}
       const tab=event.target.closest('[data-acta-tab]');
       if(tab){event.preventDefault();event.stopPropagation();actaTab=tab.dataset.actaTab;adminSection='acts';content();prepareAdminDivisions();return}
       const save=event.target.closest('[data-save-acta]');

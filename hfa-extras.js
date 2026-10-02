@@ -183,6 +183,7 @@
       { click: '[data-admin-section="competition"]', sel: '#adminActiveTournamentCard', title: 'Torneo activo', text: 'Elige sobre qué torneo vas a crear y gestionar partidos.' },
       { after: true, sel: '#adminMatchBuilder', title: 'Jornadas y partidos', text: 'Crea jornadas y arrastra los equipos a Local y Visitante, o genera todas las jornadas de una división de una vez.' },
       { click: '[data-admin-section="matches"]', sel: '#adminMatchList', title: 'Gestión de partidos', text: 'Todos los partidos con su resultado y estado. El botón ⚽ abre el acta y la columna «Presentes» muestra quién dio presente y si lo hizo con ExitLag o VPN.' },
+      { click: '[data-admin-section="attendance"]', sel: '#adminAttendanceList', title: 'Presentes por partido', text: 'Cada partido con cuántos jugadores dieron presente. Pulsa «Ver presentes» para ver quién fue, a qué hora y si usó ExitLag o VPN, y quién falta por confirmar.' },
       { click: '[data-admin-section="tournaments"]', sel: '#tournamentManagement', title: 'Temporadas y torneos', text: 'Crea torneos, elige el activo y elimina los que ya no uses.' },
       { click: '[data-admin-section="teams"]', sel: 'card:Agregar equipo', title: 'Equipos', text: 'Crea un equipo con su nombre, escudo y división.' },
       { after: true, sel: '#rosterManagement', title: 'Buscar y agregar jugadores', text: 'Busca una cuenta registrada, púlsala y elige el equipo. Solo se pueden agregar jugadores con división asignada.' },
