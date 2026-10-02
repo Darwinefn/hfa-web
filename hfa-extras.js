@@ -187,7 +187,7 @@
       { click: '[data-admin-section="teams"]', sel: 'card:Agregar equipo', title: 'Equipos', text: 'Crea un equipo con su nombre, escudo y división.' },
       { after: true, sel: '#rosterManagement', title: 'Buscar y agregar jugadores', text: 'Busca una cuenta registrada, púlsala y elige el equipo. Solo se pueden agregar jugadores con división asignada.' },
       { after: true, sel: '#ownerManagement', title: 'Dueño de equipo', text: 'Asigna a una cuenta como dueño de un equipo para que pueda enviar ofertas.' },
-      { click: '[data-admin-section="users"]', sel: '#divisionManagement', title: 'Usuarios y divisiones', text: 'Todas las cuentas con su IP. Pulsa un nombre para asignarle divisiones o marcarlo como VPN / ExitLag.' },
+      { click: '[data-admin-section="users"]', sel: '#divisionManagement', title: 'Usuarios y divisiones', text: 'Todas las cuentas con su IP. Pulsa un nombre para asignarle divisiones.' },
       { after: true, sel: '#adminDivisionSearch', title: 'Buscar usuario', text: 'Filtra la lista por nombre.' },
       { after: true, sel: '.hfa-users-toolbar', title: 'Actualizar y filtrar', text: 'Recarga la lista de cuentas o muéstrale solo las que comparten IP.' },
       { click: '[data-admin-section="roles"]', sel: '#roleManagement', title: 'Roles', text: 'Asigna Administrador, Moderador, Árbitro, Dueño de equipo o Sin rol. El cambio se guarda en la base de datos.' },
