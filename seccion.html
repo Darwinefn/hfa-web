@@ -642,6 +642,38 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
 </style>
 <script src="hfa-extras.js"></script>
 <script src="flags.js"></script>
+<style id="hfa-patch2-css">
+.roster-player-results .roster-selected-player{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin:4px 0 0;padding:14px 16px}
+.roster-selected-player img,.roster-selected-player .roster-selected-avatar{flex:none}
+.roster-selected-player .roster-selected-copy{flex:1 1 180px;min-width:0}
+.roster-selected-player .roster-selected-copy strong{display:block;font:600 15px Oswald;color:var(--text-hi);overflow-wrap:anywhere}
+.roster-selected-player .roster-selected-avatar{display:grid;place-items:center;flex:none;width:58px;height:58px;border-radius:50%;border:2px solid var(--green-dim);background:var(--panel);color:var(--green);font:700 19px Oswald}
+.roster-selected-player>small{flex:1 1 220px;margin:0;color:var(--text-mid);font:500 12px/1.5 Inter}
+.roster-selected-player>.btn{flex:none;margin-left:auto}
+.roster-player-results>.roster-eligible-teams{grid-column:1/-1}
+.admin-section-layout>*{min-width:0}.admin-section-content{min-width:0;max-width:100%}.admin-match-card{min-width:0;max-width:100%}.admin-match-table-wrap{max-width:100%;overflow-x:auto}
+.hfa-conn-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);font:600 11px Inter;white-space:nowrap}
+.hfa-conn-badge.exitlag{color:#ffb84d;border-color:#ffb84d;background:rgba(255,184,77,.10)}
+.hfa-conn-badge.vpn{color:#ff7a7a;border-color:#ff7a7a;background:rgba(255,122,122,.10)}
+.hfa-conn-badge.normal{color:var(--green);border-color:var(--green-dim);background:rgba(52,232,143,.06)}
+.hfa-att-box{margin:0 0 14px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--panel-2)}
+.hfa-att-box>b{display:block;margin-bottom:8px;font:600 13px Oswald;color:var(--text-hi)}
+.hfa-att-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--border);font-size:12px}
+.hfa-att-row:first-of-type{border-top:0}
+.hfa-att-row .hfa-att-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.hfa-att-cell summary{cursor:pointer;list-style:none;white-space:nowrap}
+.hfa-att-cell summary::-webkit-details-marker{display:none}
+.hfa-att-cell .hfa-att-list{margin-top:8px;min-width:230px}
+.hfa-conn-modal{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:20px;background:rgba(4,8,12,.78)}
+.hfa-conn-card{width:min(100%,380px);padding:22px;border:1px solid var(--border);border-radius:14px;background:var(--panel);color:var(--text-hi);box-shadow:0 24px 90px rgba(0,0,0,.55)}
+.hfa-conn-card h3{margin:0 0 6px;font:600 18px Oswald}
+.hfa-conn-card p{margin:0 0 14px;color:var(--text-mid);font:13px/1.5 Inter}
+.hfa-conn-options{display:grid;gap:8px}
+.hfa-conn-options button{padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--panel-2);color:var(--text-hi);font:600 14px Inter;text-align:left;cursor:pointer}
+.hfa-conn-options button:hover{border-color:var(--green)}
+.hfa-conn-options button small{display:block;margin-top:2px;color:var(--text-mid);font:500 11px Inter}
+.hfa-conn-cancel{margin-top:10px;width:100%;padding:9px;border:0;background:none;color:var(--text-low);text-decoration:underline;cursor:pointer}
+</style>
 </head>
 <body>
 <script src="loading.js"></script>
@@ -1328,7 +1360,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const playerManager=players.length?'':'<div class="admin-list">Este partido todavía no tiene jugadores registrados en las plantillas de sus equipos.</div>';
     const playerOptions=actaPlayerOptions(match);
     const content=actaTab==='goals'?'<select class="input" id="goalPlayer">'+playerOptions+'</select><select class="input" id="goalAssist"><option value="">Sin asistencia</option>'+playerOptions+'</select><input class="input" id="goalMinute" type="number" min="0" placeholder="Minuto del gol"><select class="input" id="goalSide"><option value="A">Local</option><option value="B">Visitante</option></select><button class="btn btn-primary" id="addGoal">Añadir gol</button><div class="admin-list">'+(goals.length?goals.map((goal,index)=>'<div class="acta-event-row"><span>'+goal.minute+"' · "+goal.player+(goal.assist?' · Asistencia: '+goal.assist:'')+' · '+(goal.side==='B'?'Visitante':'Local')+'</span><button class="btn btn-ghost btn-sm delete-goal-btn" type="button" data-delete-goal="'+match.id+'" data-goal-index="'+index+'">ELIMINAR</button></div>').join(''):'<div>Todavía no hay goles registrados.</div>')+'</div>':actaTab==='cards'?'<select class="input" id="cardPlayer">'+playerOptions+'</select><select class="input" id="cardType"><option value="amarilla">Amarilla</option><option value="roja">Roja</option></select><input class="input" id="cardMinute" type="number" min="0" placeholder="Minuto (opcional)"><select class="input" id="cardSide"><option value="A">Local</option><option value="B">Visitante</option></select><button class="btn btn-primary" id="addCard">Añadir tarjeta</button><div class="admin-list">'+(cards.length?cards.map(card=>(card.minute?card.minute+"' · ":'')+card.player+' · '+card.type).join('<br>'):'Todavía no hay tarjetas registradas.')+'</div>':actaTab==='subs'?'<input class="input" id="subMinute" type="number" min="0" placeholder="Minuto"><select class="input" id="subSide"><option value="A">Local</option><option value="B">Visitante</option></select><select class="input" id="subOut">'+playerOptions+'</select><select class="input" id="subIn">'+playerOptions+'</select><button class="btn btn-primary" id="addSub">Añadir cambio</button><div class="admin-list">'+(subs.length?subs.map(sub=>sub.minute+"' · "+sub.out+' → '+sub.in).join('<br>'):'Todavía no hay cambios registrados.')+'</div>':actaTab==='lineup'?'<select class="input" id="lineupPlayer">'+playerOptions+'</select><select class="input" id="lineupSide"><option value="A">Local</option><option value="B">Visitante</option></select><select class="input" id="lineupPos"><option value="GK">GK</option><option value="BANDA">Banda</option><option value="MED">Medio</option></select><button class="btn btn-primary" id="addLineup">Añadir al campo</button><div class="admin-list">La alineación se muestra en el campo y solo admite jugadores de las plantillas.</div>': '<select class="input" id="mentionPlayer">'+playerOptions+'</select><button class="btn btn-primary" id="addMention">Añadir mención especial</button><div class="admin-list">'+(mentions.length?mentions.join('<br>'):'Todavía no hay menciones especiales.')+'</div>';
-    return '<div class="tabs"><button class="tab-btn '+(actaTab==='goals'?'active':'')+'" data-acta-tab="goals">Goles</button><button class="tab-btn '+(actaTab==='cards'?'active':'')+'" data-acta-tab="cards">Tarjetas</button><button class="tab-btn '+(actaTab==='subs'?'active':'')+'" data-acta-tab="subs">Cambios</button><button class="tab-btn '+(actaTab==='lineup'?'active':'')+'" data-acta-tab="lineup">Alineación</button><button class="tab-btn '+(actaTab==='mentions'?'active':'')+'" data-acta-tab="mentions">Premios</button></div><div class="content-card">'+playerManager+content+(actaTab==='lineup'?'<div class="admin-list">Máximo 4 jugadores por equipo: 1 GK, 2 BANDA y 1 MED.</div>':'')+actaField(match)+'</div>';
+    return hfaAttendanceBox(match)+'<div class="tabs"><button class="tab-btn '+(actaTab==='goals'?'active':'')+'" data-acta-tab="goals">Goles</button><button class="tab-btn '+(actaTab==='cards'?'active':'')+'" data-acta-tab="cards">Tarjetas</button><button class="tab-btn '+(actaTab==='subs'?'active':'')+'" data-acta-tab="subs">Cambios</button><button class="tab-btn '+(actaTab==='lineup'?'active':'')+'" data-acta-tab="lineup">Alineación</button><button class="tab-btn '+(actaTab==='mentions'?'active':'')+'" data-acta-tab="mentions">Premios</button></div><div class="content-card">'+playerManager+content+(actaTab==='lineup'?'<div class="admin-list">Máximo 4 jugadores por equipo: 1 GK, 2 BANDA y 1 MED.</div>':'')+actaField(match)+'</div>';
   }
   function dragMatchUI(){
     const teams=teamsForMatchDivision(matchDivision).map(item=>'<div class="drag-team" draggable="true" data-drag-team="'+item.id+'" data-team-name="'+item.name+'">'+(item.crest?'<img src="'+item.crest+'" style="width:20px;height:20px;object-fit:contain;vertical-align:middle;margin-right:5px">':'')+item.name+'</div>').join('');
@@ -1362,6 +1394,43 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   }
   function ownerManagement(){const teamOptions=state.teams.length?state.teams.map(item=>'<option value="'+item.id+'">'+item.name+'</option>').join(''):'<option value="">No hay equipos</option>';const ownerOptions=accounts.filter(item=>item.role==='dueno'||item.role==='pendiente').map(item=>'<option value="'+item.username+'">'+item.username+'</option>').join('');return playerDivisionManagement()+rosterManagement()+tournamentManagement()+'<div class="content-card" id="ownerManagement"><div class="admin-title">Asignar dueño de equipo</div><select class="input" id="ownerTeam">'+teamOptions+'</select><select class="input" id="ownerAccount"><option value="">Selecciona una cuenta</option>'+ownerOptions+'</select><button class="btn btn-primary" id="assignOwner">Asignar dueño</button><div class="admin-list">El dueño asignado verá la sección Jugadores.</div></div>'}
   function tournamentManagement(){const options=state.tournaments.map(item=>'<option value="'+profileText(item.id)+'" '+(item.id===activeTournamentId?'selected':'')+'>'+profileText(item.name)+'</option>').join(''),rows=state.tournaments.map(item=>'<div class="match-row"><div><div class="match-name">'+profileText(item.name)+(item.id===activeTournamentId?' · Activo':'')+'</div></div><button class="btn delete-team-button" type="button" data-delete-tournament="'+profileText(item.id)+'">Eliminar</button></div>').join('');return '<div class="content-card" id="tournamentManagement"><div class="admin-title">Crear y administrar torneos</div><div class="admin-section-note">Crea torneos, elige cuál queda activo y elimina los que ya no se usarán. Al eliminar un torneo también se eliminarán sus partidos asociados.</div><label class="admin-team-filter-label" for="activeTournamentSelect">Torneo activo</label><select class="input" id="activeTournamentSelect" '+(options?'':'disabled')+'>'+(options||'<option value="">No hay torneos</option>')+'</select><button class="btn" id="saveActiveTournament" '+(options?'':'disabled')+'>Usar torneo seleccionado</button><div class="admin-title" style="margin-top:20px">Crear torneo nuevo</div><input class="input" id="newTournamentName" placeholder="Nombre del torneo"><button class="btn btn-primary" id="createTournament">Crear torneo</button><div class="admin-title" style="margin-top:20px">Torneos existentes</div><div class="admin-list">'+(rows||'<div class="empty">Todavía no hay torneos.</div>')+'</div></div>'}
+  const HFA_CONN={normal:{label:'Conexión normal',cls:'normal',icon:'✓'},exitlag:{label:'ExitLag',cls:'exitlag',icon:'⚡'},vpn:{label:'VPN',cls:'vpn',icon:'🛡'}};
+  function hfaConnBadge(conn){const c=HFA_CONN[conn]||null;return c?'<span class="hfa-conn-badge '+c.cls+'">'+c.icon+' '+c.label+'</span>':'<span class="hfa-conn-badge">Sin datos</span>'}
+  function hfaAskConnection(){
+    return new Promise(resolve=>{
+      document.getElementById('hfaConnModal')?.remove();
+      const wrap=document.createElement('div');wrap.id='hfaConnModal';wrap.className='hfa-conn-modal';
+      wrap.innerHTML='<div class="hfa-conn-card" role="dialog" aria-modal="true"><h3>Dar presente</h3><p>¿Cómo vas a conectarte a este partido? Los administradores verán tu respuesta.</p><div class="hfa-conn-options"><button type="button" data-conn="normal">Conexión normal<small>Sin ExitLag ni VPN</small></button><button type="button" data-conn="exitlag">ExitLag<small>Uso ExitLag para jugar</small></button><button type="button" data-conn="vpn">VPN<small>Uso una VPN para jugar</small></button></div><button type="button" class="hfa-conn-cancel" data-conn="">Cancelar</button></div>';
+      const done=value=>{wrap.remove();document.removeEventListener('keydown',onKey,true);resolve(value||null)};
+      const onKey=event=>{if(event.key==='Escape'){event.preventDefault();done(null)}};
+      wrap.addEventListener('click',event=>{const b=event.target.closest('[data-conn]');if(b){done(b.dataset.conn);return}if(event.target===wrap)done(null)});
+      document.addEventListener('keydown',onKey,true);
+      document.body.appendChild(wrap);
+      wrap.querySelector('[data-conn="normal"]').focus();
+    });
+  }
+  function hfaAttendanceEntries(match){
+    const attendance=match?.attendance||{},info=match?.attendanceInfo||{};
+    return Object.keys(attendance).filter(name=>attendance[name]).map(name=>{
+      const key=Object.keys(info).find(item=>String(item).toLowerCase()===String(name).toLowerCase());
+      const record=key?info[key]:null;
+      const account=(typeof accounts!=='undefined'?accounts:[]).find(item=>String(item.username).toLowerCase()===String(name).toLowerCase());
+      return {name,time:attendance[name],conn:record?.conn||'',flagged:!!account?.vpn};
+    });
+  }
+  function hfaAttendanceRowsHtml(entries){
+    return entries.map(entry=>'<div class="hfa-att-row"><span>'+hfaEsc(entry.name)+' · '+hfaEsc(entry.time)+'</span><span class="hfa-att-meta">'+hfaConnBadge(entry.conn)+(entry.flagged?'<span class="hfa-conn-badge vpn" title="Marcado en Usuarios y divisiones">⚑ Marcado VPN/ExitLag</span>':'')+'</span></div>').join('');
+  }
+  function hfaAttendanceCell(match){
+    const entries=hfaAttendanceEntries(match);
+    if(!entries.length)return '<span class="muted">—</span>';
+    const risky=entries.filter(entry=>entry.conn==='exitlag'||entry.conn==='vpn'||entry.flagged).length;
+    return '<details class="hfa-att-cell"><summary>👥 '+entries.length+(risky?' · <span class="hfa-conn-badge vpn">⚠ '+risky+'</span>':'')+'</summary><div class="hfa-att-list">'+hfaAttendanceRowsHtml(entries)+'</div></details>';
+  }
+  function hfaAttendanceBox(match){
+    const entries=hfaAttendanceEntries(match);
+    return '<div class="hfa-att-box"><b>👥 Presentes ('+entries.length+') · conexión</b>'+(entries.length?hfaAttendanceRowsHtml(entries):'<div class="muted">Todavía nadie ha dado presente.</div>')+'</div>';
+  }
   function adminMatchList(){
     const tournamentOptions='<option value="">Todas las temporadas</option>'+state.tournaments.map(item=>'<option value="'+item.id+'">'+profileText(item.name)+'</option>').join('');
     const divisionOptions='<option value="">Todas las divisiones</option><option value="1">1D</option><option value="2">2D</option><option value="3">3D</option><option value="4">4D</option>';
@@ -1370,9 +1439,9 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       const home=match.home||team(match.teamAId)?.name||'Equipo A',away=match.away||team(match.teamBId)?.name||'Equipo B';
       const round=Number(match.round)||1;
       const division=divisionCode(match.division||team(match.teamAId)?.division||team(match.teamBId)?.division);
-      return '<tr data-admin-match-row="'+match.id+'" data-match-tournament="'+(match.tournamentId||'')+'" data-match-division="'+division+'" data-match-round="'+round+'"><td>'+profileText(home)+'</td><td>'+profileText(away)+'</td><td>'+(match.finished?((match.scoreA??0)+' - '+(match.scoreB??0)):'—')+'</td><td><span class="admin-match-status '+(match.finished?'finished':'scheduled')+'">'+(match.finished?'Finalizado':'Programado')+'</span></td><td>'+profileText(match.date||'—')+(match.time?' '+profileText(match.time):'')+'</td><td>J'+round+' · Jornada '+round+'</td><td>'+profileText(match.mvp||'—')+'</td><td class="admin-match-actions"><button class="admin-match-icon" type="button" data-open-acta="'+match.id+'" title="'+(match.finished?'Editar acta':'Registrar / finalizar acta')+'" aria-label="'+(match.finished?'Editar acta':'Registrar o finalizar acta')+'">⚽</button><button class="admin-match-icon edit" type="button" data-edit-match="'+match.id+'" title="Editar alineación y acta" aria-label="Editar alineación y acta">✎</button><button class="admin-match-icon delete" type="button" data-delete-match="'+match.id+'" title="Eliminar partido" aria-label="Eliminar partido">🗑</button></td></tr>';
-    }).join(''):'<tr><td colspan="8"><div class="empty">No hay partidos creados.</div></td></tr>';
-    return '<div class="content-card admin-match-card" id="adminMatchList"><div class="admin-match-heading"><div><div class="admin-title">⚽ Gestión de partidos</div><div class="admin-match-subtitle">Edita actas, finaliza resultados y consulta los encuentros por división.</div></div><button class="btn btn-primary" type="button" data-new-admin-match>＋ NUEVO PARTIDO</button></div><div class="admin-match-filters"><label class="admin-match-filter"><span>Temporada</span><select class="input" id="adminTournamentFilter">'+tournamentOptions+'</select></label><label class="admin-match-filter"><span>División</span><select class="input" id="adminDivisionFilter">'+divisionOptions+'</select></label><label class="admin-match-filter"><span>Jornada</span><select class="input" id="adminRoundFilter"><option value="">Todas las jornadas</option>'+roundOptions+'</select></label></div><div class="admin-match-table-wrap"><table class="admin-match-table"><thead><tr><th>Local</th><th>Visitante</th><th>Resultado</th><th>Estado</th><th>Fecha</th><th>Jornada</th><th>MVP</th><th>Acciones</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+      return '<tr data-admin-match-row="'+match.id+'" data-match-tournament="'+(match.tournamentId||'')+'" data-match-division="'+division+'" data-match-round="'+round+'"><td>'+profileText(home)+'</td><td>'+profileText(away)+'</td><td>'+(match.finished?((match.scoreA??0)+' - '+(match.scoreB??0)):'—')+'</td><td><span class="admin-match-status '+(match.finished?'finished':'scheduled')+'">'+(match.finished?'Finalizado':'Programado')+'</span></td><td>'+profileText(match.date||'—')+(match.time?' '+profileText(match.time):'')+'</td><td>J'+round+' · Jornada '+round+'</td><td>'+profileText(match.mvp||'—')+'</td><td>'+hfaAttendanceCell(match)+'</td><td class="admin-match-actions"><button class="admin-match-icon" type="button" data-open-acta="'+match.id+'" title="'+(match.finished?'Editar acta':'Registrar / finalizar acta')+'" aria-label="'+(match.finished?'Editar acta':'Registrar o finalizar acta')+'">⚽</button><button class="admin-match-icon edit" type="button" data-edit-match="'+match.id+'" title="Editar alineación y acta" aria-label="Editar alineación y acta">✎</button><button class="admin-match-icon delete" type="button" data-delete-match="'+match.id+'" title="Eliminar partido" aria-label="Eliminar partido">🗑</button></td></tr>';
+    }).join(''):'<tr><td colspan="9"><div class="empty">No hay partidos creados.</div></td></tr>';
+    return '<div class="content-card admin-match-card" id="adminMatchList"><div class="admin-match-heading"><div><div class="admin-title">⚽ Gestión de partidos</div><div class="admin-match-subtitle">Edita actas, finaliza resultados y consulta los encuentros por división.</div></div><button class="btn btn-primary" type="button" data-new-admin-match>＋ NUEVO PARTIDO</button></div><div class="admin-match-filters"><label class="admin-match-filter"><span>Temporada</span><select class="input" id="adminTournamentFilter">'+tournamentOptions+'</select></label><label class="admin-match-filter"><span>División</span><select class="input" id="adminDivisionFilter">'+divisionOptions+'</select></label><label class="admin-match-filter"><span>Jornada</span><select class="input" id="adminRoundFilter"><option value="">Todas las jornadas</option>'+roundOptions+'</select></label></div><div class="admin-match-table-wrap"><table class="admin-match-table"><thead><tr><th>Local</th><th>Visitante</th><th>Resultado</th><th>Estado</th><th>Fecha</th><th>Jornada</th><th>MVP</th><th>Presentes</th><th>Acciones</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   }
   function setupAdminSections(){
     const tools=document.querySelector('.admin-tools');if(!tools||tools.closest('.admin-section-layout'))return;
@@ -2324,7 +2393,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const openActaButton=event.target.closest('[data-open-acta]');
     if(openActaButton){selectedActaMatchId=openActaButton.dataset.openActa;actaTab='goals';content();prepareAdminDivisions();return}
     const presentButton=event.target.closest('[data-present-match]');
-    if(presentButton&&session){const match=state.matches.find(item=>item.id===presentButton.dataset.presentMatch),player=presentButton.dataset.presentPlayer,canConfirm=session.username.toLowerCase()===String(player||'').toLowerCase();const validPlayers=matchRegisteredPlayerNames(match);if(match&&player&&canConfirm&&validPlayers.has(player.toLowerCase())){match.attendance=match.attendance||{};match.attendance[player]=new Intl.DateTimeFormat([], {hour:'2-digit',minute:'2-digit'}).format(new Date());await setJSON('matches',state.matches);content()}return}
+    if(presentButton&&session){const match=state.matches.find(item=>item.id===presentButton.dataset.presentMatch),player=presentButton.dataset.presentPlayer,canConfirm=session.username.toLowerCase()===String(player||'').toLowerCase();const validPlayers=matchRegisteredPlayerNames(match);if(match&&player&&canConfirm&&validPlayers.has(player.toLowerCase())){const conn=await hfaAskConnection();if(!conn)return;match.attendance=match.attendance||{};match.attendanceInfo=match.attendanceInfo||{};match.attendance[player]=new Intl.DateTimeFormat([], {hour:'2-digit',minute:'2-digit'}).format(new Date());match.attendanceInfo[player]={conn:conn,at:new Date().toISOString()};await setJSON('matches',state.matches);content()}return}
     const actaTabButton=event.target.closest('[data-acta-tab]');
     if(actaTabButton){actaTab=actaTabButton.dataset.actaTab;adminSection='acts';content();prepareAdminDivisions();return}
     if(event.target.id==='addActaPlayer')return;
