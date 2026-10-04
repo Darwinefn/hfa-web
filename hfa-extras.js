@@ -19,7 +19,15 @@
     rosa:       accent('Rosa', '#ff7ab8', '#120a0f', '#1d1219', '#251720', '#3d2431', '#ff7ab8', '#99466f', '#c9a3b4', '#8a6677'),
     rojo:       accent('Rojo', '#ff5d5d', '#120808', '#1c1111', '#241616', '#3d2222', '#ff5d5d', '#992f2f', '#c9a5a5', '#8a6666'),
     naranja:    accent('Naranja', '#ff9d4d', '#100b07', '#1a130d', '#211810', '#38281a', '#ff9d4d', '#995a22', '#c7b09b', '#8a735f'),
-    dorado:     accent('Dorado', '#ffd54a', '#100e06', '#1a170c', '#211d0f', '#383117', '#ffd54a', '#99801f', '#c7bd98', '#8a8160')
+    dorado:     accent('Dorado', '#ffd54a', '#100e06', '#1a170c', '#211d0f', '#383117', '#ffd54a', '#99801f', '#c7bd98', '#8a8160'),
+    lima:       accent('Lima', '#b6f03c', '#0b1005', '#141c0b', '#19230e', '#2b3a17', '#b6f03c', '#6d8f1f', '#b4c492', '#74855a'),
+    turquesa:   accent('Turquesa', '#1de9b6', '#06100e', '#0c1b18', '#0f2420', '#17403a', '#1de9b6', '#12806a', '#97c4bb', '#5a8279'),
+    indigo:     accent('Índigo', '#7c8cff', '#080a16', '#0f1224', '#141830', '#232a52', '#7c8cff', '#3f4ba3', '#a3a9d1', '#646a96'),
+    coral:      accent('Coral', '#ff6f61', '#130908', '#1e100e', '#271512', '#42241f', '#ff6f61', '#9c3f36', '#cfa9a4', '#8f6c67'),
+    vino:       accent('Vino', '#e8587f', '#12060b', '#1e0c14', '#27101a', '#43192a', '#e8587f', '#8f2d49', '#cfa3b2', '#8f6676'),
+    grafito:    accent('Grafito', '#cfd8dc', '#0d0e10', '#16181b', '#1c1f23', '#2c3036', '#cfd8dc', '#7b868c', '#a4acb1', '#6b7378'),
+    clarozul:   { label: 'Claro azul', swatch: '#cfe0fb', light: true, vars: { '--bg': '#eaf1fb', '--panel': '#ffffff', '--panel-2': '#f2f6fd', '--border': '#c9d8ee', '--green': '#1d6fe0', '--green-dim': '#9dbcf0', '--text-hi': '#0f1c33', '--text-mid': '#41567a', '--text-low': '#6f82a3' } },
+    clarocalido:{ label: 'Claro cálido', swatch: '#f3e3cf', light: true, vars: { '--bg': '#f7f1e8', '--panel': '#fffdf9', '--panel-2': '#faf4ea', '--border': '#e3d5c0', '--green': '#c2570c', '--green-dim': '#e3b48c', '--text-hi': '#2a1d10', '--text-mid': '#6b5238', '--text-low': '#9a8266' } }
   };
 
   function readTheme() { try { return localStorage.getItem(THEME_KEY) || 'oscuro'; } catch (e) { return 'oscuro'; } }
@@ -32,7 +40,7 @@
     if (theme.vars) {
       css = ':root{' + Object.keys(theme.vars).map(function (k) { return k + ':' + theme.vars[k] + ' !important'; }).join(';') + '}';
       css += 'body{background:var(--bg) !important;color:var(--text-hi)}';
-      if (theme.light) css += '.admin-section-nav{background:var(--panel) !important}.admin-section-nav button:hover,.admin-section-nav button.active{background:rgba(18,147,90,.12) !important}header,footer{background:var(--panel) !important}input,select,textarea,.input{background:#fff !important;color:var(--text-hi) !important;border-color:var(--border) !important}.btn-primary,.btn.btn-primary{color:#fff !important}';
+      if (theme.light) css += '.profile-header-card,.profile-meta-item,.profile-metric-card,.profile-metric-card.highlight,.profile-tab{background:var(--panel) !important;background-image:none !important;border-color:var(--border) !important;color:var(--text-hi) !important}.profile-tab{color:var(--text-mid) !important}.profile-tab.active{background:var(--green) !important;color:#fff !important}.profile-header-card *,.profile-metric-card *{text-shadow:none !important}.profile-header-card h2,.profile-header-card h1,.profile-header-card strong,.profile-metric-card strong{color:var(--text-hi) !important}.admin-section-nav{background:var(--panel) !important}.admin-section-nav button:hover,.admin-section-nav button.active{background:rgba(120,120,120,.14) !important}header,footer{background:var(--panel) !important}input,select,textarea,.input{background:#fff !important;color:var(--text-hi) !important;border-color:var(--border) !important}.btn-primary,.btn.btn-primary{color:#fff !important}';
     }
     tag.textContent = css;
     document.documentElement.setAttribute('data-hfa-theme', name);
@@ -68,6 +76,7 @@
     panel.addEventListener('click', function (e) {
       var opt = e.target.closest('[data-theme]');
       if (!opt) return;
+      e.stopPropagation();
       applyTheme(opt.dataset.theme);
       renderPanel();
     });
@@ -172,6 +181,7 @@
     'seccion:cuenta': [
       { sel: '.account-layout', title: 'Tu cuenta', text: 'Tu perfil: avatar, posición, país y datos de juego.' },
       { sel: '.profile-avatar', title: 'Tu keko', text: 'Tu avatar de Habbo tal como lo verán los demás.' },
+      { sel: '#hfaPassCard', title: 'Cambiar contraseña', text: 'Escribe tu contraseña actual y la nueva dos veces para cambiarla.' },
       { sel: '.mailbox-panel', title: 'Ofertas', text: 'Aquí llegan las ofertas de los equipos para que las aceptes o rechaces.', optional: true }
     ],
     'seccion:buzon': [
@@ -182,7 +192,7 @@
       { sel: '.admin-section-nav', title: 'Menú del panel', text: 'Cada botón abre una zona: competición, plantilla, comunidad y actas. Te las enseño una a una.' },
       { click: '[data-admin-section="competition"]', sel: '#adminActiveTournamentCard', title: 'Torneo activo', text: 'Elige sobre qué torneo vas a crear y gestionar partidos.' },
       { after: true, sel: '#adminMatchBuilder', title: 'Jornadas y partidos', text: 'Crea jornadas y arrastra los equipos a Local y Visitante, o genera todas las jornadas de una división de una vez.' },
-      { click: '[data-admin-section="matches"]', sel: '#adminMatchList', title: 'Gestión de partidos', text: 'Todos los partidos con su resultado y estado. El botón ⚽ abre el acta y la columna «Presentes» muestra quién dio presente y si lo hizo con ExitLag o VPN.' },
+      { click: '[data-admin-section="matches"]', sel: '#adminMatchList', title: 'Gestión de partidos', text: 'Todos los partidos con su resultado y estado. El botón ⚽ abre el acta de cada partido.' },
       { click: '[data-admin-section="attendance"]', sel: '#adminAttendanceList', title: 'Presentes por partido', text: 'Cada partido con cuántos jugadores dieron presente. Pulsa «Ver presentes» para ver quién fue, a qué hora y si usó ExitLag o VPN, y quién falta por confirmar.' },
       { click: '[data-admin-section="tournaments"]', sel: '#tournamentManagement', title: 'Temporadas y torneos', text: 'Crea torneos, elige el activo y elimina los que ya no uses.' },
       { click: '[data-admin-section="teams"]', sel: 'card:Agregar equipo', title: 'Equipos', text: 'Crea un equipo con su nombre, escudo y división.' },
