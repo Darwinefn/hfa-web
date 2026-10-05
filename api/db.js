@@ -274,6 +274,20 @@ async function attendanceIps(body) {
   };
 }
 
+// Temática global de la web (la ven todos los usuarios). Solo la cambia un administrador.
+async function setSiteTheme(body) {
+  if (!process.env.MONGODB_URI) return false;
+  const theme = String((body && body.theme) || '').trim().toLowerCase();
+  if (['mundial', 'normal'].indexOf(theme) === -1) return false;
+  const adminId = String((body && body.adminUser) || '').trim().toLowerCase();
+  if (!adminId) return false;
+  const account = await (await mongoAccountsCollection()).findOne({ _id: adminId });
+  if (!account || !account.passHash || String(account.passHash) !== String((body && body.adminHash) || '')) return false;
+  if (normalizeRole(account.role) !== 'admin') return false;
+  await setValue('sitetheme', JSON.stringify({ theme: theme, by: adminId, at: new Date().toISOString() }), null);
+  return true;
+}
+
 async function checkConnection(body, req) {
   const ip = clientIp(req);
   const id = String((body && body.username) || '').trim().toLowerCase();
@@ -362,6 +376,10 @@ module.exports = async (req, res) => {
         const ok = await setRole(body);
         return res.status(ok ? 200 : 403).json({ ok: ok });
       }
+      if (body.action === 'setSiteTheme') {
+        const ok = await setSiteTheme(body);
+        return res.status(ok ? 200 : 403).json({ ok: ok });
+      }
       if (body.action === 'attendanceIps') {
         const result = await attendanceIps(body);
         return res.status(result.ok ? 200 : 403).json(result);
@@ -375,6 +393,7 @@ module.exports = async (req, res) => {
       }
       const key = String(body.key || '');
       if (!/^[A-Za-z0-9:_-]{1,60}$/.test(key) || typeof body.value !== 'string') return res.status(400).json({ ok: false });
+      if (key === 'sitetheme') return res.status(403).json({ ok: false });
       await setValue(key, body.value, req);
       return res.status(200).json({ ok: true });
     }
