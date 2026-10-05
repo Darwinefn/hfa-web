@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apuestas · HFA · Habbo Fútbol Asociación</title>
+<link rel="icon" type="image/png" href="EDITABLE_HF.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0f0d;--panel:#121a17;--panel-2:#16201c;--border:#22302a;--green:#34e88f;--green-dim:#1f7a52;--amber:#ff9d4d;--red:#ff6b6b;--text-hi:#f2f6f4;--text-mid:#9fb3ac;--text-low:#5c706a;--cream:#f1e3c8;--radius:3px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text-hi);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;background-image:radial-gradient(ellipse 900px 500px at 50% -10%,rgba(52,232,143,.10),transparent 60%);background-repeat:no-repeat}
+a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+/* nav (igual que el resto de la web) */
+header{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 28px;background:rgba(10,15,13,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.nav-left{display:flex;align-items:center;gap:30px;min-width:0;flex:1}
+.brand{display:flex;align-items:center;gap:9px;flex-shrink:0}
+.brand-mark{width:38px;height:38px;border-radius:11px;background:url('EDITABLE_HF.png') center/contain no-repeat;filter:drop-shadow(0 4px 10px rgba(52,232,143,.22));flex-shrink:0}
+.brand-name{font-family:'Oswald',sans-serif;font-weight:600;font-size:16px;letter-spacing:.5px}
+.brand-name span{color:var(--green)}
+nav.links{display:flex;gap:22px;font-size:13px;font-weight:500;color:var(--text-mid);overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+nav.links a{padding:6px 2px;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+nav.links a:hover,nav.links a.active{color:var(--text-hi);border-color:var(--green)}
+.nav-admin{color:var(--amber)!important}
+.nav-right{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-mid);flex-shrink:0}
+.nav-right img{width:26px;height:26px;border-radius:50%;background:var(--panel-2);border:1px solid var(--border)}
+@media(max-width:850px){header{flex-wrap:wrap;padding:12px 16px}.nav-left{width:100%;flex-direction:column;align-items:flex-start;gap:8px}nav.links{max-width:100%;width:100%}}
+
+main{max-width:1100px;margin:0 auto;padding:34px 24px 80px}
+h1.page-title{font:700 clamp(28px,5vw,44px)/1.05 'Oswald',sans-serif;letter-spacing:.01em}
+.page-sub{margin-top:8px;color:var(--text-mid);font-size:14px;max-width:560px;line-height:1.6}
+
+/* moneda */
+.coin{display:inline-grid;place-items:center;width:1.15em;height:1.15em;border-radius:50%;vertical-align:-.2em;background:radial-gradient(circle at 35% 30%,#fff6dc,#e3cf9c 60%,#b99f5d);border:1px solid #9c8444;flex-shrink:0}
+.coin img{width:74%;height:74%;object-fit:contain}
+.amt{display:inline-flex;align-items:center;gap:.35em;font-variant-numeric:tabular-nums;font-weight:700}
+
+/* BILLETE HFA COIN */
+.note-wrap{container-type:inline-size;width:100%;max-width:470px}
+.note{position:relative;aspect-ratio:2.15/1;border:3px solid var(--cream);border-radius:10px;overflow:hidden;color:var(--cream);
+  background:radial-gradient(circle at 80% 50%,rgba(255,255,255,.16),transparent 42%),
+    repeating-radial-gradient(circle at 80% 50%,rgba(241,227,200,.11) 0 1.5px,transparent 1.5px 6px),
+    repeating-linear-gradient(115deg,rgba(0,0,0,.10) 0 2px,transparent 2px 9px),
+    linear-gradient(120deg,#0b2d1f,#1d7a46 52%,#0a2a1c);
+  box-shadow:0 22px 44px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.6)}
+.note::after{content:"";position:absolute;inset:2.6cqw;border:1px solid rgba(241,227,200,.55);border-radius:6px;pointer-events:none}
+.note-ghost{position:absolute;right:-6cqw;top:50%;width:62cqw;aspect-ratio:1;transform:translateY(-50%);background:url('EDITABLE_HF.png') center/contain no-repeat;opacity:.13;filter:grayscale(1) brightness(2)}
+.note-medal{position:absolute;left:6cqw;top:50%;transform:translateY(-50%);width:23cqw;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff8e6,#e8d6a8 65%,#c2a967);border:1.2cqw double #8b7437;display:grid;place-items:center;box-shadow:0 4px 12px rgba(0,0,0,.45)}
+.note-medal img{width:78%;height:78%;object-fit:contain}
+.note-title{position:absolute;left:33cqw;top:9cqw;font:700 10cqw/1 'Oswald',sans-serif;letter-spacing:.04em;text-shadow:0 2px 0 rgba(0,0,0,.35);white-space:nowrap}
+.note-sub{position:absolute;left:33.4cqw;top:22.5cqw;font:600 2.5cqw/1.2 'Inter',sans-serif;letter-spacing:.07em;white-space:nowrap;opacity:.92}
+.note-den{position:absolute;right:8cqw;bottom:8cqw;font:700 13cqw/1 'Oswald',sans-serif;color:#fff3d2;text-shadow:0 2px 0 rgba(0,0,0,.4),0 0 18px rgba(241,227,200,.25);font-variant-numeric:tabular-nums}
+.note-corner{position:absolute;top:6cqw;right:8cqw;font:700 4.6cqw/1 'Oswald',sans-serif;opacity:.95}
+.note-serial{position:absolute;left:33.4cqw;bottom:14cqw;font:600 3cqw/1 'Inter',sans-serif;letter-spacing:.16em;font-variant-numeric:tabular-nums;opacity:.95}
+.note-line{position:absolute;left:33.4cqw;bottom:8.6cqw;font:500 2.1cqw/1 'Inter',sans-serif;letter-spacing:.08em;opacity:.7;white-space:nowrap}
+.note.tilt{transform:rotate(-2.2deg)}
+
+/* cabecera */
+.top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,470px);gap:34px;align-items:center;padding:6px 0 30px}
+.balance-chip{display:inline-flex;align-items:center;gap:10px;margin-top:20px;padding:10px 16px;border:1px solid var(--green-dim);border-radius:999px;background:rgba(52,232,143,.07);font-size:13px;color:var(--text-mid)}
+.balance-chip .amt{font-size:19px;color:var(--green);font-family:'Oswald',sans-serif}
+@media(max-width:860px){.top{grid-template-columns:1fr;gap:22px}}
+
+/* pestañas */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:22px;overflow-x:auto;scrollbar-width:none}
+.tab{padding:11px 16px;background:none;border:0;border-bottom:2px solid transparent;color:var(--text-mid);font:600 13px 'Inter',sans-serif;white-space:nowrap}
+.tab:hover{color:var(--text-hi)}.tab.active{color:var(--green);border-color:var(--green)}
+
+/* general */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 18px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);color:var(--text-hi);font:600 13px 'Inter',sans-serif}
+.btn:hover{border-color:var(--green)}
+.btn-primary{background:var(--green);border-color:var(--green);color:#05130c}.btn-primary:hover{filter:brightness(1.07)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:#0d1512;color:var(--text-hi);font:500 14px 'Inter',sans-serif}
+label.f{display:block;font-size:12px;font-weight:600;color:var(--text-mid);margin-bottom:6px}
+.muted{color:var(--text-mid)}.low{color:var(--text-low)}
+.notice{padding:16px 18px;border:1px solid var(--border);border-radius:10px;background:var(--panel);color:var(--text-mid);font-size:14px;line-height:1.6}
+.notice a{color:var(--green);font-weight:600;text-decoration:underline}
+.filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.filters select{width:auto}
+.section-h{margin:24px 0 12px;font:600 16px 'Oswald',sans-serif;letter-spacing:.03em;display:flex;align-items:center;gap:10px}
+.section-h small{font:500 12px 'Inter',sans-serif;color:var(--text-low)}
+
+/* partidos */
+.matches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media(max-width:820px){.matches{grid-template-columns:1fr}}
+.mcard{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.mcard.sel{border-color:var(--green-dim)}
+.mhead{display:flex;justify-content:space-between;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:11.5px;color:var(--text-low)}
+.pill{padding:2px 9px;border-radius:999px;border:1px solid var(--border);font-size:10.5px;font-weight:700;white-space:nowrap}
+.pill.open{color:var(--green);border-color:var(--green-dim)}.pill.live{color:var(--amber);border-color:var(--amber)}.pill.fin{color:var(--text-mid)}
+.pill.won{color:var(--green);border-color:var(--green-dim);background:rgba(52,232,143,.08)}.pill.lost{color:var(--red);border-color:#7a3333}.pill.void{color:var(--text-mid)}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:16px 14px 10px}
+.tm{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;font:600 13px 'Inter',sans-serif;min-width:0}
+.tm span{overflow-wrap:anywhere}
+.crest{width:44px;height:44px;border-radius:50%;object-fit:contain;background:var(--panel-2);border:1px solid var(--border);display:grid;place-items:center;font:700 16px 'Oswald',sans-serif;color:var(--green)}
+.vs-mid{font:700 22px 'Oswald',sans-serif;color:var(--text-low);min-width:54px;text-align:center}
+.vs-mid.score{color:var(--text-hi)}
+.when{padding:0 14px 12px;text-align:center;font-size:12px;color:var(--text-mid)}
+.odds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 14px 14px}
+.odd{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 6px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);color:var(--text-hi)}
+.odd small{font-size:10.5px;color:var(--text-low);font-weight:600}
+.odd b{font:700 18px 'Oswald',sans-serif;font-variant-numeric:tabular-nums}
+.odd:hover:not(:disabled){border-color:var(--green)}
+.odd.on{border-color:var(--green);background:rgba(52,232,143,.12)}.odd.on b{color:var(--green)}
+.odd:disabled{opacity:.45;cursor:not-allowed}
+.slip{margin:0 14px 14px;padding:14px;border:1px dashed var(--green-dim);border-radius:10px;background:rgba(52,232,143,.04)}
+.slip-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;margin-bottom:10px;color:var(--text-mid)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}
+.chip{padding:5px 11px;border:1px solid var(--border);border-radius:999px;background:var(--panel-2);color:var(--text-mid);font:600 12px 'Inter',sans-serif}.chip:hover{border-color:var(--green);color:var(--text-hi)}
+.mybet{margin:0 14px 14px;padding:10px 12px;border-radius:8px;background:var(--panel-2);border:1px solid var(--border);font-size:12.5px;color:var(--text-mid);display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+details.fin>summary{cursor:pointer;color:var(--text-mid);font:600 13px 'Inter',sans-serif;padding:8px 0}
+
+/* wallet */
+.bank{align-items:start;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px}
+@media(max-width:860px){.bank{grid-template-columns:1fr}}
+.account{position:relative;overflow:hidden;padding:22px;border-radius:16px;border:1px solid var(--green-dim);background:linear-gradient(145deg,#0f2a1f,#0a1612 60%);box-shadow:0 18px 40px rgba(0,0,0,.4)}
+.account::before{content:"";position:absolute;right:-50px;top:-50px;width:230px;height:230px;background:url('EDITABLE_HF.png') center/contain no-repeat;opacity:.08;filter:grayscale(1) brightness(2)}
+.acc-top{display:flex;align-items:center;justify-content:space-between;gap:10px;font:600 13px 'Oswald',sans-serif;letter-spacing:.06em;color:var(--text-mid)}
+.acc-bal{margin:18px 0 4px;font:700 clamp(34px,6vw,48px)/1 'Oswald',sans-serif;display:flex;align-items:center;gap:12px;color:var(--text-hi)}
+.acc-bal .coin{font-size:.7em}
+.acc-iban{font:600 15px/1.3 'Inter',sans-serif;letter-spacing:.12em;font-variant-numeric:tabular-nums;color:var(--cream);margin-top:18px}
+.acc-holder{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:13px;color:var(--text-mid)}
+.acc-holder img{width:34px;height:34px;border-radius:50%;background:var(--panel-2);border:1px solid var(--border)}
+.acc-sums{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.acc-sums div{padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.04);font-size:11.5px;color:var(--text-mid)}
+.acc-sums b{display:block;margin-top:3px;font:700 17px 'Oswald',sans-serif}
+.acc-sums .in b{color:var(--green)}.acc-sums .out b{color:var(--red)}
+.acc-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.side{display:flex;flex-direction:column;gap:16px;align-items:center}
+.form-row{display:grid;grid-template-columns:1fr 130px;gap:10px;margin-bottom:10px}
+@media(max-width:520px){.form-row{grid-template-columns:1fr}}
+.hint{min-height:18px;margin-top:8px;font-size:12px;color:var(--green)}.hint.err{color:var(--red)}
+.stmt{width:100%;border-collapse:collapse;font-size:13px}
+.stmt th{padding:8px 10px;text-align:left;font:600 11.5px 'Inter',sans-serif;color:var(--text-low);border-bottom:1px solid var(--border)}
+.stmt td{padding:10px;border-bottom:1px solid var(--border);vertical-align:top}
+.stmt td.r,.stmt th.r{text-align:right}
+.pos{color:var(--green);font-weight:700}.neg{color:var(--red);font-weight:700}
+.scroll-x{overflow-x:auto}
+.rank{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--border)}
+.rank .pos-n{width:26px;font:700 16px 'Oswald',sans-serif;color:var(--text-low);text-align:center}
+.rank:nth-child(-n+3) .pos-n{color:var(--green)}
+.rank img{width:34px;height:34px;border-radius:50%;background:var(--panel-2);border:1px solid var(--border)}
+.rank .nm{flex:1;font-weight:600}.rank.me{background:rgba(52,232,143,.06)}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.stats3 div{padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--panel);font-size:12px;color:var(--text-mid)}
+.stats3 b{display:block;margin-top:4px;font:700 22px 'Oswald',sans-serif;color:var(--text-hi)}
+.betrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 14px;border:1px solid var(--border);border-radius:10px;background:var(--panel);margin-bottom:8px}
+.betrow .t{font-weight:600;font-size:14px}.betrow .s{font-size:12px;color:var(--text-mid);margin-top:3px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9000;max-width:min(440px,calc(100vw - 28px));padding:13px 18px;border:1px solid var(--green);border-radius:10px;background:var(--panel);color:var(--text-hi);font-size:13.5px;box-shadow:0 14px 40px #000a}
+.toast.err{border-color:var(--red)}
+.fine{margin-top:26px;font-size:11.5px;color:var(--text-low);line-height:1.6;max-width:640px}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+<script src="hfa-extras.js"></script>
+<script src="flags.js"></script>
+</head>
+<body>
+<header>
+  <div class="nav-left">
+    <a class="brand" href="afh-liga.html"><div class="brand-mark" aria-label="Logo HFA"></div><div class="brand-name">Habbo<span> </span>Fútbol<span> Asociación</span></div></a>
+    <nav class="links" id="nav"></nav>
+  </div>
+  <div class="nav-right" id="navRight"></div>
+</header>
+
+<main>
+  <section class="top">
+    <div>
+      <h1 class="page-title">Apuestas HFA</h1>
+      <p class="page-sub">Apuesta HFA COIN en los partidos de la liga. Las cuotas se calculan con los resultados reales y tus ganancias llegan a tu cuenta cuando el árbitro cierra el acta.</p>
+      <div id="chipSlot"></div>
+    </div>
+    <div class="note-wrap" id="heroNote"></div>
+  </section>
+
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <div id="view"><div class="notice">Cargando…</div></div>
+
+  <p class="fine">HFA COIN es una moneda ficticia de la comunidad, solo para jugar dentro de HFA: no tiene valor real y no se puede comprar ni cambiar por dinero. Cada partido admite una apuesta por usuario y se cierra al comenzar (hora de España).</p>
+</main>
+
+<footer class="hfa-footer">
+  <div class="foot-brand">HFA· Habbo Fútbol Asociación</div>
+  <p>© 2026 HFA. Comunidad de rol futbolístico independiente para Habbo.es. No está afiliada, patrocinada ni respaldada por Sulake Corporation ni por Habbo.</p>
+</footer>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>String(Math.round(Number(n)||0)).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const LOGO='EDITABLE_HF.png';
+const coinIcon='<span class="coin"><img src="'+LOGO+'" alt=""></span>';
+const amt=n=>'<span class="amt">'+coinIcon+fmt(n)+'</span>';
+const avatar=u=>'https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(u)+'&size=s&direction=2&head_direction=2&gesture=sml&action=std&headonly=1';
+
+let session=null,passHash='',tab='apostar';
+let teams=[],matches=[],oddsById={},skew=0,cfg={minBet:10,maxBet:2000,daily:100};
+let W=null;                 // datos de wallet
+let top=[];
+let sel=null,stake=100;     // selección de apuesta
+let prevStatus={};
+
+/* ---------- API ---------- */
+async function post(p){try{const r=await fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});return await r.json()}catch(e){return{ok:false,error:'net'}}}
+async function getKey(k){try{const r=await fetch('/api/db?key='+encodeURIComponent(k),{cache:'no-store'});const d=await r.json();return d&&d.ok&&typeof d.value==='string'?JSON.parse(d.value):null}catch(e){return null}}
+const auth=()=>({user:session.username,hash:passHash});
+const ERR={auth:'Sesión no válida. Cierra sesión y vuelve a entrar.',funds:'No tienes saldo suficiente.',closed:'Este partido ya no admite apuestas.',dup:'Ya tienes una apuesta en este partido.',match:'No se encontró el partido.',pick:'Elige un resultado.',amount:'El importe no es válido.',dest:'Escribe el usuario de destino (distinto de ti).',nodest:'Ese usuario aún no tiene cuenta HFA COIN. Debe entrar una vez en Apuestas para abrirla.',wait:'Aún no puedes cobrar el ingreso diario.',net:'No se pudo conectar con el servidor.'};
+const errText=r=>r&&r.error==='stake'?'La apuesta debe estar entre '+r.min+' y '+r.max+' HFA COIN.':(ERR[r&&r.error]||'No se pudo completar la operación.');
+
+function toast(t,err){const o=document.querySelector('.toast');if(o)o.remove();const d=document.createElement('div');d.className='toast'+(err?' err':'');d.setAttribute('role','status');d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),4200)}
+
+/* ---------- billete ---------- */
+function banknote(den,serial,tilt){
+  return '<div class="note'+(tilt?' tilt':'')+'" role="img" aria-label="Billete de '+den+' HFA COIN"><div class="note-ghost"></div>'+
+   '<div class="note-medal"><img src="'+LOGO+'" alt="HFA"></div>'+
+   '<div class="note-title">HFA COIN</div><div class="note-sub">MONEDA OFICIAL DE LA HFA</div>'+
+   '<div class="note-corner">'+den+'</div><div class="note-den">'+den+'</div>'+
+   '<div class="note-serial">'+esc(serial)+'</div><div class="note-line">BANCO CENTRAL HFA · 2026</div></div>';
+}
+
+/* ---------- navegación ---------- */
+function nav(){
+  const links=session?[['afh-liga.html','Inicio',''],['seccion.html?view=comunidad','Comunidad',''],['clasificacion.html','Clasificación',''],['seccion.html?view=torneos','Torneos',''],['seccion.html?view=estadisticas','Estadísticas',''],['seccion.html?view=partidos','Partidos',''],['apuestas.html','Apuestas','active'],['seccion.html?view=album','Álbum',''],['seccion.html?view=cuenta','Cuenta',''],['seccion.html?view=buzon','Buzón','']]:[['afh-liga.html','Inicio',''],['apuestas.html','Apuestas','active']];
+  if(session&&['admin','prueba_moderador','moderador','arbitro'].includes(session.role))links.push(['seccion.html?view=admin','Admin','nav-admin']);
+  $('#nav').innerHTML=links.map(l=>'<a class="'+l[2]+'" href="'+l[0]+'">'+l[1]+'</a>').join('');
+  $('#navRight').innerHTML=session?'<img src="'+avatar(session.username)+'" alt=""><span>'+esc(session.username)+'</span>':'<a href="seccion.html?view=cuenta" class="btn btn-primary" style="padding:7px 14px">Iniciar sesión</a>';
+}
+
+/* ---------- datos de partidos ---------- */
+const teamOf=(id,name)=>teams.find(t=>id&&String(t.id)===String(id))||teams.find(t=>name&&String(t.name).trim().toLowerCase()===String(name).trim().toLowerCase());
+function side(m,s){const id=s==='A'?m.teamAId:m.teamBId,nm=s==='A'?m.home:m.away,t=teamOf(id,nm);return{name:nm||(t&&t.name)||'',crest:t&&t.crest}}
+function crestHtml(x){return x.crest?'<img class="crest" src="'+esc(x.crest)+'" alt="">':'<span class="crest">'+esc((x.name||'?').trim().charAt(0).toUpperCase())+'</span>'}
+const nowS=()=>Date.now()+skew;
+function mState(m){
+  if(m.finished)return'finished';
+  const o=oddsById[String(m.id)];
+  if(o&&o.state==='finished')return'finished';
+  const k=o&&o.kickoff;
+  if(k&&nowS()>=k)return'live';
+  return'open';
+}
+function whenText(m){
+  const o=oddsById[String(m.id)],k=o&&o.kickoff;
+  const d=m.date?m.date.split('-').reverse().join('/'):'';
+  const base=d?d+(m.time?' · '+m.time+' h':''):'Sin fecha fijada';
+  if(!k||mState(m)!=='open')return base;
+  const mins=Math.round((k-nowS())/60000);
+  if(mins<60)return base+' · cierra en '+Math.max(mins,1)+' min';
+  if(mins<1440)return base+' · cierra en '+Math.floor(mins/60)+' h '+(mins%60)+' min';
+  return base;
+}
+const myBet=id=>W&&W.bets.find(b=>String(b.matchId)===String(id));
+const PICK={'1':'Gana local','X':'Empate','2':'Gana visitante'};
+
+/* ---------- vistas ---------- */
+function matchCard(m){
+  const A=side(m,'A'),B=side(m,'B'),st=mState(m),o=oddsById[String(m.id)],od=o?o.odds:null;
+  const bet=myBet(m.id),open=st==='open'&&!!od&&session&&!bet;
+  const pill=st==='open'?'<span class="pill open">Abierto</span>':st==='live'?'<span class="pill live">En juego · cerrado</span>':'<span class="pill fin">Finalizado</span>';
+  const mid=st==='finished'?'<div class="vs-mid score num">'+(Number(m.scoreA)||0)+' - '+(Number(m.scoreB)||0)+'</div>':'<div class="vs-mid">VS</div>';
+  const sOn=sel&&String(sel.id)===String(m.id);
+  let oddsH='';
+  if(od&&st!=='finished'){
+    oddsH='<div class="odds">'+['1','X','2'].map(k=>'<button type="button" class="odd'+(sOn&&sel.pick===k?' on':'')+'" data-pick="'+k+'" data-m="'+esc(m.id)+'" '+(open?'':'disabled')+'><small>'+(k==='1'?'Local':k==='2'?'Visitante':'Empate')+'</small><b>'+od[k].toFixed(2)+'</b></button>').join('')+'</div>';
+  }
+  let slip='';
+  if(sOn&&open){
+    const c=od[sel.pick],win=Math.floor(stake*c),maxS=Math.min(cfg.maxBet,W?W.wallet.balance:cfg.maxBet);
+    slip='<div class="slip"><div class="slip-row"><span>'+PICK[sel.pick]+' · cuota <b class="num" style="color:var(--text-hi)">'+c.toFixed(2)+'</b></span><button type="button" class="chip" data-cancel>Quitar</button></div>'+
+     '<label class="f" for="stakeIn">Importe a apostar (HFA COIN)</label><input id="stakeIn" class="input num" type="number" inputmode="numeric" min="'+cfg.minBet+'" max="'+cfg.maxBet+'" value="'+stake+'">'+
+     '<div class="chips">'+[50,100,250,500].map(v=>'<button type="button" class="chip" data-stake="'+v+'">'+v+'</button>').join('')+'<button type="button" class="chip" data-stake="'+maxS+'">Máx</button></div>'+
+     '<div class="slip-row"><span>Si aciertas ganas</span><b class="num" style="color:var(--green)" id="winOut">'+fmt(win)+' HFA COIN</b></div>'+
+     '<button type="button" class="btn btn-primary" style="width:100%" data-confirm>Confirmar apuesta</button></div>';
+  }
+  let mine='';
+  if(bet)mine='<div class="mybet"><span>Tu apuesta: <b style="color:var(--text-hi)">'+PICK[bet.pick]+'</b> · '+fmt(bet.stake)+' a cuota '+Number(bet.odds).toFixed(2)+'</span>'+betPill(bet)+'</div>';
+  else if(!session&&st==='open')mine='<div class="mybet"><span>Inicia sesión para apostar.</span><a class="btn" href="seccion.html?view=cuenta">Entrar</a></div>';
+  return '<article class="mcard'+(sOn?' sel':'')+'"><div class="mhead"><span>'+(m.division?'División '+esc(m.division):'HFA')+(m.round?' · Jornada '+esc(m.round):'')+'</span>'+pill+'</div>'+
+   '<div class="vs"><div class="tm">'+crestHtml(A)+'<span>'+esc(A.name)+'</span></div>'+mid+'<div class="tm">'+crestHtml(B)+'<span>'+esc(B.name)+'</span></div></div>'+
+   '<div class="when">'+esc(whenText(m))+'</div>'+oddsH+slip+mine+'</article>';
+}
+function betPill(b){
+  if(b.status==='won')return'<span class="pill won">Ganada +'+fmt(b.payout)+'</span>';
+  if(b.status==='lost')return'<span class="pill lost">Perdida</span>';
+  if(b.status==='void')return'<span class="pill void">Devuelta</span>';
+  return'<span class="pill open">Abierta</span>';
+}
+function viewApostar(){
+  const divs=[...new Set(matches.map(m=>m.division).filter(Boolean))].sort();
+  const valid=matches.filter(m=>side(m,'A').name&&side(m,'B').name&&(divFilter==='all'||String(m.division)===divFilter));
+  const key=m=>{const o=oddsById[String(m.id)];return o&&o.kickoff?o.kickoff:9e15};
+  const open=valid.filter(m=>mState(m)==='open').sort((a,b)=>key(a)-key(b));
+  const live=valid.filter(m=>mState(m)==='live').sort((a,b)=>key(a)-key(b));
+  const fin=valid.filter(m=>mState(m)==='finished').sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,12);
+  let h='<div class="filters"><label class="f" for="divSel" style="margin:0">División</label><select id="divSel" class="input"><option value="all">Todas</option>'+divs.map(d=>'<option value="'+esc(d)+'" '+(String(d)===divFilter?'selected':'')+'>División '+esc(d)+'</option>').join('')+'</select></div>';
+  h+='<div class="section-h">Próximos partidos <small>'+open.length+' abiertos</small></div>';
+  h+=open.length?'<div class="matches">'+open.map(matchCard).join('')+'</div>':'<div class="notice">No hay partidos abiertos para apostar ahora mismo. Cuando se programe una jornada aparecerán aquí.</div>';
+  if(live.length)h+='<div class="section-h">En juego <small>apuestas cerradas hasta el resultado</small></div><div class="matches">'+live.map(matchCard).join('')+'</div>';
+  if(fin.length)h+='<details class="fin" style="margin-top:22px"><summary>Últimos resultados ('+fin.length+')</summary><div class="matches" style="margin-top:10px">'+fin.map(matchCard).join('')+'</div></details>';
+  return h;
+}
+let divFilter='all';
+
+function viewMis(){
+  if(!session)return loginNotice();
+  if(!W)return'<div class="notice">Cargando tus apuestas…</div>';
+  const b=W.bets,won=b.filter(x=>x.status==='won'),lost=b.filter(x=>x.status==='lost');
+  const staked=b.reduce((s,x)=>s+x.stake,0),paid=won.reduce((s,x)=>s+x.payout,0),dec=won.length+lost.length;
+  let h='<div class="stats3"><div>Apostado<b class="num">'+fmt(staked)+'</b></div><div>Cobrado<b class="num" style="color:var(--green)">'+fmt(paid)+'</b></div><div>Aciertos<b class="num">'+(dec?Math.round(won.length/dec*100)+'%':'—')+'</b></div></div>';
+  if(!b.length)return h+'<div class="notice">Todavía no has apostado. Ve a <b>Partidos</b>, elige un resultado y confirma tu apuesta.</div>';
+  h+=b.map(x=>'<div class="betrow"><div><div class="t">'+esc(x.home)+' vs '+esc(x.away)+'</div><div class="s">'+PICK[x.pick]+' · '+fmt(x.stake)+' a cuota '+Number(x.odds).toFixed(2)+(x.result?' · resultado '+esc(x.result):'')+'</div></div>'+betPill(x)+'</div>').join('');
+  return h;
+}
+
+function viewWallet(){
+  if(!session)return loginNotice();
+  if(!W)return'<div class="notice">Abriendo tu cuenta…</div>';
+  const w=W.wallet,wait=w.nextDaily>nowS(),mins=Math.ceil((w.nextDaily-nowS())/60000);
+  const daily=wait?'Ingreso diario en '+(mins>=60?Math.floor(mins/60)+' h '+(mins%60)+' min':mins+' min'):'Cobrar ingreso diario +'+cfg.daily;
+  let h='<div class="bank"><div class="account"><div class="acc-top"><span>HFA BANK · CUENTA HFA COIN</span>'+coinIcon.replace('class="coin"','class="coin" style="font-size:20px"')+'</div>'+
+   '<div class="acc-bal"><span class="num">'+fmt(w.balance)+'</span><span style="font-size:.4em;color:var(--text-mid);font-weight:500">HFA COIN</span></div><div class="low" style="font-size:12px">Saldo disponible</div>'+
+   '<div class="acc-iban">'+esc(w.number)+'</div>'+
+   '<div class="acc-holder"><img src="'+avatar(w.username)+'" alt=""><span>Titular: <b style="color:var(--text-hi)">'+esc(w.username)+'</b> · abierta el '+new Date(w.createdAt).toLocaleDateString('es-ES')+'</span></div>'+
+   '<div class="acc-sums"><div class="in">Ingresos totales<b class="num">+'+fmt(W.income)+'</b></div><div class="out">Gastos totales<b class="num">−'+fmt(W.expense)+'</b></div></div>'+
+   '<div class="acc-actions"><button type="button" class="btn btn-primary" data-daily '+(wait?'disabled':'')+'>'+daily+'</button></div><div class="hint" id="dailyHint"></div></div>'+
+   '<div class="side">'+
+   '<div class="card" style="width:100%"><div class="section-h" style="margin-top:0">Transferir</div>'+
+   '<div class="form-row"><div><label class="f" for="trTo">Usuario de destino</label><input id="trTo" class="input" maxlength="25" autocomplete="off"></div><div><label class="f" for="trAmt">Importe</label><input id="trAmt" class="input num" type="number" min="1" inputmode="numeric"></div></div>'+
+   '<label class="f" for="trNote">Concepto (opcional)</label><input id="trNote" class="input" maxlength="60" style="margin-bottom:12px"><button type="button" class="btn btn-primary" data-transfer>Enviar HFA COIN</button><div class="hint" id="trHint" role="status"></div></div></div></div>';
+  h+='<div class="section-h" style="margin-top:28px">Movimientos</div><div class="card scroll-x" style="padding:6px 8px">';
+  h+=W.tx.length?'<table class="stmt"><thead><tr><th>Fecha</th><th>Concepto</th><th class="r">Importe</th><th class="r">Saldo</th></tr></thead><tbody>'+W.tx.map(t=>'<tr><td class="low" style="white-space:nowrap">'+new Date(t.at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'</td><td>'+esc(t.note)+'</td><td class="r num '+(t.amount>0?'pos':'neg')+'">'+(t.amount>0?'+':'−')+fmt(Math.abs(t.amount))+'</td><td class="r num">'+fmt(t.balance)+'</td></tr>').join('')+'</tbody></table>':'<div class="notice" style="border:0">Sin movimientos todavía.</div>';
+  return h+'</div>';
+}
+function serialOf(n){const x=String(n||'').replace(/\D/g,'');return 'Nº A-'+(x.slice(-8)||'00000000')}
+
+function viewRanking(){
+  if(!top.length)return'<div class="notice">Aún no hay cuentas abiertas.</div>';
+  return'<div class="card">'+top.map((r,i)=>'<div class="rank'+(session&&r.username.toLowerCase()===session.username.toLowerCase()?' me':'')+'"><span class="pos-n">'+(i+1)+'</span><img src="'+avatar(r.username)+'" alt=""><span class="nm">'+esc(r.username)+'</span>'+amt(r.balance)+'</div>').join('')+'</div>';
+}
+function viewAdmin(){
+  return'<div class="card" style="max-width:520px"><div class="section-h" style="margin-top:0">Ingresar o retirar HFA COIN</div><p class="muted" style="font-size:13px;margin-bottom:14px;line-height:1.6">Para premios o correcciones. Usa un importe negativo para retirar. La cuenta del usuario debe existir. Las copias de seguridad están en el pie de la página.</p>'+
+   '<div class="form-row"><div><label class="f" for="adT">Usuario</label><input id="adT" class="input" maxlength="25" autocomplete="off"></div><div><label class="f" for="adA">Importe (±)</label><input id="adA" class="input num" type="number" inputmode="numeric"></div></div>'+
+   '<label class="f" for="adN">Motivo</label><input id="adN" class="input" maxlength="60" style="margin-bottom:12px"><button type="button" class="btn btn-primary" data-admin>Aplicar movimiento</button><div class="hint" id="adHint" role="status"></div></div>';
+}
+function loginNotice(){return'<div class="notice">Necesitas una cuenta HFA para tener wallet y apostar. <a href="seccion.html?view=cuenta">Inicia sesión o regístrate</a> — al entrar recibes '+fmt(500)+' HFA COIN de bienvenida.</div>'}
+
+function tabs(){
+  const t=[['apostar','Partidos'],['mis','Mis apuestas'],['wallet','Mi wallet'],['ranking','Ranking']];
+  if(session&&session.role==='admin')t.push(['admin','Admin']);
+  $('#tabs').innerHTML=t.map(x=>'<button type="button" role="tab" class="tab'+(tab===x[0]?' active':'')+'" data-tab="'+x[0]+'">'+x[1]+'</button>').join('');
+}
+function render(force){
+  const ae=document.activeElement;
+  if(!force&&ae&&ae.tagName==='INPUT')return;     // no pisar lo que el usuario está escribiendo
+  tabs();
+  $('#chipSlot').innerHTML=W?'<div class="balance-chip">Tu saldo '+amt(W.wallet.balance)+'</div>':'';
+  $('#heroNote').innerHTML=banknote(100,W?serialOf(W.wallet.number):'Nº A-00000000',true);
+  const v={apostar:viewApostar,mis:viewMis,wallet:viewWallet,ranking:viewRanking,admin:viewAdmin}[tab]||viewApostar;
+  $('#view').innerHTML=v();
+}
+
+/* ---------- carga y sincronización ---------- */
+async function loadWorld(){
+  const [t,m,o]=await Promise.all([getKey('teams'),getKey('matches'),post({action:'betOdds'})]);
+  if(Array.isArray(t))teams=t;
+  if(Array.isArray(m))matches=m;
+  if(o&&o.ok){oddsById={};o.matches.forEach(x=>oddsById[x.id]=x);skew=o.now-Date.now();cfg=Object.assign(cfg,o.config||{})}
+}
+async function loadWallet(){
+  if(!session||!passHash)return;
+  const r=await post(Object.assign({action:'walletGet'},auth()));
+  if(!r.ok){if(r.error==='auth')toast(ERR.auth,true);return}
+  if(W){r.bets.forEach(b=>{const p=prevStatus[b._id];if(p==='open'&&b.status==='won')toast('🏆 ¡Apuesta ganada! '+b.home+' vs '+b.away+': +'+fmt(b.payout)+' HFA COIN');else if(p==='open'&&b.status==='lost')toast('Apuesta perdida: '+b.home+' vs '+b.away,true);else if(p==='open'&&b.status==='void')toast('Apuesta devuelta: '+b.home+' vs '+b.away)})}
+  r.bets.forEach(b=>prevStatus[b._id]=b.status);
+  W=r;cfg=Object.assign(cfg,r.config||{});skew=r.now-Date.now();
+}
+async function loadTop(){const r=await post({action:'walletTop'});if(r.ok)top=r.rows}
+async function refresh(){await loadWorld();await Promise.all([loadWallet(),loadTop()]);render()}
+
+/* ---------- eventos ---------- */
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;sel=null;render(true);return}
+  const p=e.target.closest('[data-pick]');
+  if(p&&!p.disabled){const same=sel&&String(sel.id)===p.dataset.m&&sel.pick===p.dataset.pick;sel=same?null:{id:p.dataset.m,pick:p.dataset.pick};render(true);return}
+  if(e.target.closest('[data-cancel]')){sel=null;render(true);return}
+  const sv=e.target.closest('[data-stake]');if(sv){stake=Math.max(1,Number(sv.dataset.stake)||cfg.minBet);render(true);return}
+  if(e.target.closest('[data-confirm]')&&sel){
+    const btn=e.target.closest('[data-confirm]');btn.disabled=true;
+    const r=await post(Object.assign({action:'betPlace',matchId:sel.id,pick:sel.pick,stake:stake},auth()));
+    if(r.ok){toast('✔ Apuesta registrada: '+fmt(stake)+' HFA COIN a cuota '+Number(r.bet.odds).toFixed(2));sel=null;await refresh();render(true)}
+    else{toast(errText(r),true);btn.disabled=false;if(r.error==='closed'||r.error==='dup')refresh()}
+    return}
+  if(e.target.closest('[data-daily]')){
+    const r=await post(Object.assign({action:'walletDaily'},auth()));
+    if(r.ok){toast('✔ +'+cfg.daily+' HFA COIN ingresados');await loadWallet();render(true)}else toast(errText(r),true);return}
+  if(e.target.closest('[data-transfer]')){
+    const h=$('#trHint');h.className='hint';h.textContent='Enviando…';
+    const r=await post(Object.assign({action:'walletTransfer',to:$('#trTo').value,amount:$('#trAmt').value,note:$('#trNote').value},auth()));
+    if(r.ok){toast('✔ Transferencia realizada');await Promise.all([loadWallet(),loadTop()]);render(true)}else{h.className='hint err';h.textContent=errText(r)}
+    return}
+  if(e.target.closest('[data-admin]')){
+    const h=$('#adHint');h.className='hint';h.textContent='Aplicando…';
+    let hh='';try{hh=localStorage.getItem('hfa:adminAuth')||passHash}catch(x){hh=passHash}
+    const r=await post({action:'walletAdmin',adminUser:session.username,adminHash:hh,target:$('#adT').value,amount:$('#adA').value,note:$('#adN').value});
+    if(r.ok){h.textContent='✔ Hecho. Nuevo saldo del usuario: '+fmt(r.balance);loadTop()}else{h.className='hint err';h.textContent=errText(r)}
+    return}
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='stakeIn'){stake=Math.max(0,Math.floor(Number(e.target.value))||0);const o=oddsById[sel&&sel.id];const out=$('#winOut');if(o&&out)out.textContent=fmt(Math.floor(stake*o.odds[sel.pick]))+' HFA COIN'}
+});
+document.addEventListener('change',e=>{if(e.target.id==='divSel'){divFilter=e.target.value;render(true)}});
+
+/* ---------- arranque ---------- */
+(async function init(){
+  try{session=JSON.parse(localStorage.getItem('hfa:session')||'null')}catch(e){}
+  nav();render(true);
+  if(session){
+    const accs=await getKey('accounts');
+    const me=Array.isArray(accs)&&accs.find(a=>String(a.username).toLowerCase()===String(session.username).toLowerCase());
+    if(me)passHash=me.passHash||'';
+    if(!passHash){try{passHash=localStorage.getItem('hfa:adminAuth')||''}catch(e){}}
+  }
+  await refresh();render(true);
+  setInterval(()=>{if(!document.hidden)refresh()},20000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
+})();
+})();
+</script>
+<script src="chat.js" defer></script>
+</body>
+</html>

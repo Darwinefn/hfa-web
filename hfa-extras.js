@@ -68,9 +68,7 @@
     '.btn-primary,.btn.btn-primary{background:linear-gradient(180deg,#ffd75a,#ffbf1f) !important;border-color:#ffd75a !important;color:#241a00 !important}',
     '.content-card,.panel-card,.home-news-card,.retiro-card,.profile-header-card{box-shadow:inset 0 2px 0 rgba(255,199,44,.55),0 12px 34px rgba(0,0,0,.35)}',
     '.retiro-card{background:linear-gradient(180deg,rgba(0,166,81,.16),rgba(11,19,48,.96)) !important;border-color:rgba(255,199,44,.5) !important}',
-    '.retiro-cell{background:linear-gradient(180deg,rgba(255,199,44,.14),rgba(255,199,44,.04)) !important}',
-    'footer{background:linear-gradient(180deg,transparent,rgba(0,166,81,.12));border-top:2px solid rgba(255,199,44,.5) !important}',
-    'footer::before{content:"🏆 ⚽ 🏆";display:block;margin-bottom:8px;letter-spacing:.4em}'
+    '.retiro-cell{background:linear-gradient(180deg,rgba(255,199,44,.14),rgba(255,199,44,.04)) !important}'
   ].join('\n');
 
   function applySiteTheme(name, persist) {
@@ -145,6 +143,7 @@
       return 'seccion:' + view + (view === 'comunidad' && params.get('sub') ? ':' + params.get('sub') : '');
     }
     if (page.indexOf('clasificacion') === 0) return 'clasificacion';
+    if (page.indexOf('apuestas') === 0) return 'apuestas';
     return 'inicio';
   }
 
@@ -178,6 +177,11 @@
       { sel: '#resumenNextMatch', title: 'Próximo partido', text: 'El siguiente encuentro programado, con fecha y hora.' },
       { sel: '#resumenTeams', title: 'Equipos', text: 'Los equipos de cada división de un vistazo.' },
       { sel: '#resumenFinished', title: 'Últimos resultados', text: 'Los partidos ya jugados. Pulsa uno para ver el acta completa.' }
+    ],
+    'apuestas': [
+      { sel: '#heroNote', title: 'HFA COIN', text: 'La moneda oficial de la HFA. Se usa para apostar en los partidos y se guarda en tu wallet.' },
+      { sel: '#tabs', title: 'Apuestas y wallet', text: 'Elige un partido, mira tus apuestas, gestiona tu cuenta HFA COIN (movimientos y transferencias) o consulta el ranking.' },
+      { sel: '#view', title: 'Cómo apostar', text: 'Pulsa una cuota (Local, Empate o Visitante), escribe el importe y confirma. Las ganancias se ingresan solas cuando termina el partido.' }
     ],
     'clasificacion': [
       { sel: '#classificationNav', title: 'Menú', text: 'Navega por el resto de secciones de la web.' },
@@ -387,7 +391,7 @@
   }
 
   function init() {
-    addCss(); buildFab(); applySiteTheme(siteTheme, false); autoTour(); staffToast();
+    addCss(); buildFab(); applySiteTheme(siteTheme, false); autoTour(); staffToast(); setupFooter();
     fetchSiteTheme();
     setInterval(fetchSiteTheme, 60000);
     document.addEventListener('visibilitychange', function () { if (!document.hidden) fetchSiteTheme(); });
@@ -432,6 +436,156 @@
     }
     setTimeout(check, 2500);
     setInterval(check, 60000);
+  }
+
+  /* ---------- Pie de página común + copias de seguridad (solo ADMIN) ---------- */
+  var FOOT_CSS = 'footer.hfa-footer{border-top:1px solid var(--border,#22302a);padding:34px 28px;text-align:center}' +
+    'footer.hfa-footer .foot-brand{font-family:Oswald,sans-serif;color:var(--text-mid,#9fb3ac);font-size:13px;margin-bottom:10px;font-weight:500}' +
+    'footer.hfa-footer p{font-size:11.5px;color:var(--text-low,#5c706a);line-height:1.7;max-width:640px;margin:0 auto}' +
+    '.hfa-backup-btn{margin-top:16px;padding:8px 16px;border:1px solid var(--amber,#ff9d4d);border-radius:999px;background:transparent;color:var(--amber,#ff9d4d);font:600 12px Inter,Arial,sans-serif;cursor:pointer}.hfa-backup-btn:hover{background:rgba(255,157,77,.12)}' +
+    '.hfa-bk-over{position:fixed;inset:0;z-index:30010;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(3,8,6,.78);backdrop-filter:blur(4px)}' +
+    '.hfa-bk{width:min(560px,100%);max-height:90vh;overflow:auto;padding:22px;border:1px solid var(--amber,#ff9d4d);border-radius:14px;background:var(--panel,#121a17);color:var(--text-hi,#f2f6f4);font:13px/1.5 Inter,Arial,sans-serif;box-shadow:0 24px 70px #000a;text-align:left}' +
+    '.hfa-bk h3{margin:0 0 4px;font:700 19px Oswald,sans-serif;letter-spacing:.04em;color:var(--amber,#ff9d4d)}.hfa-bk .sub{margin:0 0 14px;color:var(--text-mid,#9fb3ac)}' +
+    '.hfa-bk h4{margin:16px 0 8px;font:600 13px Inter,Arial,sans-serif;color:var(--text-hi,#f2f6f4)}' +
+    '.hfa-bk-row{display:flex;gap:8px;flex-wrap:wrap}.hfa-bk button{padding:9px 14px;border:1px solid var(--border,#22302a);border-radius:8px;background:var(--panel-2,#16201c);color:inherit;font:600 12px Inter,Arial,sans-serif;cursor:pointer}.hfa-bk button:hover{border-color:var(--green,#34e88f)}.hfa-bk button.primary{background:var(--green,#34e88f);border-color:var(--green,#34e88f);color:#05130c}.hfa-bk button.danger{border-color:#ff7a7a;color:#ff9a9a}.hfa-bk button:disabled{opacity:.5;cursor:wait}' +
+    '.hfa-bk-list{display:flex;flex-direction:column;gap:6px}.hfa-bk-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;border:1px solid var(--border,#22302a);border-radius:8px;background:var(--panel-2,#16201c)}.hfa-bk-item small{display:block;color:var(--text-low,#5c706a)}' +
+    '.hfa-bk-status{min-height:20px;margin-top:12px;color:var(--green,#34e88f);font-size:12px}.hfa-bk-status.err{color:#ff8a8a}.hfa-bk-close{float:right;border:0!important;background:none!important;font-size:20px!important;padding:0 4px!important}';
+
+  function bkAuth() {
+    var s = readSession(), h = ''; try { h = localStorage.getItem('hfa:adminAuth') || ''; } catch (e) {}
+    return s && s.role === 'admin' && h ? { adminUser: s.username, adminHash: h } : null;
+  }
+  function bkCall(payload) {
+    var a = bkAuth(); if (!a) return Promise.reject(new Error('Necesitas iniciar sesión como administrador.'));
+    var body = Object.assign({ action: 'backup' }, a, payload);
+    return fetch('/api/db', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
+      .then(function (d) { if (!d || !d.ok) throw new Error('El servidor rechazó la operación (¿sesión de admin caducada o API sin actualizar?).'); return d; });
+  }
+  var BK_COLLS = ['app_data', 'accounts', 'role_assignments', 'wallets', 'wallet_tx', 'bets'];
+
+  function openBackupModal() {
+    var old = document.getElementById('hfaBackup'); if (old) old.remove();
+    var over = document.createElement('div'); over.id = 'hfaBackup'; over.className = 'hfa-bk-over';
+    over.innerHTML = '<div class="hfa-bk" role="dialog" aria-modal="true"><button class="hfa-bk-close" type="button" data-bk-close aria-label="Cerrar">&times;</button>' +
+      '<h3>🛡️ Copias de seguridad</h3><p class="sub">Solo administradores. Incluye partidos, equipos, cuentas, roles, wallets y apuestas.</p>' +
+      '<h4>En el servidor</h4><div class="hfa-bk-row"><button type="button" class="primary" data-bk-save>Guardar copia ahora</button></div>' +
+      '<div class="hfa-bk-list" id="hfaBkList" style="margin-top:10px"><small>Cargando copias…</small></div>' +
+      '<h4>En tu ordenador</h4><div class="hfa-bk-row"><button type="button" data-bk-download>⬇ Descargar copia (.json)</button><button type="button" data-bk-upload>⬆ Restaurar desde archivo</button><input type="file" id="hfaBkFile" accept="application/json,.json" hidden></div>' +
+      '<div class="hfa-bk-status" id="hfaBkStatus" role="status"></div></div>';
+    document.body.appendChild(over);
+    var status = over.querySelector('#hfaBkStatus');
+    function say(t, err) { status.textContent = t; status.className = 'hfa-bk-status' + (err ? ' err' : ''); }
+    function busy(on) { over.querySelectorAll('button').forEach(function (b) { b.disabled = on; }); }
+    function fmt(iso) { try { return new Date(iso).toLocaleString('es-ES'); } catch (e) { return iso; } }
+    function total(counts) { var n = 0; Object.keys(counts || {}).forEach(function (k) { n += counts[k]; }); return n; }
+
+    function loadList() {
+      bkCall({ op: 'list' }).then(function (d) {
+        var box = over.querySelector('#hfaBkList');
+        if (!d.rows.length) { box.innerHTML = '<small>Aún no hay copias guardadas en el servidor.</small>'; return; }
+        box.innerHTML = d.rows.map(function (r) {
+          return '<div class="hfa-bk-item"><div><b>' + (r.label || 'Copia').replace(/</g, '&lt;') + '</b><small>' + fmt(r.at) + ' · ' + (r.by || '') + ' · ' + total(r.counts) + ' registros</small></div>' +
+            '<div class="hfa-bk-row"><button type="button" class="danger" data-bk-restore="' + r._id + '">Restaurar</button><button type="button" data-bk-del="' + r._id + '" title="Borrar">🗑</button></div></div>';
+        }).join('');
+      }).catch(function (e) { over.querySelector('#hfaBkList').innerHTML = '<small>' + e.message + '</small>'; });
+    }
+    loadList();
+
+    function download() {
+      busy(true); say('Preparando copia…');
+      var data = {};
+      var chain = Promise.resolve();
+      BK_COLLS.forEach(function (name) {
+        chain = chain.then(function () {
+          data[name] = [];
+          function page(skip) {
+            return bkCall({ op: 'export', coll: name, skip: skip }).then(function (d) {
+              data[name] = data[name].concat(d.docs);
+              say('Descargando ' + name + '… ' + Math.min(d.next, d.total) + '/' + d.total);
+              if (!d.done && d.docs.length) return page(d.next);
+            });
+          }
+          return page(0);
+        });
+      });
+      chain.then(function () {
+        var file = { app: 'HFA', version: 1, createdAt: new Date().toISOString(), data: data };
+        var blob = new Blob([JSON.stringify(file)], { type: 'application/json' });
+        var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = 'hfa-backup-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.json';
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+        say('✔ Copia descargada. Guárdala en un lugar seguro.');
+      }).catch(function (e) { say(e.message, true); }).then(function () { busy(false); });
+    }
+
+    function restoreFile(file) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        var parsed; try { parsed = JSON.parse(reader.result); } catch (e) { say('El archivo no es una copia válida.', true); return; }
+        if (!parsed || parsed.app !== 'HFA' || !parsed.data) { say('El archivo no es una copia de HFA.', true); return; }
+        if (!window.confirm('Se REEMPLAZARÁN los datos actuales por los del archivo (' + fmt(parsed.createdAt) + ').\n\nAntes se guardará una copia automática en el servidor. ¿Continuar?')) return;
+        busy(true);
+        var chain = Promise.resolve(), first = true;
+        BK_COLLS.forEach(function (name) {
+          if (!Array.isArray(parsed.data[name])) return;
+          var docs = parsed.data[name], chunks = [], cur = [], size = 0;
+          docs.forEach(function (d) { var s = JSON.stringify(d).length; if (cur.length && size + s > 2500000) { chunks.push(cur); cur = []; size = 0; } cur.push(d); size += s; });
+          chunks.push(cur);
+          chunks.forEach(function (chunk, i) {
+            chain = chain.then(function () {
+              say('Restaurando ' + name + '… (' + (i + 1) + '/' + chunks.length + ')');
+              var p = bkCall({ op: 'import', coll: name, docs: chunk, reset: i === 0, pre: first });
+              first = false; return p;
+            });
+          });
+        });
+        chain.then(function () { say('✔ Copia restaurada. Recargando…'); setTimeout(function () { location.reload(); }, 1200); })
+          .catch(function (e) { say(e.message + ' — Se guardó una copia automática antes de empezar.', true); busy(false); });
+      };
+      reader.readAsText(file);
+    }
+
+    over.addEventListener('click', function (e) {
+      if (e.target === over || e.target.closest('[data-bk-close]')) { over.remove(); return; }
+      if (e.target.closest('[data-bk-save]')) {
+        busy(true); say('Guardando copia en el servidor…');
+        bkCall({ op: 'save', label: 'Copia manual' }).then(function () { say('✔ Copia guardada en el servidor.'); loadList(); }).catch(function (er) { say(er.message, true); }).then(function () { busy(false); });
+        return;
+      }
+      if (e.target.closest('[data-bk-download]')) { download(); return; }
+      if (e.target.closest('[data-bk-upload]')) { over.querySelector('#hfaBkFile').click(); return; }
+      var rs = e.target.closest('[data-bk-restore]');
+      if (rs) {
+        if (!window.confirm('Se REEMPLAZARÁN los datos actuales por esta copia. Antes se guardará una copia automática. ¿Restaurar?')) return;
+        busy(true); say('Restaurando… no cierres la página.');
+        bkCall({ op: 'restoreSnapshot', id: rs.getAttribute('data-bk-restore') }).then(function () { say('✔ Restaurado. Recargando…'); setTimeout(function () { location.reload(); }, 1200); }).catch(function (er) { say(er.message, true); busy(false); });
+        return;
+      }
+      var del = e.target.closest('[data-bk-del]');
+      if (del && window.confirm('¿Borrar esta copia del servidor?')) {
+        bkCall({ op: 'delete', id: del.getAttribute('data-bk-del') }).then(loadList).catch(function (er) { say(er.message, true); });
+      }
+    });
+    over.querySelector('#hfaBkFile').addEventListener('change', function (e) { if (e.target.files[0]) restoreFile(e.target.files[0]); e.target.value = ''; });
+  }
+
+  var FOOT_HTML = '<div class="foot-brand">HFA· Habbo Fútbol Asociación</div><p>© 2026 HFA. Comunidad de rol futbolístico independiente para Habbo.es. No está afiliada, patrocinada ni respaldada por Sulake Corporation ni por Habbo.</p>';
+  function setupFooter() {
+    var st = document.createElement('style'); st.textContent = FOOT_CSS; document.head.appendChild(st);
+    var foot = document.querySelector('footer');
+    if (!foot) { foot = document.createElement('footer'); document.body.appendChild(foot); }
+    foot.classList.add('hfa-footer');
+    if (foot.textContent.replace(/\s+/g, ' ').indexOf('Habbo Fútbol Asociación') === -1 || foot.textContent.indexOf('Sulake Corporation ni por Habbo.') === -1) foot.innerHTML = FOOT_HTML;
+    function sync() {
+      var s = readSession(), isAdmin = !!(s && s.role === 'admin'), btn = foot.querySelector('.hfa-backup-btn');
+      if (isAdmin && !btn) {
+        btn = document.createElement('button'); btn.type = 'button'; btn.className = 'hfa-backup-btn';
+        btn.textContent = '🛡️ Copia de seguridad (Admin)'; btn.addEventListener('click', openBackupModal);
+        var wrap = document.createElement('div'); wrap.className = 'hfa-backup-wrap'; wrap.appendChild(btn); foot.appendChild(wrap);
+      } else if (!isAdmin && btn) { btn.parentNode.remove(); }
+    }
+    sync(); setInterval(sync, 3000);
   }
 
   window.HFAExtras = { startTour: function () { startTour(true); }, applyTheme: applyTheme, setSiteTheme: function (n) { applySiteTheme(n); }, getSiteTheme: function () { return siteTheme; } };

@@ -453,9 +453,9 @@
   </div>
 </section>
 
-<footer>
-  <div class="foot-brand">HFA· Habbo Fútbol Asociación </div>
-  <p>© 2026 HFA. Comunidad de rol futbolístico independiente para Habbo.es. No está afiliada, patrocinada ni respaldada por Sulake Corporation Oy ni por Habbo.</p>
+<footer class="hfa-footer">
+  <div class="foot-brand">HFA· Habbo Fútbol Asociación</div>
+  <p>© 2026 HFA. Comunidad de rol futbolístico independiente para Habbo.es. No está afiliada, patrocinada ni respaldada por Sulake Corporation ni por Habbo.</p>
 </footer>
 
 <div class="overlay" id="overlay">
@@ -784,7 +784,7 @@
   function renderMainNav(){
     const links = session ? [
       ['#resumen','Inicio',''], ['clasificacion.html','Clasificación',''], ['seccion.html?view=torneos','Torneos',''],
-      ['seccion.html?view=estadisticas','Estadísticas',''], ['seccion.html?view=partidos','Partidos',''],
+      ['seccion.html?view=estadisticas','Estadísticas',''], ['seccion.html?view=partidos','Partidos',''], ['apuestas.html','Apuestas',''],
       ['seccion.html?view=album','Álbum',''], ['seccion.html?view=cuenta','Cuenta',''], ['seccion.html?view=buzon','Buzón',''], ['seccion.html?view=admin','Admin','nav-admin']
     ] : [['#resumen','Inicio','active']];
     const communityMenu = `
