@@ -35,7 +35,7 @@ footer{border-top:1px solid var(--border);padding:30px 28px;text-align:center;co
 .stats-shell{max-width:692px;margin:0 auto}.stats-toolbar{display:flex;flex-direction:column;gap:9px;margin-bottom:20px}.stats-filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.stats-filter-label{width:42px;font:600 8px Oswald;letter-spacing:1.1px;color:var(--text-low);text-transform:uppercase}.stats-filter{padding:6px 13px;border:1px solid transparent;border-radius:12px;background:#121b23;color:#809099;font:600 9px Oswald;letter-spacing:.5px}.stats-filter:hover{color:var(--text-hi);border-color:#31444b}.stats-filter.active{background:var(--green);color:#05130c}.stats-competition{padding:6px 12px;border:1px solid #263943;border-radius:12px;background:#111b23;color:#82939b;font:600 8px Oswald;letter-spacing:.5px}.stats-competition.active{border-color:var(--green-dim);color:var(--green);background:rgba(52,232,143,.08)}.stats-category-row{display:flex;align-items:center;gap:25px;padding:14px 8px 12px;border-bottom:1px solid #24352f;margin-bottom:20px}.stats-category{position:relative;border:0;background:transparent;color:#71817e;font:600 9px Oswald;letter-spacing:.8px;text-transform:uppercase;padding:0 0 4px}.stats-category.active{color:var(--green)}.stats-category.active:after{content:'';position:absolute;left:0;right:0;bottom:-13px;height:2px;background:var(--green)}.stats-content{background:transparent}.stats-podium{display:grid;grid-template-columns:1fr 1.16fr 1fr;align-items:end;gap:7px;margin:0 auto 24px;max-width:445px}.stat-podium-card{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:176px;padding:14px 8px 35px;background:linear-gradient(150deg,#18212a,#101820);border:1px solid #30414b;border-radius:7px 7px 0 0;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,.18)}.stat-podium-card.first{min-height:214px;background:linear-gradient(150deg,rgba(115,104,16,.25),#111a20 65%);border-color:#766c18}.stat-podium-card.second{min-height:190px}.stat-podium-card.third{min-height:182px;border-color:#704c2a}.stat-podium-avatar{width:43px;height:43px;border-radius:50%;object-fit:cover;background:#202b31;border:2px solid #c7d0dc;margin:10px 0 7px}.first .stat-podium-avatar{width:54px;height:54px;border-color:#ffd446}.second .stat-podium-avatar{border-color:#c7d0dc}.third .stat-podium-avatar{border-color:#c1844c}.stat-podium-name{font:600 11px Oswald;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.stat-podium-team{font:600 7px Oswald;color:#83938f;letter-spacing:.7px;text-transform:uppercase;margin:3px 0 11px}.stat-podium-goals{font:700 25px Oswald;color:var(--green);line-height:1}.stat-podium-goals:after{content:' Goles';display:block;font:600 6px Oswald;color:#73827f;letter-spacing:1px;text-transform:uppercase;margin-top:4px}.stat-podium-rank{position:absolute;bottom:0;left:0;right:0;padding:7px;font:700 13px Oswald;color:#eef4f1;background:#8995a4}.first .stat-podium-rank{background:#f0c900}.third .stat-podium-rank{background:#b86d26}.stats-leader-list{border:1px solid #284039;border-radius:6px;overflow:hidden;background:#111b23}.stats-leader-row{display:grid;grid-template-columns:25px 1fr 150px 30px;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid #263d36;min-height:38px}.stats-leader-row:first-child{border-top:0}.stats-leader-rank{font:700 12px Oswald;color:#84938f}.stats-leader-player{display:flex;align-items:center;gap:8px;min-width:0}.stats-leader-avatar{width:21px;height:21px;border-radius:50%;object-fit:cover;background:#202b31}.stats-leader-name{font:600 10px Oswald;color:#dbe6e2}.stats-leader-team{font:600 6px Oswald;color:#84938f;text-transform:uppercase;letter-spacing:.6px}.stats-leader-bar{height:4px;background:#1c2c32;border-radius:2px;overflow:hidden}.stats-leader-bar span{display:block;height:100%;background:var(--green);border-radius:2px}.stats-leader-value{font:700 15px Oswald;color:var(--green);text-align:right}.stats-leader-value:after{content:' G';display:block;font:600 6px Oswald;color:#71817e;letter-spacing:.7px}@media(max-width:640px){.stats-filter-label{width:35px}.stats-category-row{gap:13px;overflow-x:auto}.stats-category{font-size:8px}.stats-leader-row{grid-template-columns:22px 1fr 42px 27px;padding:8px 7px}.stats-leader-bar{display:none}.stats-podium{gap:4px}.stat-podium-card{padding-left:4px;padding-right:4px}.stat-podium-name{font-size:10px}}
 body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,body:has(.stats-shell) .intro,body:has(.stats-shell) .back{display:none}body:has(.stats-shell) .title-row{margin-bottom:14px}
 .stat-podium-avatar,.stats-leader-avatar{object-position:center top}.stat-podium-avatar-empty,.stats-leader-avatar-empty{background:linear-gradient(135deg,#1b2a2f,#0f171d);border:1px solid #314148;border-radius:50%;display:block;box-shadow:inset 0 0 0 2px rgba(255,255,255,.04)}.stat-podium-avatar-empty{width:58px;height:58px;margin-bottom:8px}.stats-leader-avatar-empty{width:30px;height:30px}.stats-category b{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:13px;margin-left:4px;padding:0 4px;border-radius:4px;background:#263645;color:#77a9da;font:600 7px Inter}.stats-category:nth-child(1) b{color:var(--green)}.stats-category:nth-child(3) b{color:#ffb23e}.stats-category:nth-child(4) b{color:#c5a7ff}.stats-category:nth-child(5) b{color:#a9b6c1}.stat-podium-goals{display:flex;flex-direction:column;align-items:center;gap:3px}.stat-podium-goals:after{display:none}.stat-podium-goals small{font:600 6px Oswald;color:#73827f;letter-spacing:1px;text-transform:uppercase}.stats-leader-row{grid-template-columns:25px 1fr auto}.stats-leader-metrics{display:grid;grid-template-columns:repeat(5,24px);gap:4px}.stats-leader-metrics span{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:25px;border:1px solid #243a42;border-radius:4px;background:#14222a;color:#76a9d8;font:700 11px Oswald;line-height:1}.stats-leader-metrics span small{margin-top:3px;color:#6f838d;font:600 5px Inter;letter-spacing:.4px}.stats-leader-metrics .metric-goals{color:var(--green);border-color:#1d594b}.stats-leader-metrics .metric-assists{color:#67aef2}.stats-leader-metrics .metric-mvps{color:#ffad32}.stats-leader-metrics .metric-mentions{color:#bd9cff}.stats-leader-metrics .metric-general{color:#b3c0c8}@media(max-width:640px){.stats-category-row{gap:12px}.stats-category b{display:none}.stats-leader-metrics{grid-template-columns:repeat(5,20px);gap:2px}.stats-leader-metrics span{min-height:23px;font-size:10px}.stats-leader-metrics span small{font-size:4px}.stats-leader-row{grid-template-columns:22px 1fr auto;padding:8px 7px}}
-.profile-subtitle,.profile-chip-row,.profile-summary,.profile-activity,.profile-shell + .notice{display:none}.profile-country{display:block;margin-top:7px;color:var(--text-mid);font:600 10px Oswald;letter-spacing:.12em;text-transform:uppercase}.profile-meta-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}.profile-meta-item{padding:9px 10px;border:1px solid rgba(148,164,173,.14);border-radius:8px;background:rgba(16,24,28,.9)}.profile-meta-item span{display:block;margin-bottom:4px;color:var(--text-low);font:600 8px Oswald;letter-spacing:.15em;text-transform:uppercase}.profile-meta-item strong{display:block;font:600 12px Oswald;color:var(--text-hi);letter-spacing:.04em}.profile-metrics .profile-metric-card:nth-child(4){display:none}.profile-layout>.profile-side-column{display:none}.profile-main-column>.profile-panel:nth-child(2){display:none}.profile-main-column>.profile-panel:nth-child(n+3){display:none}@media(max-width:640px){.profile-meta-list{grid-template-columns:1fr}}
+.profile-subtitle,.profile-chip-row,.profile-summary,.profile-activity,.profile-shell + .notice{display:none}.profile-country{display:block;margin-top:7px;color:var(--text-mid);font:600 10px Oswald;letter-spacing:.12em;text-transform:uppercase}.profile-meta-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}.profile-meta-item{padding:9px 10px;border:1px solid rgba(148,164,173,.14);border-radius:8px;background:rgba(16,24,28,.9)}.profile-meta-item span{display:block;margin-bottom:4px;color:var(--text-low);font:600 8px Oswald;letter-spacing:.15em;text-transform:uppercase}.profile-meta-item strong{display:block;font:600 12px Oswald;color:var(--text-hi);letter-spacing:.04em}.profile-metrics .profile-metric-card:nth-child(4){display:none}.profile-metrics{grid-template-columns:repeat(3,minmax(0,1fr)) !important}.profile-metrics .profile-metric-card{min-width:0}@media(max-width:420px){.profile-metrics{gap:8px !important}.profile-metric-card{padding:14px 8px !important}.profile-metric-card strong{font-size:32px !important}}.profile-layout>.profile-side-column{display:none}.profile-main-column>.profile-panel:nth-child(2){display:none}.profile-main-column>.profile-panel:nth-child(n+3){display:none}@media(max-width:640px){.profile-meta-list{grid-template-columns:1fr}}
 .profile-season-list{display:flex;flex-direction:column;gap:14px}.profile-season-row{padding:12px;border:1px solid rgba(148,164,173,.14);border-radius:9px;background:rgba(16,24,28,.86)}.profile-season-head{display:flex;justify-content:space-between;gap:10px;font:600 11px Oswald;color:#dfe7e4}.profile-season-head b{color:var(--green)}.profile-progress{height:7px;margin-top:9px;border-radius:5px;background:var(--panel-2);overflow:hidden}.profile-progress span{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--green-dim),var(--green))}.profile-position{display:inline-block;margin-top:7px;color:var(--text-mid);font:600 10px Oswald;letter-spacing:.12em;text-transform:uppercase}.profile-comment-form{display:flex;flex-direction:column;gap:8px}.profile-comment-form .btn{align-self:flex-end}
 .comment-author{display:flex;align-items:center;gap:8px}.comment-avatar{width:25px;height:25px;border-radius:50%;object-fit:cover;background:var(--panel-2);border:1px solid rgba(52,232,143,.35)}.comment-actions-row{display:flex;gap:6px;margin-top:8px}.comment-actions-row button{padding:5px 8px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text-mid);font-size:10px}.comment-actions-row button:hover{border-color:var(--green-dim);color:var(--green)}
 .profile-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.position-picker{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.position-option{padding:11px 8px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);color:var(--text-mid);font:700 11px Oswald;letter-spacing:.08em}.position-option.active{border-color:var(--green);background:rgba(52,232,143,.12);color:var(--green)}
@@ -653,7 +653,15 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
 .roster-player-results>.roster-eligible-teams{grid-column:1/-1}
 .admin-section-layout>*{min-width:0}.admin-section-content{min-width:0;max-width:100%}.admin-match-card{min-width:0;max-width:100%}.admin-match-table-wrap{max-width:100%;overflow-x:auto}
 .hfa-att-risk>td{background:rgba(255,122,122,.07)}
-.hfa-pass-card{margin-top:16px;max-width:520px}.hfa-pass-card .form{display:grid;gap:10px;margin-top:12px}
+.hfa-att-alert{margin:0 0 16px;padding:14px 16px;border:1px solid #ff7a7a;border-left-width:5px;border-radius:10px;background:rgba(255,122,122,.10);color:var(--text-hi)}
+.hfa-att-alert-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.hfa-att-alert-head strong{font:600 14px Oswald;color:#ff9a9a;letter-spacing:.03em}
+.hfa-att-alert ul{margin:8px 0 0;padding-left:18px;color:var(--text-mid);font-size:12px;line-height:1.7}
+.hfa-nav-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ff5d5d;color:#fff;font:700 10px Inter;vertical-align:middle}
+.hfa-att-ip{color:var(--text-low);font-size:11px}
+.profile-layout{grid-template-columns:minmax(0,1fr) !important}
+.profile-metrics{max-width:100%}
+.hfa-pass-bar{display:flex;justify-content:center;margin:16px auto 0;max-width:960px}.hfa-pass-bar .btn{min-width:220px}.hfa-pass-fields{display:grid;gap:10px}.hfa-pass-fields .form-hint{min-height:18px}
 .hfa-att-detail>td{padding:0 !important;background:var(--panel-2)}.hfa-att-detail .hfa-att-box{margin:10px;border:0;background:transparent}.hfa-att-pending{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);color:var(--text-mid);font-size:12px;line-height:1.5}.hfa-att-table{min-width:0 !important;table-layout:auto}.hfa-att-table th,.hfa-att-table td{padding:8px 8px}.hfa-att-table td{vertical-align:middle}.hfa-att-detail .hfa-att-row{padding:6px 4px}.hfa-att-table .btn-sm{white-space:nowrap}
 .hfa-att-list{display:grid;gap:2px}.hfa-att-list .hfa-conn-badge{white-space:normal;line-height:1.3}.hfa-att-cell .hfa-att-list{min-width:260px}
 .hfa-conn-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);font:600 11px Inter;white-space:nowrap}
@@ -720,7 +728,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
 <script src="loading.js"></script>
 <header><a class="brand" href="afh-liga.html"><div class="brand-mark" aria-label="Logo HFA"></div><div class="brand-name">Habbo<span> </span>Fútbol<span> Asociación</span></div></a><nav id="nav"></nav></header>
 <main><div class="eyebrow" id="eyebrow">Competición oficial</div><div class="title-row"><h1 class="title" id="title">Sección</h1><a class="back" href="afh-liga.html">← Volver al inicio</a></div><p class="intro" id="intro"></p><div id="content"></div></main>
-<footer>HFA · Asociación de Fútbol Habbo.es · <span id="hfaVersion" style="opacity:.55">v2026-10-04-d</span></footer>
+<footer>HFA · Asociación de Fútbol Habbo.es · <span id="hfaVersion" style="opacity:.55">v2026-10-05-f</span></footer>
 <script>
 (function(){
   const params=new URLSearchParams(location.search),view=params.get('view')||'estadisticas';
@@ -1450,9 +1458,9 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       wrap.querySelector('[data-conn="normal"]').focus();
     });
   }
-  async function hfaDetectConnection(username){
+  async function hfaDetectConnection(username,matchId,conn){
     try{
-      const response=await fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'checkConn',username:username})});
+      const response=await fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'checkConn',username:username,matchId:matchId,conn:conn})});
       if(!response.ok)return null;
       const data=await response.json();
       if(!data||!data.ok)return null;
@@ -1470,21 +1478,88 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     if(entry.conn==='normal'&&d&&d.checked&&(d.vpn||d.proxy||d.datacenter))out.push('<span class="hfa-conn-badge vpn">⚠ Dijo conexión normal</span>');
     return out.join('');
   }
+  window.hfaAttIps=window.hfaAttIps||{};
+  async function hfaLoadAttendanceIps(){
+    try{
+      if(!session||!['admin','moderador','prueba_moderador'].includes(session.role))return false;
+      const adminHash=localStorage.getItem('hfa:adminAuth')||'';
+      if(!adminHash)return false;
+      const response=await fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'attendanceIps',adminUser:session.username,adminHash:adminHash})});
+      if(!response.ok)return false;
+      const data=await response.json();
+      if(!data||!data.ok)return false;
+      const map={};
+      (data.rows||[]).forEach(row=>{map[row.matchId+'|'+String(row.username).toLowerCase()]={ip:row.ip,ips:row.ips||[]}});
+      window.hfaAttIps=map;
+      return true;
+    }catch(error){return false}
+  }
   function hfaAttendanceEntries(match){
     const attendance=match?.attendance||{},info=match?.attendanceInfo||{};
     return Object.keys(attendance).filter(name=>attendance[name]).map(name=>{
       const key=Object.keys(info).find(item=>String(item).toLowerCase()===String(name).toLowerCase());
       const record=key?info[key]:null;
-      return {name,time:attendance[name],conn:record?.conn||'',detected:record?.detected||null};
+      const ipInfo=window.hfaAttIps&&window.hfaAttIps[match.id+'|'+String(name).toLowerCase()];return {name,time:attendance[name],at:record?.at||'',conn:record?.conn||'',detected:record?.detected||null,ip:ipInfo?ipInfo.ip:'',ips:ipInfo?ipInfo.ips:[]};
     });
   }
   function hfaAttendanceRowsHtml(entries){
-    return entries.map(entry=>'<div class="hfa-att-row"><span>'+hfaEsc(entry.name)+' · '+hfaEsc(entry.time)+'</span><span class="hfa-att-meta">'+hfaConnBadge(entry.conn)+hfaDetectedBadges(entry)+'</span></div>').join('');
+    return entries.map(entry=>'<div class="hfa-att-row"><span>'+hfaEsc(entry.name)+' · '+hfaEsc(entry.time)+(entry.ip?' · <span class="hfa-att-ip" title="IP con la que dio presente">IP '+hfaEsc(entry.ip)+'</span>':'')+'</span><span class="hfa-att-meta">'+hfaConnBadge(entry.conn)+hfaDetectedBadges(entry)+'</span></div>').join('');
   }
   function hfaAttendanceBox(match){
     const entries=hfaAttendanceEntries(match);
     return '<div class="hfa-att-box"><b>👥 Presentes ('+entries.length+') · conexión</b>'+(entries.length?hfaAttendanceRowsHtml(entries):'<div class="muted">Todavía nadie ha dado presente.</div>')+'</div>';
   }
+  /* ---- Alerta de presentes con VPN / ExitLag ---- */
+  const HFA_STAFF=['admin','moderador','prueba_moderador'];
+  function hfaRiskEntries(){
+    const out=[];
+    (state.matches||[]).forEach(match=>{
+      const info=match.attendanceInfo||{};
+      hfaAttendanceEntries(match).forEach(entry=>{
+        const d=entry.detected;
+        const risky=entry.conn==='exitlag'||entry.conn==='vpn'||(d&&d.checked&&(d.vpn||d.proxy||d.datacenter));
+        if(risky){
+          const key=match.id+'|'+entry.name+'|'+(entry.at||entry.time);
+          const home=match.home||team(match.teamAId)?.name||'Equipo A',away=match.away||team(match.teamBId)?.name||'Equipo B';
+          out.push({key:key,name:entry.name,conn:entry.conn,label:home+' vs '+away,round:Number(match.round)||1,kind:(entry.conn==='vpn'||(d&&(d.vpn||d.proxy)))?'VPN':'ExitLag'});
+        }
+      });
+    });
+    return out;
+  }
+  function hfaSeenAlerts(){try{return JSON.parse(localStorage.getItem('hfa:attSeen')||'[]')||[]}catch(error){return []}}
+  function hfaMarkAlertsSeen(){
+    try{const seen=new Set(hfaSeenAlerts());hfaRiskEntries().forEach(item=>seen.add(item.key));localStorage.setItem('hfa:attSeen',JSON.stringify([...seen].slice(-800)))}catch(error){}
+    hfaRenderAttendanceAlert();
+  }
+  function hfaRenderAttendanceAlert(){
+    if(!session||!HFA_STAFF.includes(session.role))return;
+    const seen=new Set(hfaSeenAlerts());
+    const fresh=hfaRiskEntries().filter(item=>!seen.has(item.key));
+    const navButton=document.querySelector('[data-admin-section="attendance"]');
+    if(navButton){navButton.querySelector('.hfa-nav-badge')?.remove();if(fresh.length)navButton.insertAdjacentHTML('beforeend',' <span class="hfa-nav-badge">'+fresh.length+'</span>')}
+    let box=document.getElementById('hfaAttAlert');
+    const layout=document.querySelector('.admin-section-layout');
+    if(!layout)return;
+    if(!fresh.length){box?.remove();return}
+    if(!box){box=document.createElement('div');box.id='hfaAttAlert';box.className='hfa-att-alert';box.setAttribute('role','alert');layout.parentElement.insertBefore(box,layout)}
+    const lines=fresh.slice(0,6).map(item=>'<li><b>'+hfaEsc(item.name)+'</b> · '+item.kind+' · '+hfaEsc(item.label)+' · J'+item.round+'</li>').join('');
+    box.innerHTML='<div class="hfa-att-alert-head"><strong>⚠ '+fresh.length+(fresh.length===1?' jugador dio presente':' jugadores dieron presente')+' con VPN o ExitLag</strong><span><button class="btn btn-sm btn-primary" type="button" data-att-alert-open>Ver presentes</button> <button class="btn btn-sm" type="button" data-att-alert-dismiss>Entendido</button></span></div><ul>'+lines+(fresh.length>6?'<li>… y '+(fresh.length-6)+' más</li>':'')+'</ul>';
+  }
+  async function hfaRefreshAttendance(){
+    try{state.matches=await getJSON('matches',state.matches);accounts=await getJSON('accounts',accounts)}catch(error){}
+    await hfaLoadAttendanceIps();
+    hfaRenderAttendanceAlert();
+    const card=document.getElementById('adminAttendanceList');
+    if(card&&!card.querySelector('tr[data-att-detail]:not([hidden])'))card.innerHTML=hfaAttendanceTableInner();
+  }
+  document.addEventListener('click',event=>{
+    if(event.target.closest('[data-att-alert-open]')){document.querySelector('[data-admin-section="attendance"]')?.click();return}
+    if(event.target.closest('[data-att-alert-dismiss]')){hfaMarkAlertsSeen();return}
+    if(event.target.closest('[data-admin-section="attendance"]')){const card=document.getElementById('adminAttendanceList');if(card)card.innerHTML=hfaAttendanceTableInner();hfaRefreshAttendance();setTimeout(hfaMarkAlertsSeen,400)}
+  });
+  setInterval(()=>{if(session&&HFA_STAFF.includes(session.role)&&document.querySelector('.admin-section-layout')&&!document.hidden)hfaRefreshAttendance()},45000);
+  setTimeout(()=>{if(session&&HFA_STAFF.includes(session.role)&&document.querySelector('.admin-section-layout')){hfaRefreshAttendance();if(location.hash==='#presentes')document.querySelector('[data-admin-section="attendance"]')?.click()}},1200);
   function hfaMatchRisk(match){return hfaAttendanceEntries(match).filter(entry=>entry.conn==='exitlag'||entry.conn==='vpn'||(entry.detected&&entry.detected.checked&&(entry.detected.vpn||entry.detected.proxy||entry.detected.datacenter))).length}
   function hfaAttendanceTableInner(){
     const tournamentOptions='<option value="">Todas las temporadas</option>'+state.tournaments.map(item=>'<option value="'+item.id+'">'+profileText(item.name)+'</option>').join('');
@@ -1515,8 +1590,20 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     });
   }
   function hfaChangePasswordCard(){
-    return '<div class="content-card hfa-pass-card" id="hfaPassCard"><div class="admin-title">🔑 Cambiar contraseña</div><div class="admin-section-note">Escribe tu contraseña actual y elige una nueva (mínimo 6 caracteres).</div><div class="form"><input class="input" id="hfaPassCurrent" type="password" autocomplete="current-password" placeholder="Contraseña actual"><input class="input" id="hfaPassNew" type="password" autocomplete="new-password" placeholder="Nueva contraseña"><input class="input" id="hfaPassConfirm" type="password" autocomplete="new-password" placeholder="Repite la nueva contraseña"><button class="btn btn-primary" id="hfaPassSubmit" type="button">Cambiar contraseña</button><div class="form-hint" id="hfaPassHint" role="status"></div></div></div>';
+    return '<div class="hfa-pass-bar" id="hfaPassCard"><button class="btn" type="button" id="hfaPassOpen">🔑 Cambiar contraseña</button></div>';
   }
+  function hfaClosePasswordModal(){document.getElementById('hfaPassModal')?.remove()}
+  document.addEventListener('click',event=>{
+    if(event.target.closest('#hfaPassOpen')&&session){
+      hfaClosePasswordModal();
+      const wrap=document.createElement('div');wrap.id='hfaPassModal';wrap.className='hfa-conn-modal';
+      wrap.innerHTML='<div class="hfa-conn-card" role="dialog" aria-modal="true" aria-labelledby="hfaPassTitle"><h3 id="hfaPassTitle">Cambiar contraseña</h3><p>Escribe tu contraseña actual y elige una nueva (mínimo 6 caracteres).</p><div class="hfa-pass-fields"><input class="input" id="hfaPassCurrent" type="password" autocomplete="current-password" placeholder="Contraseña actual"><input class="input" id="hfaPassNew" type="password" autocomplete="new-password" placeholder="Nueva contraseña"><input class="input" id="hfaPassConfirm" type="password" autocomplete="new-password" placeholder="Repite la nueva contraseña"><div class="form-hint" id="hfaPassHint" role="status"></div><button class="btn btn-primary" id="hfaPassSubmit" type="button">Guardar contraseña</button><button class="hfa-conn-cancel" type="button" data-pass-cancel>Cancelar</button></div></div>';
+      wrap.addEventListener('click',e=>{if(e.target===wrap||e.target.closest('[data-pass-cancel]'))hfaClosePasswordModal()});
+      wrap.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();hfaClosePasswordModal()}else if(e.key==='Enter'&&e.target.tagName==='INPUT'){e.preventDefault();document.getElementById('hfaPassSubmit')?.click()}});
+      document.body.appendChild(wrap);
+      document.getElementById('hfaPassCurrent').focus();
+    }
+  });
   document.addEventListener('click',async event=>{
     const button=event.target.closest('#hfaPassSubmit');
     if(!button||!session)return;
@@ -1536,8 +1623,8 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       if(account.passHash!==await hashPassword(current)){fail('La contraseña actual no es correcta.');return}
       account.passHash=await hashPassword(next);
       await setJSON('accounts',accounts);
-      if(session.role==='admin'){try{localStorage.setItem('hfa:adminAuth',account.passHash)}catch(error){}}
-      ['hfaPassCurrent','hfaPassNew','hfaPassConfirm'].forEach(id=>{const field=document.getElementById(id);if(field)field.value=''});
+      if(['admin','moderador','prueba_moderador'].includes(session.role)){try{localStorage.setItem('hfa:adminAuth',account.passHash)}catch(error){}}
+      hfaClosePasswordModal();
       hfaModal({title:'Contraseña cambiada',text:'Tu contraseña se actualizó. Úsala la próxima vez que inicies sesión.',buttons:[{label:'Entendido'}]});
     }catch(error){fail('No se pudo cambiar la contraseña. Inténtalo de nuevo.')}
     finally{button.disabled=false}
@@ -2052,7 +2139,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       const attToggle=event.target.closest('[data-att-toggle]');
       if(attToggle){const detail=document.querySelector('#adminAttendanceList tr[data-att-detail="'+attToggle.dataset.attToggle+'"]');if(detail){detail.hidden=!detail.hidden;attToggle.textContent=detail.hidden?'Ver presentes':'Ocultar'}return}
       const attRefresh=event.target.closest('[data-att-refresh]');
-      if(attRefresh){attRefresh.disabled=true;attRefresh.textContent='Actualizando...';try{state.matches=await getJSON('matches',state.matches);accounts=await getJSON('accounts',accounts)}catch(error){}const card=document.getElementById('adminAttendanceList');if(card){card.innerHTML=hfaAttendanceTableInner()}return}
+      if(attRefresh){attRefresh.disabled=true;attRefresh.textContent='Actualizando...';try{state.matches=await getJSON('matches',state.matches);accounts=await getJSON('accounts',accounts)}catch(error){}await hfaLoadAttendanceIps();const card=document.getElementById('adminAttendanceList');if(card){card.innerHTML=hfaAttendanceTableInner()}hfaRenderAttendanceAlert();return}
       const tab=event.target.closest('[data-acta-tab]');
       if(tab){event.preventDefault();event.stopPropagation();actaTab=tab.dataset.actaTab;adminSection='acts';content();prepareAdminDivisions();return}
       const save=event.target.closest('[data-save-acta]');
@@ -2333,7 +2420,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
         sideColumn.style.display=tabIndex>=3?'block':'none';
         layout.style.gridTemplateColumns=tabIndex===6?'1fr':'';
         const selectedMainIndex=tabIndex===0?0:tabIndex===1?2:3;
-        [...mainColumn.children].forEach((child,index)=>child.style.display=index===selectedMainIndex?'block':'none');
+        [...mainColumn.children].forEach((child,index)=>child.style.display=index===selectedMainIndex?(child.classList.contains('profile-metrics')?'grid':'block'):'none');
         [...sideColumn.children].forEach((child,index)=>child.style.display=index===tabIndex-3?'block':'none');
       }
       return;
@@ -2398,7 +2485,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     if(saveRoleButton){
       if(session?.role!=='admin')return;
       const username=saveRoleButton.dataset.saveUserRole,roleSelect=document.querySelector('[data-user-role="'+CSS.escape(username)+'"]'),row=saveRoleButton.closest('.admin-player-row'),account=accounts.find(item=>item.username===username);
-      if(account&&roleSelect){account.role=roleSelect.value;const roleSaved=await hfaSetRoleRemote(account.username,account.role);if(!roleSaved)window.alert('No se pudo guardar el rol en la base de datos. Comprueba que tu sesión de administrador sea válida e inténtalo de nuevo.');if(row?.querySelector('[data-user-division-choice]')){const divisionButton=row.querySelector('[data-user-division-choice].active');account.division=divisionButton?.dataset.division||'';account.enabledDivisions=[...row.querySelectorAll('[data-user-enabled-choice].active')].map(button=>button.dataset.division)}await setJSON('accounts',accounts);if(session?.username===username){session.role=account.role;localStorage.setItem('hfa:session',JSON.stringify(session));if(session.role==='admin')localStorage.setItem('hfa:adminAuth',account.passHash);else localStorage.removeItem('hfa:adminAuth');nav()}content();prepareAdminDivisions()}
+      if(account&&roleSelect){account.role=roleSelect.value;const roleSaved=await hfaSetRoleRemote(account.username,account.role);if(!roleSaved)window.alert('No se pudo guardar el rol en la base de datos. Comprueba que tu sesión de administrador sea válida e inténtalo de nuevo.');if(row?.querySelector('[data-user-division-choice]')){const divisionButton=row.querySelector('[data-user-division-choice].active');account.division=divisionButton?.dataset.division||'';account.enabledDivisions=[...row.querySelectorAll('[data-user-enabled-choice].active')].map(button=>button.dataset.division)}await setJSON('accounts',accounts);if(session?.username===username){session.role=account.role;localStorage.setItem('hfa:session',JSON.stringify(session));if(['admin','moderador','prueba_moderador'].includes(session.role))localStorage.setItem('hfa:adminAuth',account.passHash);else localStorage.removeItem('hfa:adminAuth');nav()}content();prepareAdminDivisions()}
       return;
     }
     const saveDivisionButton=event.target.closest('[data-save-user-division]');
@@ -2508,7 +2595,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const openActaButton=event.target.closest('[data-open-acta]');
     if(openActaButton){selectedActaMatchId=openActaButton.dataset.openActa;actaTab='goals';content();prepareAdminDivisions();return}
     const presentButton=event.target.closest('[data-present-match]');
-    if(presentButton&&session){const match=state.matches.find(item=>item.id===presentButton.dataset.presentMatch),player=presentButton.dataset.presentPlayer,canConfirm=session.username.toLowerCase()===String(player||'').toLowerCase();const validPlayers=matchRegisteredPlayerNames(match);if(match&&player&&canConfirm&&validPlayers.has(player.toLowerCase())){const conn=await hfaAskConnection();if(!conn)return;const detected=await hfaDetectConnection(session.username);match.attendance=match.attendance||{};match.attendanceInfo=match.attendanceInfo||{};match.attendance[player]=new Intl.DateTimeFormat([], {hour:'2-digit',minute:'2-digit'}).format(new Date());match.attendanceInfo[player]={conn:conn,at:new Date().toISOString(),detected:detected};await setJSON('matches',state.matches);content()}return}
+    if(presentButton&&session){const match=state.matches.find(item=>item.id===presentButton.dataset.presentMatch),player=presentButton.dataset.presentPlayer,canConfirm=session.username.toLowerCase()===String(player||'').toLowerCase();const validPlayers=matchRegisteredPlayerNames(match);if(match&&player&&canConfirm&&validPlayers.has(player.toLowerCase())){const conn=await hfaAskConnection();if(!conn)return;const detected=await hfaDetectConnection(session.username,match.id,conn);match.attendance=match.attendance||{};match.attendanceInfo=match.attendanceInfo||{};match.attendance[player]=new Intl.DateTimeFormat([], {hour:'2-digit',minute:'2-digit'}).format(new Date());match.attendanceInfo[player]={conn:conn,at:new Date().toISOString(),detected:detected};await setJSON('matches',state.matches);content()}return}
     const actaTabButton=event.target.closest('[data-acta-tab]');
     if(actaTabButton){actaTab=actaTabButton.dataset.actaTab;adminSection='acts';content();prepareAdminDivisions();return}
     if(event.target.id==='addActaPlayer')return;
@@ -2604,7 +2691,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const accountRecord=accounts.find(account=>account.username.toLowerCase()===username.toLowerCase());
     hint.textContent='';hint.classList.remove('error');if(!accountRecord){hfaModal({error:true,title:'No encontramos esa cuenta',text:'Revisa el nombre de usuario o crea una cuenta nueva.',buttons:[{label:'Reintentar'},{label:'Crear cuenta',ghost:true,action:function(){authMode='register';content();prepareAccountForm()}}]});return}if(accountRecord.passHash!==await hashPassword(password)){hfaModal({error:true,title:'Tu contraseña no es correcta',text:'Revísala e inténtalo de nuevo, o contacta con un administrador para recuperarla.',buttons:[{label:'Reintentar',action:function(){const f=document.getElementById('authPassword');if(f){f.value='';f.focus()}}},{label:'Recuperar contraseña',ghost:true,action:function(){hfaRecovery(username)}}]});return}{const ip=await hfaGetIp();if(ip&&hfaTrackIp(accountRecord,ip)){try{await setJSON('accounts',accounts)}catch(error){}}}
     session={username:accountRecord.username,role:accountRecord.role};
-    try{localStorage.setItem('hfa:session',JSON.stringify(session));localStorage.setItem('hfa:loginWelcome',accountRecord.username);if(session.role==='admin')localStorage.setItem('hfa:adminAuth',accountRecord.passHash);else localStorage.removeItem('hfa:adminAuth')}catch(error){}
+    try{localStorage.setItem('hfa:session',JSON.stringify(session));localStorage.setItem('hfa:loginWelcome',accountRecord.username);if(['admin','moderador','prueba_moderador'].includes(session.role))localStorage.setItem('hfa:adminAuth',accountRecord.passHash);else localStorage.removeItem('hfa:adminAuth')}catch(error){}
     location.href='afh-liga.html';
   });
   document.addEventListener('input',function(event){
@@ -2760,7 +2847,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     accounts=loadedAccounts;state.teams=teams;state.matches=matches;state.competition=competition;state.sponsors=sponsors;state.offers=offers;state.palmares=palmares;state.news=news;
     state.tournaments=tournaments===null||tournaments===undefined?[{id:'default',name:state.competition,season:'Temporada actual'}]:tournaments;
     try{activeTournamentId=localStorage.getItem('hfa:activeTournament')||String(state.tournaments[0]?.id||'');session=JSON.parse(localStorage.getItem('hfa:session')||'null')}catch(error){}
-    try{if(session&&session.username){const fresh=accounts.find(item=>String(item.username).toLowerCase()===String(session.username).toLowerCase());if(fresh){const freshRole=fresh.role||'pendiente';if(session.role!==freshRole||session.username!==fresh.username){session={username:fresh.username,role:freshRole};localStorage.setItem('hfa:session',JSON.stringify(session))}if(freshRole==='admin')localStorage.setItem('hfa:adminAuth',fresh.passHash);else localStorage.removeItem('hfa:adminAuth')}}}catch(error){}
+    try{if(session&&session.username){const fresh=accounts.find(item=>String(item.username).toLowerCase()===String(session.username).toLowerCase());if(fresh){const freshRole=fresh.role||'pendiente';if(session.role!==freshRole||session.username!==fresh.username){session={username:fresh.username,role:freshRole};localStorage.setItem('hfa:session',JSON.stringify(session))}if(['admin','moderador','prueba_moderador'].includes(freshRole))localStorage.setItem('hfa:adminAuth',fresh.passHash);else localStorage.removeItem('hfa:adminAuth')}}}catch(error){}
     nav();content();if(view==='buzon')document.getElementById('content').innerHTML=mailboxPage();prepareAccountForm();prepareAdminDivisions();
     if(session&&view==='cuenta'){await hydrateProfile();if(params.get('tab')==='buzon'){document.querySelector('.profile-layout')?.style.setProperty('display','none');document.querySelector('.mailbox-panel')?.classList.add('mailbox-visible');document.querySelector('.free-agent-block')?.classList.add('mailbox-visible')}}
     window.hfaLoadingReady?.();

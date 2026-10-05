@@ -117,7 +117,17 @@
   .sponsor-name{font-size:12px; font-weight:600; color:var(--text-mid);}
   .ticker{margin-top:24px; background:var(--green); color:#05130c; font-family:'Oswald',sans-serif; font-weight:600; font-size:12.5px; padding:9px 0; overflow:hidden;}
   .ticker-track{display:flex; gap:40px; width:max-content; animation:scroll 24s linear infinite;}
-  .home-news{max-width:980px;margin:34px auto 0;padding:0 28px}.home-news-card{position:relative;min-height:190px;display:flex;align-items:flex-end;overflow:hidden;border:1px solid var(--border);border-radius:10px;background:var(--panel)}.home-news-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.42}.home-news-card:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,15,13,.96),rgba(10,15,13,.45),rgba(10,15,13,.2))}.home-news-copy{position:relative;z-index:1;max-width:650px;padding:24px}.home-news-copy h2{font:700 28px Oswald}.home-news-copy p{margin-top:8px;color:var(--text-mid);font-size:13px;line-height:1.6}.home-news-controls{position:absolute;z-index:2;right:16px;bottom:16px;display:flex;align-items:center;gap:8px}.home-news-controls button{width:30px;height:30px;border:1px solid var(--border);border-radius:50%;background:rgba(10,15,13,.8);color:var(--text-hi)}.home-news-dots{display:flex;gap:5px}.home-news-dot{width:7px!important;height:7px!important;padding:0;border-radius:50%!important;background:var(--text-low)!important}.home-news-dot.active{background:var(--green)!important}
+  .home-news{max-width:980px;margin:34px auto 0;padding:0 28px}
+.retiro{max-width:980px;margin:22px auto 0;padding:0 28px}
+.retiro-card{display:flex;flex-direction:column;align-items:center;gap:14px;padding:30px 24px;text-align:center;border:1px solid var(--border);border-radius:14px;background:linear-gradient(180deg,var(--panel-2),var(--panel))}
+.retiro-badge{padding:4px 12px;border-radius:999px;border:1px solid var(--green-dim);background:rgba(52,232,143,.08);color:var(--green);font:700 10px Oswald;letter-spacing:.16em;text-transform:uppercase}
+.retiro-title{margin:0;font:700 clamp(28px,5vw,44px)/1.05 Oswald;letter-spacing:.02em;color:var(--text-hi)}
+.retiro-box{min-width:min(100%,260px);padding:22px 30px;border:2px solid var(--green);border-radius:14px;background:rgba(52,232,143,.06);box-shadow:0 0 0 4px rgba(52,232,143,.07)}
+.retiro-days{font:700 clamp(54px,12vw,92px)/1 Oswald;color:var(--green);letter-spacing:-.03em}
+.retiro-unit{margin-top:2px;font:600 14px Oswald;letter-spacing:.3em;text-transform:uppercase;color:var(--text-mid)}
+.retiro-date{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font:600 13px Inter,Arial,sans-serif;color:var(--text-hi)}
+.retiro-thanks{margin:0;font:600 clamp(15px,2.6vw,19px)/1.4 Inter,Arial,sans-serif;color:var(--text-hi)}
+@media(max-width:600px){.retiro{padding:0 16px}.retiro-card{padding:24px 16px}.retiro-box{padding:18px 20px}}.home-news-card{position:relative;min-height:190px;display:flex;align-items:flex-end;overflow:hidden;border:1px solid var(--border);border-radius:10px;background:var(--panel)}.home-news-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.42}.home-news-card:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,15,13,.96),rgba(10,15,13,.45),rgba(10,15,13,.2))}.home-news-copy{position:relative;z-index:1;max-width:650px;padding:24px}.home-news-copy h2{font:700 28px Oswald}.home-news-copy p{margin-top:8px;color:var(--text-mid);font-size:13px;line-height:1.6}.home-news-controls{position:absolute;z-index:2;right:16px;bottom:16px;display:flex;align-items:center;gap:8px}.home-news-controls button{width:30px;height:30px;border:1px solid var(--border);border-radius:50%;background:rgba(10,15,13,.8);color:var(--text-hi)}.home-news-dots{display:flex;gap:5px}.home-news-dot{width:7px!important;height:7px!important;padding:0;border-radius:50%!important;background:var(--text-low)!important}.home-news-dot.active{background:var(--green)!important}
 
   /* ---------- SECTIONS ---------- */
   section.block{max-width:1180px; margin:0 auto; padding:60px 28px;}
@@ -404,6 +414,19 @@
 <div class="ticker"><div class="ticker-track" id="tickerTrack"></div></div>
 <section class="home-news" id="homeNews" aria-label="Noticias"></section>
 
+<section class="retiro" id="retiroGiova" aria-label="Retiro de Giova">
+  <div class="retiro-card">
+    <span class="retiro-badge">Anuncio</span>
+    <h2 class="retiro-title">Retiro Giova</h2>
+    <div class="retiro-box" role="timer" aria-live="polite">
+      <div class="retiro-days" id="retiroDays">--</div>
+      <div class="retiro-unit" id="retiroUnit">días</div>
+      <div class="retiro-date">31 de diciembre de 2026</div>
+    </div>
+    <p class="retiro-thanks">Gracias por todo Giova, Te extrañaremos</p>
+  </div>
+</section>
+
 <section class="block" id="resumen">
   <div class="block-head"><div class="block-title">Resumen</div></div>
   <div class="panel-grid">
@@ -592,7 +615,7 @@
       if (savedSession && savedSession.username){
         const account = state.accounts.find(item => String(item.username).toLowerCase() === String(savedSession.username).toLowerCase());
         session = account ? {username: account.username, role: account.role || 'pendiente'} : savedSession;
-        if (account){ try{ localStorage.setItem('hfa:session', JSON.stringify(session)); if (session.role === 'admin') localStorage.setItem('hfa:adminAuth', account.passHash); else localStorage.removeItem('hfa:adminAuth'); }catch(e){} }
+        if (account){ try{ localStorage.setItem('hfa:session', JSON.stringify(session)); if (['admin','moderador','prueba_moderador'].includes(session.role)) localStorage.setItem('hfa:adminAuth', account.passHash); else localStorage.removeItem('hfa:adminAuth'); }catch(e){} }
       }
     }catch(e){}
   }
@@ -708,9 +731,27 @@
     track.innerHTML = build() + build();
   }
   function renderTicker(){
-    const items = ['1','2','3','4'].map(k => {
+    const items = [];
+    ['1','2','3','4'].forEach(k => {
       const d = state.divisions[k] || {};
-      return `${k}D · ${esc(d.name||'Sin nombre')} · ${matchRoundLabel(d.round)}`;
+      const label = `${k}D · ${esc(d.name||'Sin nombre')}`;
+      const rounds = {};
+      state.matches.filter(m => String(m.division) === k).forEach(m => {
+        const n = Number(m.round) || 1;
+        rounds[n] = rounds[n] || {total:0, done:0};
+        rounds[n].total++;
+        if (m.finished) rounds[n].done++;
+      });
+      const numbers = Object.keys(rounds).map(Number).sort((x,y) => x-y);
+      if (!numbers.length) { items.push(`${label} · Sin jornadas todavía`); return; }
+      let current = numbers.find(n => rounds[n].done < rounds[n].total);
+      if (current === undefined) current = numbers[numbers.length-1];
+      const at = numbers.indexOf(current);
+      numbers.slice(Math.max(0, at-1), at+3).forEach(n => {
+        const r = rounds[n];
+        const status = r.done === r.total ? 'finalizada ✓' : (n === current ? `en curso · ${r.done}/${r.total} jugados` : 'próxima');
+        items.push(`${label} · J${n} · ${status}`);
+      });
     });
     const build = () => items.map(t => `<span>${t}</span>`).join('<span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>');
     document.getElementById('tickerTrack').innerHTML = build() + '<span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>' + build();
@@ -1291,7 +1332,21 @@
   }
 
   // ---------- Render global ----------
+  function renderRetiro(){
+    const daysEl = document.getElementById('retiroDays');
+    if (!daysEl) return;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const target = new Date(2026, 11, 31);
+    const days = Math.round((target - today) / 86400000);
+    const unit = document.getElementById('retiroUnit');
+    if (days > 0) { daysEl.textContent = String(days); unit.textContent = days === 1 ? 'día' : 'días'; }
+    else if (days === 0) { daysEl.textContent = '¡Hoy!'; unit.textContent = 'es el día'; }
+    else { daysEl.textContent = '0'; unit.textContent = 'días'; }
+  }
+  setInterval(renderRetiro, 60000);
   function renderAll(){
+    renderRetiro();
     renderHero();
     renderTicker();
     renderHomeNews();
@@ -1383,7 +1438,7 @@
         if (passHash !== account.passHash){ hint.textContent = 'Contraseña incorrecta.'; hint.style.color = 'var(--red)'; return; }
         session = {username: account.username, role: account.role};
         localStorage.setItem('hfa:session', JSON.stringify(session));
-        if (session.role === 'admin') localStorage.setItem('hfa:adminAuth', account.passHash); else localStorage.removeItem('hfa:adminAuth');
+        if (['admin','moderador','prueba_moderador'].includes(session.role)) localStorage.setItem('hfa:adminAuth', account.passHash); else localStorage.removeItem('hfa:adminAuth');
         renderAll();
         showLoginWelcome(session.username);
       }

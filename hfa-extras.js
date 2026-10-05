@@ -49,7 +49,7 @@
   applyTheme(readTheme());
 
   var BASE_CSS = '.hfa-x-fab{position:fixed;left:16px;bottom:16px;z-index:9990;display:flex;gap:8px}.hfa-x-fab button{border:1px solid var(--border,#22302a);background:var(--panel,#121a17);color:var(--text-hi,#f2f6f4);border-radius:8px;padding:10px 13px;font:600 13px Inter,Arial,sans-serif;cursor:pointer;box-shadow:0 6px 18px #0005}.hfa-x-fab button:hover{border-color:var(--green,#34e88f)}.hfa-x-theme-panel{position:fixed;left:16px;bottom:64px;z-index:9991;min-width:220px;max-height:min(70vh,430px);overflow:auto;padding:12px;border:1px solid var(--border,#22302a);border-radius:10px;background:var(--panel,#121a17);color:var(--text-hi,#f2f6f4);font:13px Inter,Arial,sans-serif;box-shadow:0 14px 40px #0008}.hfa-x-theme-panel[hidden]{display:none}.hfa-x-theme-panel strong{display:block;margin-bottom:8px}.hfa-x-theme-opt{display:flex;align-items:center;gap:10px;width:100%;padding:8px 9px;margin-top:4px;border:1px solid transparent;border-radius:7px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}.hfa-x-theme-opt:hover{background:var(--panel-2,#16201c)}.hfa-x-theme-opt[aria-pressed=true]{border-color:var(--green,#34e88f)}.hfa-x-dot{width:16px;height:16px;border-radius:50%;border:1px solid #0006;flex:none}' +
-    '.hfa-tour-shield{position:fixed;inset:0;z-index:30000;background:transparent}.hfa-tour-hole{position:fixed;z-index:30001;border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.66),0 0 0 3px var(--green,#34e88f);pointer-events:none}.hfa-tour-hole.full{box-shadow:none;background:rgba(0,0,0,.66);border-radius:0}.hfa-tour-card{position:fixed;z-index:30002;width:min(350px,calc(100vw - 24px));padding:16px;border:1px solid var(--green,#34e88f);border-radius:10px;background:var(--panel,#121a17);color:var(--text-hi,#f2f6f4);font:14px/1.5 Inter,Arial,sans-serif;box-shadow:0 18px 50px #000a}.hfa-tour-card h4{margin:0 0 6px;font-size:15px;color:var(--green,#34e88f)}.hfa-tour-card p{margin:0 0 14px;color:var(--text-mid,#9fb3ac)}.hfa-tour-row{display:flex;align-items:center;justify-content:space-between;gap:8px}.hfa-tour-row small{color:var(--text-low,#5c706a)}.hfa-tour-row button{border:1px solid var(--border,#22302a);background:var(--panel-2,#16201c);color:var(--text-hi,#f2f6f4);border-radius:6px;padding:7px 12px;font:600 12px Inter,Arial,sans-serif;cursor:pointer}.hfa-tour-row button.primary{background:var(--green,#34e88f);border-color:var(--green,#34e88f);color:#05130c}.hfa-tour-row button.hfa-tour-skip{background:none;border:0;color:var(--text-low,#5c706a);text-decoration:underline}@media(max-width:520px){.hfa-x-fab{bottom:76px}.hfa-x-theme-panel{bottom:124px}}';
+    '.hfa-staff-toast{position:fixed;right:16px;bottom:16px;z-index:9995;width:min(340px,calc(100vw - 32px));padding:14px 16px;border:1px solid #ff7a7a;border-left-width:5px;border-radius:10px;background:var(--panel,#121a17);color:var(--text-hi,#f2f6f4);font:13px/1.45 Inter,Arial,sans-serif;box-shadow:0 14px 40px #000a}.hfa-staff-toast b{display:block;color:#ff9a9a;font-size:14px}.hfa-staff-toast span{display:block;margin:4px 0 10px;color:var(--text-mid,#9fb3ac)}.hfa-staff-toast div{display:flex;gap:8px}.hfa-staff-toast a,.hfa-staff-toast button{padding:7px 12px;border-radius:6px;border:1px solid var(--border,#22302a);background:var(--panel-2,#16201c);color:inherit;font:600 12px Inter,Arial,sans-serif;text-decoration:none;cursor:pointer}.hfa-staff-toast a{background:#ff7a7a;border-color:#ff7a7a;color:#1a0707}@media(max-width:520px){.hfa-staff-toast{bottom:76px}}.hfa-tour-shield{position:fixed;inset:0;z-index:30000;background:transparent}.hfa-tour-hole{position:fixed;z-index:30001;border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.66),0 0 0 3px var(--green,#34e88f);pointer-events:none}.hfa-tour-hole.full{box-shadow:none;background:rgba(0,0,0,.66);border-radius:0}.hfa-tour-card{position:fixed;z-index:30002;width:min(350px,calc(100vw - 24px));padding:16px;border:1px solid var(--green,#34e88f);border-radius:10px;background:var(--panel,#121a17);color:var(--text-hi,#f2f6f4);font:14px/1.5 Inter,Arial,sans-serif;box-shadow:0 18px 50px #000a}.hfa-tour-card h4{margin:0 0 6px;font-size:15px;color:var(--green,#34e88f)}.hfa-tour-card p{margin:0 0 14px;color:var(--text-mid,#9fb3ac)}.hfa-tour-row{display:flex;align-items:center;justify-content:space-between;gap:8px}.hfa-tour-row small{color:var(--text-low,#5c706a)}.hfa-tour-row button{border:1px solid var(--border,#22302a);background:var(--panel-2,#16201c);color:var(--text-hi,#f2f6f4);border-radius:6px;padding:7px 12px;font:600 12px Inter,Arial,sans-serif;cursor:pointer}.hfa-tour-row button.primary{background:var(--green,#34e88f);border-color:var(--green,#34e88f);color:#05130c}.hfa-tour-row button.hfa-tour-skip{background:none;border:0;color:var(--text-low,#5c706a);text-decoration:underline}@media(max-width:520px){.hfa-x-fab{bottom:76px}.hfa-x-theme-panel{bottom:124px}}';
 
   function addCss() { var s = document.createElement('style'); s.textContent = BASE_CSS; document.head.appendChild(s); }
 
@@ -125,8 +125,9 @@
       { sel: '#navRight', title: 'Tu cuenta', text: 'Inicia sesión o crea tu cuenta con tu nombre de Habbo. Con la sesión iniciada verás tu perfil y tus notificaciones.' },
       { sel: '.hero', title: 'Portada de la liga', text: 'Resumen rápido de la liga: cuántos equipos y partidos hay y un saludo para ti si ya iniciaste sesión.' },
       { sel: '.hero-actions', title: 'Accesos rápidos', text: 'Botones directos a las secciones más usadas. El acceso al panel de administración solo aparece al personal con rol.' },
-      { sel: function () { var t = document.getElementById('tickerTrack'); return t && t.parentElement; }, title: 'Cinta de novedades', text: 'Aquí pasan los últimos resultados y avisos de la liga.' },
+      { sel: function () { var t = document.getElementById('tickerTrack'); return t && t.parentElement; }, title: 'Cinta de novedades', text: 'Aquí pasan las jornadas de cada división a medida que se van creando, con su estado: finalizada, en curso o próxima.' },
       { sel: '#homeNews', title: 'Noticias', text: 'Las novedades más recientes publicadas por la administración. Usa las flechas para ver más.' },
+      { sel: '#retiroGiova', title: 'Retiro Giova', text: 'Cuenta atrás en días hasta el 31 de diciembre de 2026, con el mensaje de agradecimiento a Giova.' },
       { sel: '#resumenNextMatch', title: 'Próximo partido', text: 'El siguiente encuentro programado, con fecha y hora.' },
       { sel: '#resumenTeams', title: 'Equipos', text: 'Los equipos de cada división de un vistazo.' },
       { sel: '#resumenFinished', title: 'Últimos resultados', text: 'Los partidos ya jugados. Pulsa uno para ver el acta completa.' }
@@ -181,7 +182,7 @@
     'seccion:cuenta': [
       { sel: '.account-layout', title: 'Tu cuenta', text: 'Tu perfil: avatar, posición, país y datos de juego.' },
       { sel: '.profile-avatar', title: 'Tu keko', text: 'Tu avatar de Habbo tal como lo verán los demás.' },
-      { sel: '#hfaPassCard', title: 'Cambiar contraseña', text: 'Escribe tu contraseña actual y la nueva dos veces para cambiarla.' },
+      { sel: '#hfaPassOpen', title: 'Cambiar contraseña', text: 'Pulsa este botón para cambiar tu contraseña: te pedirá la actual y la nueva dos veces.' },
       { sel: '.mailbox-panel', title: 'Ofertas', text: 'Aquí llegan las ofertas de los equipos para que las aceptes o rechaces.', optional: true }
     ],
     'seccion:buzon': [
@@ -337,7 +338,47 @@
     }, 500);
   }
 
-  function init() { addCss(); buildFab(); autoTour(); }
+  function init() { addCss(); buildFab(); autoTour(); staffToast(); }
+  /* ---------- Aviso al personal: presentes con VPN / ExitLag (en cualquier página) ---------- */
+  function staffToast() {
+    var s = readSession();
+    if (!s || ['admin', 'moderador', 'prueba_moderador'].indexOf(s.role) === -1) return;
+    if (pageKey() === 'seccion:admin') return; /* en el panel ya hay un aviso propio */
+    function seen() { try { return JSON.parse(localStorage.getItem('hfa:attSeen') || '[]') || []; } catch (e) { return []; } }
+    function check() {
+      if (document.hidden) return;
+      fetch('/api/db?key=matches', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (res) {
+        if (!res || !res.ok || typeof res.value !== 'string') return;
+        var matches = []; try { matches = JSON.parse(res.value) || []; } catch (e) { return; }
+        var done = {}; seen().forEach(function (k) { done[k] = 1; });
+        var fresh = [];
+        matches.forEach(function (m) {
+          var att = m.attendance || {}, info = m.attendanceInfo || {};
+          Object.keys(att).forEach(function (name) {
+            if (!att[name]) return;
+            var rec = info[name] || {}, d = rec.detected;
+            var risky = rec.conn === 'exitlag' || rec.conn === 'vpn' || (d && d.checked && (d.vpn || d.proxy || d.datacenter));
+            var key = m.id + '|' + name + '|' + (rec.at || att[name]);
+            if (risky && !done[key]) fresh.push({ key: key, name: name });
+          });
+        });
+        var old = document.getElementById('hfaStaffToast');
+        if (!fresh.length) { if (old) old.remove(); return; }
+        if (!old) { old = document.createElement('div'); old.id = 'hfaStaffToast'; old.setAttribute('role', 'alert'); document.body.appendChild(old); }
+        old.className = 'hfa-staff-toast';
+        old.innerHTML = '<b>⚠ ' + fresh.length + (fresh.length === 1 ? ' presente' : ' presentes') + ' con VPN o ExitLag</b><span></span><div><a class="hfa-toast-go" href="seccion.html?view=admin#presentes">Ver presentes</a><button type="button" data-toast-close>Cerrar</button></div>';
+        old.querySelector('span').textContent = fresh.slice(0, 3).map(function (f) { return f.name; }).join(', ') + (fresh.length > 3 ? '…' : '');
+        old.querySelector('[data-toast-close]').onclick = function () {
+          var list = seen(); fresh.forEach(function (f) { list.push(f.key); });
+          try { localStorage.setItem('hfa:attSeen', JSON.stringify(list.slice(-800))); } catch (e) {}
+          old.remove();
+        };
+      }).catch(function () {});
+    }
+    setTimeout(check, 2500);
+    setInterval(check, 60000);
+  }
+
   window.HFAExtras = { startTour: function () { startTour(true); }, applyTheme: applyTheme };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
