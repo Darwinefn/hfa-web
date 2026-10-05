@@ -235,6 +235,45 @@ async function lookupIp(ip) {
   return { checked: false };
 }
 
+// Quien puede ver las IP de los presentes: admin y moderadores (se verifica usuario + hash de contraseña).
+async function isStaff(body) {
+  if (!process.env.MONGODB_URI) return false;
+  const adminId = String((body && body.adminUser) || '').trim().toLowerCase();
+  if (!adminId) return false;
+  const account = await (await mongoAccountsCollection()).findOne({ _id: adminId });
+  if (!account || !account.passHash || String(account.passHash) !== String((body && body.adminHash) || '')) return false;
+  return ['admin', 'moderador', 'prueba_moderador'].indexOf(normalizeRole(account.role)) !== -1;
+}
+
+// La IP de cada presente se guarda en una colección privada (nunca en los datos públicos del partido).
+async function logAttendance(body, ip, conn, geo, ipChanged, shared) {
+  try {
+    const matchId = String((body && body.matchId) || '').slice(0, 80);
+    const username = String((body && body.username) || '').trim().toLowerCase();
+    if (!matchId || !/^[a-z0-9._-]{3,25}$/.test(username)) return;
+    const now = new Date();
+    await (await mongoDb()).collection('attendance_log').updateOne(
+      { matchId: matchId, username: username },
+      {
+        $set: { ip: ip, conn: conn, at: now, vpn: !!geo.vpn, proxy: !!geo.proxy, datacenter: !!geo.datacenter, isp: geo.isp || '', ipChanged: !!ipChanged, shared: shared || 0 },
+        $addToSet: { ips: ip },
+        $setOnInsert: { firstAt: now }
+      },
+      { upsert: true }
+    );
+  } catch (e) {}
+}
+
+async function attendanceIps(body) {
+  if (!(await isStaff(body))) return { ok: false };
+  const filter = body.matchId ? { matchId: String(body.matchId).slice(0, 80) } : {};
+  const rows = await (await mongoDb()).collection('attendance_log').find(filter).sort({ at: -1 }).limit(2000).toArray();
+  return {
+    ok: true,
+    rows: rows.map(row => ({ matchId: row.matchId, username: row.username, ip: row.ip || '', ips: row.ips || [], conn: row.conn || '', at: row.at }))
+  };
+}
+
 async function checkConnection(body, req) {
   const ip = clientIp(req);
   const id = String((body && body.username) || '').trim().toLowerCase();
@@ -249,6 +288,7 @@ async function checkConnection(body, req) {
     } catch (e) {}
   }
   const geo = await lookupIp(ip);
+  await logAttendance(body, ip, String((body && body.conn) || '').slice(0, 12), geo, ipChanged, shared);
   return { ok: true, checked: !!geo.checked, vpn: !!geo.vpn, proxy: !!geo.proxy, datacenter: !!geo.datacenter, isp: geo.isp || '', ipChanged: ipChanged, shared: shared };
 }
 
@@ -321,6 +361,10 @@ module.exports = async (req, res) => {
       if (body.action === 'setRole') {
         const ok = await setRole(body);
         return res.status(ok ? 200 : 403).json({ ok: ok });
+      }
+      if (body.action === 'attendanceIps') {
+        const result = await attendanceIps(body);
+        return res.status(result.ok ? 200 : 403).json(result);
       }
       if (body.action === 'checkConn') {
         return res.status(200).json(await checkConnection(body, req));
