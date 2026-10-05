@@ -367,7 +367,7 @@ async function setValue(key, value, req) {
    Requiere MongoDB (MONGODB_URI).
    ===================================================================== */
 const crypto = require('crypto');
-const COIN_CFG = { welcome: 500, daily: 100, minBet: 10, maxBet: 2000, margin: 0.08, maxTransfer: 100000 };
+const COIN_CFG = { welcome: 0, minBet: 10, maxBet: 2000, margin: 0.08 };   // el saldo solo lo reparte un administrador
 const BACKUP_COLLS = ['app_data', 'accounts', 'role_assignments', 'wallets', 'wallet_tx', 'bets'];
 let indexesReady = false;
 
@@ -494,7 +494,7 @@ async function betOdds() {
     const state = matchState(m, now);
     list.push({ id: String(m.id), state: state, kickoff: kickoffMs(m), odds: computeOdds(form, m) });
   });
-  return { ok: true, now: now, matches: list, config: { minBet: COIN_CFG.minBet, maxBet: COIN_CFG.maxBet, daily: COIN_CFG.daily } };
+  return { ok: true, now: now, matches: list, config: { minBet: COIN_CFG.minBet, maxBet: COIN_CFG.maxBet } };
 }
 
 /* ---------- liquidación automática (sincronizada con los resultados) ---------- */
@@ -543,42 +543,7 @@ async function walletGet(body) {
   const sums = await (await dbc('wallet_tx')).aggregate([{ $match: { username: id } }, { $group: { _id: { $gt: ['$amount', 0] }, total: { $sum: '$amount' } } }]).toArray();
   let income = 0, expense = 0;
   sums.forEach(s => { if (s._id) income = s.total; else expense = -s.total; });
-  const nextDaily = wallet.lastDaily ? new Date(wallet.lastDaily).getTime() + 86400000 : 0;
-  return { ok: true, wallet: { username: wallet.username, number: wallet.number, balance: wallet.balance, createdAt: wallet.createdAt, nextDaily: nextDaily }, income: income, expense: expense, tx: tx, bets: bets, config: { minBet: COIN_CFG.minBet, maxBet: COIN_CFG.maxBet, daily: COIN_CFG.daily }, now: Date.now() };
-}
-
-async function walletDaily(body) {
-  const account = await authUser(body);
-  if (!account) return { ok: false, error: 'auth' };
-  const id = String(account._id);
-  const w = await openWallet(account);
-  const now = Date.now(), cutoff = new Date(now - 86400000).toISOString();
-  const r = unwrap(await (await dbc('wallets')).findOneAndUpdate(
-    { _id: id, $or: [{ lastDaily: null }, { lastDaily: { $lte: cutoff } }] },
-    { $inc: { balance: COIN_CFG.daily }, $set: { lastDaily: new Date(now).toISOString() } }, { returnDocument: 'after' }));
-  if (!r) return { ok: false, error: 'wait', nextDaily: new Date(w.lastDaily).getTime() + 86400000 };
-  await addTx(id, 'deposit', COIN_CFG.daily, r.balance, 'Ingreso diario HFA');
-  return { ok: true, balance: r.balance };
-}
-
-async function walletTransfer(body) {
-  const account = await authUser(body);
-  if (!account) return { ok: false, error: 'auth' };
-  const from = String(account._id);
-  const to = String((body && body.to) || '').trim().toLowerCase();
-  const amount = Math.floor(Number(body && body.amount));
-  const note = String((body && body.note) || '').trim().slice(0, 80);
-  if (!/^[a-z0-9._-]{3,25}$/.test(to) || to === from) return { ok: false, error: 'dest' };
-  if (!(amount >= 1 && amount <= COIN_CFG.maxTransfer)) return { ok: false, error: 'amount' };
-  const target = await (await dbc('wallets')).findOne({ _id: to });
-  if (!target) return { ok: false, error: 'nodest' };
-  await openWallet(account);
-  const after = await debit(from, amount);
-  if (!after) return { ok: false, error: 'funds' };
-  const got = await credit(to, amount);
-  await addTx(from, 'transfer_out', -amount, after.balance, 'Transferencia a ' + target.username + (note ? ' · ' + note : ''), to);
-  await addTx(to, 'transfer_in', amount, got ? got.balance : 0, 'Transferencia de ' + account.username + (note ? ' · ' + note : ''), from);
-  return { ok: true, balance: after.balance };
+  return { ok: true, wallet: { username: wallet.username, number: wallet.number, balance: wallet.balance, createdAt: wallet.createdAt }, income: income, expense: expense, tx: tx, bets: bets, config: { minBet: COIN_CFG.minBet, maxBet: COIN_CFG.maxBet }, now: Date.now() };
 }
 
 async function betPlace(body) {
@@ -615,6 +580,17 @@ async function betPlace(body) {
 async function walletTop() {
   const rows = await (await dbc('wallets')).find({}).sort({ balance: -1 }).limit(10).toArray();
   return { ok: true, rows: rows.map(r => ({ username: r.username, balance: r.balance })) };
+}
+
+
+// Solo admin: todas las cuentas con su saldo, para repartir HFA COIN persona por persona.
+async function walletList(body) {
+  const admin = await authAdmin(body);
+  if (!admin) return { ok: false, error: 'auth' };
+  const accounts = await (await mongoAccountsCollection()).find({}, { projection: { username: 1 } }).sort({ username: 1 }).toArray();
+  const wallets = await (await dbc('wallets')).find({}).toArray();
+  const bal = {}; wallets.forEach(w => { bal[w._id] = w.balance; });
+  return { ok: true, rows: accounts.map(a => ({ username: a.username, balance: bal[String(a._id)] || 0 })) };
 }
 
 // Solo admin: ingresar o retirar HFA COIN a una cuenta (premios, correcciones...).
@@ -736,8 +712,7 @@ module.exports = async (req, res) => {
         return res.status(ok ? 200 : 403).json({ ok: ok });
       }
       if (body.action === 'walletGet') { const r = await walletGet(body); return res.status(r.ok ? 200 : 403).json(r); }
-      if (body.action === 'walletDaily') { const r = await walletDaily(body); return res.status(r.ok ? 200 : 403).json(r); }
-      if (body.action === 'walletTransfer') { const r = await walletTransfer(body); return res.status(r.ok ? 200 : 400).json(r); }
+      if (body.action === 'walletList') { const r = await walletList(body); return res.status(r.ok ? 200 : 403).json(r); }
       if (body.action === 'walletAdmin') { const r = await walletAdmin(body); return res.status(r.ok ? 200 : 403).json(r); }
       if (body.action === 'walletTop') { return res.status(200).json(await walletTop()); }
       if (body.action === 'betOdds') { return res.status(200).json(await betOdds()); }
