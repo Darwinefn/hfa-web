@@ -28,7 +28,7 @@ nav.links a{padding:6px 2px;border-bottom:2px solid transparent;transition:color
 nav.links a:hover,nav.links a.active{color:var(--text-hi);border-color:var(--green)}
 .nav-admin{color:var(--amber)!important}
 .nav-right{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-mid);flex-shrink:0}
-.nav-right img{width:26px;height:26px;border-radius:50%;background:var(--panel-2);border:1px solid var(--border)}
+.nav-right img,.rank img,.acc-holder img,.arow img{object-fit:cover;object-position:center}.nav-right img{width:32px;height:32px;border-radius:50%;background:var(--panel-2);border:1px solid var(--border)}.nav-right a.me{display:flex;align-items:center;gap:8px;color:var(--text-hi);font-weight:600}.nav-right a.me:hover span{color:var(--green)}.nav-right .btn{padding:7px 14px}
 @media(max-width:850px){header{flex-wrap:wrap;padding:12px 16px}.nav-left{width:100%;flex-direction:column;align-items:flex-start;gap:8px}nav.links{max-width:100%;width:100%}}
 
 main{max-width:1100px;margin:0 auto;padding:34px 24px 80px}
@@ -148,6 +148,7 @@ details.fin>summary{cursor:pointer;color:var(--text-mid);font:600 13px 'Inter',s
 .rank:nth-child(-n+3) .pos-n{color:var(--green)}
 .rank img{width:34px;height:34px;border-radius:50%;background:var(--panel-2);border:1px solid var(--border)}
 .rank .nm{flex:1;font-weight:600}.rank.me{background:rgba(52,232,143,.06)}
+.arow{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--border);flex-wrap:wrap}.arow img{width:34px;height:34px;border-radius:50%;background:var(--panel-2);border:1px solid var(--border)}.arow .nm{flex:1;min-width:110px;font-weight:600}.arow input{width:110px}
 .stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
 .stats3 div{padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--panel);font-size:12px;color:var(--text-mid)}
 .stats3 b{display:block;margin-top:4px;font:700 22px 'Oswald',sans-serif;color:var(--text-hi)}
@@ -174,7 +175,7 @@ details.fin>summary{cursor:pointer;color:var(--text-mid);font:600 13px 'Inter',s
   <section class="top">
     <div>
       <h1 class="page-title">Apuestas HFA</h1>
-      <p class="page-sub">Apuesta HFA COIN en los partidos de la liga. Las cuotas se calculan con los resultados reales y tus ganancias llegan a tu cuenta cuando el árbitro cierra el acta.</p>
+      <p class="page-sub">Apuesta HFA COIN en los partidos de la liga. Las cuotas se calculan con los resultados reales y tus ganancias llegan a tu cuenta cuando el árbitro cierra el acta. Tu saldo lo ingresa un administrador.</p>
       <div id="chipSlot"></div>
     </div>
     <div class="note-wrap" id="heroNote"></div>
@@ -200,10 +201,10 @@ const fmt=n=>String(Math.round(Number(n)||0)).replace(/\B(?=(\d{3})+(?!\d))/g,'.
 const LOGO='EDITABLE_HF.png';
 const coinIcon='<span class="coin"><img src="'+LOGO+'" alt=""></span>';
 const amt=n=>'<span class="amt">'+coinIcon+fmt(n)+'</span>';
-const avatar=u=>'https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(u)+'&size=s&direction=2&head_direction=2&gesture=sml&action=std&headonly=1';
+const avatar=u=>'https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(u)+'&size=b&direction=2&head_direction=2&gesture=sml&action=std&headonly=1';
 
 let session=null,passHash='',tab='apostar';
-let teams=[],matches=[],oddsById={},skew=0,cfg={minBet:10,maxBet:2000,daily:100};
+let teams=[],matches=[],oddsById={},skew=0,cfg={minBet:10,maxBet:2000};
 let W=null;                 // datos de wallet
 let top=[];
 let sel=null,stake=100;     // selección de apuesta
@@ -232,7 +233,7 @@ function nav(){
   const links=session?[['afh-liga.html','Inicio',''],['seccion.html?view=comunidad','Comunidad',''],['clasificacion.html','Clasificación',''],['seccion.html?view=torneos','Torneos',''],['seccion.html?view=estadisticas','Estadísticas',''],['seccion.html?view=partidos','Partidos',''],['apuestas.html','Apuestas','active'],['seccion.html?view=album','Álbum',''],['seccion.html?view=cuenta','Cuenta',''],['seccion.html?view=buzon','Buzón','']]:[['afh-liga.html','Inicio',''],['apuestas.html','Apuestas','active']];
   if(session&&['admin','prueba_moderador','moderador','arbitro'].includes(session.role))links.push(['seccion.html?view=admin','Admin','nav-admin']);
   $('#nav').innerHTML=links.map(l=>'<a class="'+l[2]+'" href="'+l[0]+'">'+l[1]+'</a>').join('');
-  $('#navRight').innerHTML=session?'<img src="'+avatar(session.username)+'" alt=""><span>'+esc(session.username)+'</span>':'<a href="seccion.html?view=cuenta" class="btn btn-primary" style="padding:7px 14px">Iniciar sesión</a>';
+  $('#navRight').innerHTML=session?'<a class="me" href="seccion.html?view=cuenta" title="Entrar a mi cuenta"><img src="'+avatar(session.username)+'" alt=""><span>'+esc(session.username)+'</span></a><button type="button" class="btn" id="logoutButton">Salir</button>':'<a href="seccion.html?view=cuenta" class="btn btn-primary" style="padding:7px 14px">Iniciar sesión</a>';
 }
 
 /* ---------- datos de partidos ---------- */
@@ -324,18 +325,13 @@ function viewMis(){
 function viewWallet(){
   if(!session)return loginNotice();
   if(!W)return'<div class="notice">Abriendo tu cuenta…</div>';
-  const w=W.wallet,wait=w.nextDaily>nowS(),mins=Math.ceil((w.nextDaily-nowS())/60000);
-  const daily=wait?'Ingreso diario en '+(mins>=60?Math.floor(mins/60)+' h '+(mins%60)+' min':mins+' min'):'Cobrar ingreso diario +'+cfg.daily;
+  const w=W.wallet;
   let h='<div class="bank"><div class="account"><div class="acc-top"><span>HFA BANK · CUENTA HFA COIN</span>'+coinIcon.replace('class="coin"','class="coin" style="font-size:20px"')+'</div>'+
    '<div class="acc-bal"><span class="num">'+fmt(w.balance)+'</span><span style="font-size:.4em;color:var(--text-mid);font-weight:500">HFA COIN</span></div><div class="low" style="font-size:12px">Saldo disponible</div>'+
    '<div class="acc-iban">'+esc(w.number)+'</div>'+
    '<div class="acc-holder"><img src="'+avatar(w.username)+'" alt=""><span>Titular: <b style="color:var(--text-hi)">'+esc(w.username)+'</b> · abierta el '+new Date(w.createdAt).toLocaleDateString('es-ES')+'</span></div>'+
-   '<div class="acc-sums"><div class="in">Ingresos totales<b class="num">+'+fmt(W.income)+'</b></div><div class="out">Gastos totales<b class="num">−'+fmt(W.expense)+'</b></div></div>'+
-   '<div class="acc-actions"><button type="button" class="btn btn-primary" data-daily '+(wait?'disabled':'')+'>'+daily+'</button></div><div class="hint" id="dailyHint"></div></div>'+
-   '<div class="side">'+
-   '<div class="card" style="width:100%"><div class="section-h" style="margin-top:0">Transferir</div>'+
-   '<div class="form-row"><div><label class="f" for="trTo">Usuario de destino</label><input id="trTo" class="input" maxlength="25" autocomplete="off"></div><div><label class="f" for="trAmt">Importe</label><input id="trAmt" class="input num" type="number" min="1" inputmode="numeric"></div></div>'+
-   '<label class="f" for="trNote">Concepto (opcional)</label><input id="trNote" class="input" maxlength="60" style="margin-bottom:12px"><button type="button" class="btn btn-primary" data-transfer>Enviar HFA COIN</button><div class="hint" id="trHint" role="status"></div></div></div></div>';
+   '<div class="acc-sums"><div class="in">Ingresos totales<b class="num">+'+fmt(W.income)+'</b></div><div class="out">Gastos totales<b class="num">−'+fmt(W.expense)+'</b></div></div></div>'+
+   '<div class="card"><div class="section-h" style="margin-top:0">¿Cómo consigo HFA COIN?</div><p class="muted" style="font-size:13.5px;line-height:1.7">Los administradores de la HFA ingresan en tu cuenta la cantidad que te corresponde. Tus apuestas ganadas se suman solas a tu saldo cuando termina el partido. Las HFA COIN no se pueden transferir entre usuarios.</p></div></div>';
   h+='<div class="section-h" style="margin-top:28px">Movimientos</div><div class="card scroll-x" style="padding:6px 8px">';
   h+=W.tx.length?'<table class="stmt"><thead><tr><th>Fecha</th><th>Concepto</th><th class="r">Importe</th><th class="r">Saldo</th></tr></thead><tbody>'+W.tx.map(t=>'<tr><td class="low" style="white-space:nowrap">'+new Date(t.at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'</td><td>'+esc(t.note)+'</td><td class="r num '+(t.amount>0?'pos':'neg')+'">'+(t.amount>0?'+':'−')+fmt(Math.abs(t.amount))+'</td><td class="r num">'+fmt(t.balance)+'</td></tr>').join('')+'</tbody></table>':'<div class="notice" style="border:0">Sin movimientos todavía.</div>';
   return h+'</div>';
@@ -346,12 +342,22 @@ function viewRanking(){
   if(!top.length)return'<div class="notice">Aún no hay cuentas abiertas.</div>';
   return'<div class="card">'+top.map((r,i)=>'<div class="rank'+(session&&r.username.toLowerCase()===session.username.toLowerCase()?' me':'')+'"><span class="pos-n">'+(i+1)+'</span><img src="'+avatar(r.username)+'" alt=""><span class="nm">'+esc(r.username)+'</span>'+amt(r.balance)+'</div>').join('')+'</div>';
 }
-function viewAdmin(){
-  return'<div class="card" style="max-width:520px"><div class="section-h" style="margin-top:0">Ingresar o retirar HFA COIN</div><p class="muted" style="font-size:13px;margin-bottom:14px;line-height:1.6">Para premios o correcciones. Usa un importe negativo para retirar. La cuenta del usuario debe existir. Las copias de seguridad están en el pie de la página.</p>'+
-   '<div class="form-row"><div><label class="f" for="adT">Usuario</label><input id="adT" class="input" maxlength="25" autocomplete="off"></div><div><label class="f" for="adA">Importe (±)</label><input id="adA" class="input num" type="number" inputmode="numeric"></div></div>'+
-   '<label class="f" for="adN">Motivo</label><input id="adN" class="input" maxlength="60" style="margin-bottom:12px"><button type="button" class="btn btn-primary" data-admin>Aplicar movimiento</button><div class="hint" id="adHint" role="status"></div></div>';
+let adminRows=[],adminQ='';
+function adminRowsHtml(){
+  const q=adminQ.trim().toLowerCase(),rows=adminRows.filter(r=>!q||r.username.toLowerCase().includes(q));
+  if(!rows.length)return'<div class="notice" style="border:0">Sin resultados.</div>';
+  return rows.slice(0,60).map(r=>'<div class="arow"><img src="'+avatar(r.username)+'" alt=""><span class="nm">'+esc(r.username)+'</span><span class="num low" style="font-size:12px">Saldo '+fmt(r.balance)+'</span><input class="input num" type="number" min="1" inputmode="numeric" placeholder="Cantidad" data-amt="'+esc(r.username)+'" aria-label="Cantidad para '+esc(r.username)+'"><button type="button" class="btn btn-primary" data-give="'+esc(r.username)+'">Dar</button><button type="button" class="btn" data-take="'+esc(r.username)+'">Quitar</button></div>').join('');
 }
-function loginNotice(){return'<div class="notice">Necesitas una cuenta HFA para tener wallet y apostar. <a href="seccion.html?view=cuenta">Inicia sesión o regístrate</a> — al entrar recibes '+fmt(500)+' HFA COIN de bienvenida.</div>'}
+function viewAdmin(){
+  return'<div class="card"><div class="section-h" style="margin-top:0">Repartir HFA COIN</div><p class="muted" style="font-size:13px;margin-bottom:14px;line-height:1.6">Escribe la cantidad que le darás a cada persona y pulsa <b>Dar</b>. <b>Quitar</b> resta esa cantidad. Todo queda en su extracto. Las copias de seguridad están en el panel de administración y en el pie de la página.</p>'+
+   '<input id="adQ" class="input" placeholder="Buscar usuario…" value="'+esc(adminQ)+'" style="max-width:320px;margin-bottom:12px"><div class="hint" id="adHint" role="status"></div><div id="adList">'+(adminRows.length?adminRowsHtml():'Cargando cuentas…')+'</div></div>';
+}
+async function loadAdmin(){
+  let hh='';try{hh=localStorage.getItem('hfa:adminAuth')||passHash}catch(x){hh=passHash}
+  const r=await post({action:'walletList',adminUser:session.username,adminHash:hh});
+  if(r.ok){adminRows=r.rows;const l=$('#adList');if(l&&tab==='admin')l.innerHTML=adminRowsHtml()}
+}
+function loginNotice(){return'<div class="notice">Necesitas una cuenta HFA para tener wallet y apostar. <a href="seccion.html?view=cuenta">Inicia sesión o regístrate</a>. Un administrador te ingresará tus HFA COIN.</div>'}
 
 function tabs(){
   const t=[['apostar','Partidos'],['mis','Mis apuestas'],['wallet','Mi wallet'],['ranking','Ranking']];
@@ -388,7 +394,7 @@ async function refresh(){await loadWorld();await Promise.all([loadWallet(),loadT
 
 /* ---------- eventos ---------- */
 document.addEventListener('click',async e=>{
-  const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;sel=null;render(true);return}
+  const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;sel=null;render(true);if(tab==='admin')loadAdmin();return}
   const p=e.target.closest('[data-pick]');
   if(p&&!p.disabled){const same=sel&&String(sel.id)===p.dataset.m&&sel.pick===p.dataset.pick;sel=same?null:{id:p.dataset.m,pick:p.dataset.pick};render(true);return}
   if(e.target.closest('[data-cancel]')){sel=null;render(true);return}
@@ -399,22 +405,21 @@ document.addEventListener('click',async e=>{
     if(r.ok){toast('✔ Apuesta registrada: '+fmt(stake)+' HFA COIN a cuota '+Number(r.bet.odds).toFixed(2));sel=null;await refresh();render(true)}
     else{toast(errText(r),true);btn.disabled=false;if(r.error==='closed'||r.error==='dup')refresh()}
     return}
-  if(e.target.closest('[data-daily]')){
-    const r=await post(Object.assign({action:'walletDaily'},auth()));
-    if(r.ok){toast('✔ +'+cfg.daily+' HFA COIN ingresados');await loadWallet();render(true)}else toast(errText(r),true);return}
-  if(e.target.closest('[data-transfer]')){
-    const h=$('#trHint');h.className='hint';h.textContent='Enviando…';
-    const r=await post(Object.assign({action:'walletTransfer',to:$('#trTo').value,amount:$('#trAmt').value,note:$('#trNote').value},auth()));
-    if(r.ok){toast('✔ Transferencia realizada');await Promise.all([loadWallet(),loadTop()]);render(true)}else{h.className='hint err';h.textContent=errText(r)}
-    return}
-  if(e.target.closest('[data-admin]')){
-    const h=$('#adHint');h.className='hint';h.textContent='Aplicando…';
+  const gv=e.target.closest('[data-give],[data-take]');
+  if(gv){
+    const user=gv.dataset.give||gv.dataset.take,inp=document.querySelector('[data-amt="'+(window.CSS&&CSS.escape?CSS.escape(user):user)+'"]'),n=Math.floor(Number(inp&&inp.value));
+    const h=$('#adHint');h.className='hint';
+    if(!(n>0)){h.className='hint err';h.textContent='Escribe una cantidad mayor que 0 para '+user+'.';return}
     let hh='';try{hh=localStorage.getItem('hfa:adminAuth')||passHash}catch(x){hh=passHash}
-    const r=await post({action:'walletAdmin',adminUser:session.username,adminHash:hh,target:$('#adT').value,amount:$('#adA').value,note:$('#adN').value});
-    if(r.ok){h.textContent='✔ Hecho. Nuevo saldo del usuario: '+fmt(r.balance);loadTop()}else{h.className='hint err';h.textContent=errText(r)}
+    gv.disabled=true;
+    const r=await post({action:'walletAdmin',adminUser:session.username,adminHash:hh,target:user,amount:gv.dataset.give?n:-n,note:'Reparto de la HFA'});
+    gv.disabled=false;
+    if(r.ok){h.textContent='✔ '+(gv.dataset.give?'Ingresadas ':'Retiradas ')+fmt(n)+' HFA COIN a '+user+'. Nuevo saldo: '+fmt(r.balance);const row=adminRows.find(x=>x.username===user);if(row)row.balance=r.balance;if(inp)inp.value='';const l=$('#adList');if(l)l.innerHTML=adminRowsHtml();loadTop()}
+    else{h.className='hint err';h.textContent=errText(r)}
     return}
 });
 document.addEventListener('input',e=>{
+  if(e.target.id==='adQ'){adminQ=e.target.value;const l=$('#adList');if(l)l.innerHTML=adminRowsHtml();return}
   if(e.target.id==='stakeIn'){stake=Math.max(0,Math.floor(Number(e.target.value))||0);const o=oddsById[sel&&sel.id];const out=$('#winOut');if(o&&out)out.textContent=fmt(Math.floor(stake*o.odds[sel.pick]))+' HFA COIN'}
 });
 document.addEventListener('change',e=>{if(e.target.id==='divSel'){divFilter=e.target.value;render(true)}});

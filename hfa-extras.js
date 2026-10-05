@@ -588,6 +588,41 @@
     sync(); setInterval(sync, 3000);
   }
 
-  window.HFAExtras = { startTour: function () { startTour(true); }, applyTheme: applyTheme, setSiteTheme: function (n) { applySiteTheme(n); }, getSiteTheme: function () { return siteTheme; } };
+
+  /* ---------- Cerrar sesión (funciona en todas las secciones) + caras de los avatares ---------- */
+  function doLogout() {
+    try { ['hfa:session', 'hfa:adminAuth', 'hfa:loginWelcome'].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}
+    location.href = 'afh-liga.html';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest ? e.target.closest('#logoutButton,#navLogoutBtn,[data-hfa-logout]') : null;
+    if (!t) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    doLogout();
+  }, true);
+  document.addEventListener('click', function (e) {
+    if (e.target && e.target.closest && e.target.closest('[data-open-backup]')) { e.preventDefault(); openBackupModal(); }
+  });
+  function syncLogoutFab() {
+    var wrap = document.querySelector('.hfa-x-fab'); if (!wrap) return;
+    var btn = wrap.querySelector('[data-hfa-logout]'), s = readSession();
+    if (s && !btn) { btn = document.createElement('button'); btn.type = 'button'; btn.setAttribute('data-hfa-logout', ''); btn.title = 'Cerrar sesión'; btn.textContent = '⏻ Salir'; wrap.appendChild(btn); }
+    else if (!s && btn) btn.remove();
+  }
+  /* los avatares redondos pasan a mostrar solo la cara, más grande */
+  function fixFaces() {
+    var imgs = document.querySelectorAll('img[src*="habbo-imaging/avatarimage"]');
+    for (var i = 0; i < imgs.length; i++) {
+      var im = imgs[i], src = im.getAttribute('src');
+      if (src.indexOf('headonly=1') !== -1) continue;
+      var r = ''; try { r = getComputedStyle(im).borderRadius; } catch (e) {}
+      if (r.indexOf('50%') === -1 && !/avatar|mini|comment/i.test(im.className)) continue;
+      im.setAttribute('src', src.replace(/([?&])size=[a-z]/, '$1size=b') + '&headonly=1');
+      im.style.objectFit = 'cover'; im.style.objectPosition = 'center';
+    }
+  }
+  setInterval(function () { syncLogoutFab(); fixFaces(); }, 1200);
+
+  window.HFAExtras = { openBackup: function () { openBackupModal(); }, logout: doLogout, startTour: function () { startTour(true); }, applyTheme: applyTheme, setSiteTheme: function (n) { applySiteTheme(n); }, getSiteTheme: function () { return siteTheme; } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
