@@ -30,9 +30,15 @@
     clarocalido:{ label: 'Claro cálido', swatch: '#f3e3cf', light: true, vars: { '--bg': '#f7f1e8', '--panel': '#fffdf9', '--panel-2': '#faf4ea', '--border': '#e3d5c0', '--green': '#c2570c', '--green-dim': '#e3b48c', '--text-hi': '#2a1d10', '--text-mid': '#6b5238', '--text-low': '#9a8266' } }
   };
 
+  /* ---------- Temática global de la web (la decide el administrador) ---------- */
+  var SITE_KEY = 'hfa:siteTheme';
+  function readSiteCache() { try { return localStorage.getItem(SITE_KEY) === 'normal' ? 'normal' : 'mundial'; } catch (e) { return 'mundial'; } }
+  var siteTheme = readSiteCache();
+
   function readTheme() { try { return localStorage.getItem(THEME_KEY) || 'oscuro'; } catch (e) { return 'oscuro'; } }
 
   function applyTheme(name) {
+    if (siteTheme === 'mundial') { var own = document.getElementById('hfaThemeStyle'); if (own) own.textContent = ''; return; }
     var theme = THEMES[name] || THEMES.oscuro;
     var tag = document.getElementById('hfaThemeStyle');
     if (!tag) { tag = document.createElement('style'); tag.id = 'hfaThemeStyle'; document.head.appendChild(tag); }
@@ -47,6 +53,47 @@
     try { localStorage.setItem(THEME_KEY, name); } catch (e) {}
   }
   applyTheme(readTheme());
+
+  var MUNDIAL_CSS = [
+    ':root{--bg:#050a18 !important;--panel:#0b1330 !important;--panel-2:#101b3f !important;--border:#243667 !important;--green:#ffc72c !important;--green-dim:#9c7512 !important;--amber:#ff9d4d !important;--red:#ff5a5f !important;--text-hi:#f6f8ff !important;--text-mid:#aab6dc !important;--text-low:#6d7cab !important}',
+    'html{background:#050a18}',
+    'body{background:radial-gradient(900px 420px at 50% -80px,rgba(0,170,80,.30),transparent 72%),repeating-linear-gradient(90deg,rgba(0,140,66,.06) 0 80px,rgba(0,0,0,0) 80px 160px),#050a18 !important;background-attachment:fixed !important}',
+    'body::before{content:"";position:fixed;top:0;left:0;right:0;height:4px;z-index:10001;background:linear-gradient(90deg,#ffc72c 0 20%,#00a651 20% 40%,#e63946 40% 60%,#1d6fe0 60% 80%,#ffffff 80%)}',
+    'header{background:linear-gradient(180deg,rgba(10,18,48,.97),rgba(6,12,32,.95)) !important;border-bottom:1px solid rgba(255,199,44,.5) !important;box-shadow:0 6px 24px rgba(0,0,0,.4)}',
+    '.hero{background:radial-gradient(620px 260px at 50% 0,rgba(255,199,44,.14),transparent 70%)}',
+    '.hero::before{content:"🏆  EDICIÓN MUNDIAL  ⚽";display:inline-block;padding:7px 18px;border:1px solid var(--green);border-radius:999px;background:rgba(255,199,44,.10);color:var(--green);font:700 12px Oswald,sans-serif;letter-spacing:.22em}',
+    '.hero-name{text-shadow:0 0 30px rgba(255,199,44,.38)}',
+    '.eyebrow::before{content:"🏆 "}',
+    '.ticker{background:linear-gradient(90deg,#ffc72c,#ffe27a,#ffc72c) !important;color:#1b1400 !important;border-top:2px solid #fff3c4;border-bottom:2px solid #b88a0c}',
+    '.btn-primary,.btn.btn-primary{background:linear-gradient(180deg,#ffd75a,#ffbf1f) !important;border-color:#ffd75a !important;color:#241a00 !important}',
+    '.content-card,.panel-card,.home-news-card,.retiro-card,.profile-header-card{box-shadow:inset 0 2px 0 rgba(255,199,44,.55),0 12px 34px rgba(0,0,0,.35)}',
+    '.retiro-card{background:linear-gradient(180deg,rgba(0,166,81,.16),rgba(11,19,48,.96)) !important;border-color:rgba(255,199,44,.5) !important}',
+    '.retiro-cell{background:linear-gradient(180deg,rgba(255,199,44,.14),rgba(255,199,44,.04)) !important}',
+    'footer{background:linear-gradient(180deg,transparent,rgba(0,166,81,.12));border-top:2px solid rgba(255,199,44,.5) !important}',
+    'footer::before{content:"🏆 ⚽ 🏆";display:block;margin-bottom:8px;letter-spacing:.4em}'
+  ].join('\n');
+
+  function applySiteTheme(name, persist) {
+    siteTheme = name === 'normal' ? 'normal' : 'mundial';
+    var tag = document.getElementById('hfaSiteThemeStyle');
+    if (!tag) { tag = document.createElement('style'); tag.id = 'hfaSiteThemeStyle'; (document.head || document.documentElement).appendChild(tag); }
+    tag.textContent = siteTheme === 'mundial' ? MUNDIAL_CSS : '';
+    document.documentElement.setAttribute('data-hfa-site', siteTheme);
+    if (persist !== false) { try { localStorage.setItem(SITE_KEY, siteTheme); } catch (e) {} }
+    applyTheme(readTheme());
+    var btn = document.querySelector('[data-x-theme]'); if (btn) btn.style.display = siteTheme === 'mundial' ? 'none' : '';
+    var panel = document.querySelector('.hfa-x-theme-panel'); if (panel && siteTheme === 'mundial') panel.hidden = true;
+    try { window.dispatchEvent(new CustomEvent('hfa:sitetheme', { detail: siteTheme })); } catch (e) {}
+  }
+
+  function fetchSiteTheme() {
+    fetch('/api/db?key=sitetheme', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (res) {
+      if (!res || !res.ok) return;
+      var name = 'mundial';
+      if (typeof res.value === 'string') { try { var v = JSON.parse(res.value); if (v && v.theme === 'normal') name = 'normal'; } catch (e) {} }
+      if (name !== siteTheme) applySiteTheme(name); else { try { localStorage.setItem(SITE_KEY, name); } catch (e) {} }
+    }).catch(function () {});
+  }
 
   var BASE_CSS = '.hfa-x-fab{position:fixed;left:16px;bottom:16px;z-index:9990;display:flex;gap:8px}.hfa-x-fab button{border:1px solid var(--border,#22302a);background:var(--panel,#121a17);color:var(--text-hi,#f2f6f4);border-radius:8px;padding:10px 13px;font:600 13px Inter,Arial,sans-serif;cursor:pointer;box-shadow:0 6px 18px #0005}.hfa-x-fab button:hover{border-color:var(--green,#34e88f)}.hfa-x-theme-panel{position:fixed;left:16px;bottom:64px;z-index:9991;min-width:220px;max-height:min(70vh,430px);overflow:auto;padding:12px;border:1px solid var(--border,#22302a);border-radius:10px;background:var(--panel,#121a17);color:var(--text-hi,#f2f6f4);font:13px Inter,Arial,sans-serif;box-shadow:0 14px 40px #0008}.hfa-x-theme-panel[hidden]{display:none}.hfa-x-theme-panel strong{display:block;margin-bottom:8px}.hfa-x-theme-opt{display:flex;align-items:center;gap:10px;width:100%;padding:8px 9px;margin-top:4px;border:1px solid transparent;border-radius:7px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}.hfa-x-theme-opt:hover{background:var(--panel-2,#16201c)}.hfa-x-theme-opt[aria-pressed=true]{border-color:var(--green,#34e88f)}.hfa-x-dot{width:16px;height:16px;border-radius:50%;border:1px solid #0006;flex:none}' +
     '.hfa-staff-toast{position:fixed;right:16px;bottom:16px;z-index:9995;width:min(340px,calc(100vw - 32px));padding:14px 16px;border:1px solid #ff7a7a;border-left-width:5px;border-radius:10px;background:var(--panel,#121a17);color:var(--text-hi,#f2f6f4);font:13px/1.45 Inter,Arial,sans-serif;box-shadow:0 14px 40px #000a}.hfa-staff-toast b{display:block;color:#ff9a9a;font-size:14px}.hfa-staff-toast span{display:block;margin:4px 0 10px;color:var(--text-mid,#9fb3ac)}.hfa-staff-toast div{display:flex;gap:8px}.hfa-staff-toast a,.hfa-staff-toast button{padding:7px 12px;border-radius:6px;border:1px solid var(--border,#22302a);background:var(--panel-2,#16201c);color:inherit;font:600 12px Inter,Arial,sans-serif;text-decoration:none;cursor:pointer}.hfa-staff-toast a{background:#ff7a7a;border-color:#ff7a7a;color:#1a0707}@media(max-width:520px){.hfa-staff-toast{bottom:76px}}.hfa-tour-shield{position:fixed;inset:0;z-index:30000;background:transparent}.hfa-tour-hole{position:fixed;z-index:30001;border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.66),0 0 0 3px var(--green,#34e88f);pointer-events:none}.hfa-tour-hole.full{box-shadow:none;background:rgba(0,0,0,.66);border-radius:0}.hfa-tour-card{position:fixed;z-index:30002;width:min(350px,calc(100vw - 24px));padding:16px;border:1px solid var(--green,#34e88f);border-radius:10px;background:var(--panel,#121a17);color:var(--text-hi,#f2f6f4);font:14px/1.5 Inter,Arial,sans-serif;box-shadow:0 18px 50px #000a}.hfa-tour-card h4{margin:0 0 6px;font-size:15px;color:var(--green,#34e88f)}.hfa-tour-card p{margin:0 0 14px;color:var(--text-mid,#9fb3ac)}.hfa-tour-row{display:flex;align-items:center;justify-content:space-between;gap:8px}.hfa-tour-row small{color:var(--text-low,#5c706a)}.hfa-tour-row button{border:1px solid var(--border,#22302a);background:var(--panel-2,#16201c);color:var(--text-hi,#f2f6f4);border-radius:6px;padding:7px 12px;font:600 12px Inter,Arial,sans-serif;cursor:pointer}.hfa-tour-row button.primary{background:var(--green,#34e88f);border-color:var(--green,#34e88f);color:#05130c}.hfa-tour-row button.hfa-tour-skip{background:none;border:0;color:var(--text-low,#5c706a);text-decoration:underline}@media(max-width:520px){.hfa-x-fab{bottom:76px}.hfa-x-theme-panel{bottom:124px}}';
@@ -127,7 +174,7 @@
       { sel: '.hero-actions', title: 'Accesos rápidos', text: 'Botones directos a las secciones más usadas. El acceso al panel de administración solo aparece al personal con rol.' },
       { sel: function () { var t = document.getElementById('tickerTrack'); return t && t.parentElement; }, title: 'Cinta de novedades', text: 'Aquí pasan las jornadas de cada división a medida que se van creando, con su estado: finalizada, en curso o próxima.' },
       { sel: '#homeNews', title: 'Noticias', text: 'Las novedades más recientes publicadas por la administración. Usa las flechas para ver más.' },
-      { sel: '#retiroGiova', title: 'Retiro Giova', text: 'Cuenta atrás en días hasta el 31 de diciembre de 2026, con el mensaje de agradecimiento a Giova.' },
+      { sel: '#retiroGiova', title: 'Retiro Giova', text: 'Cuenta atrás en días, horas, minutos y segundos hasta el 31 de diciembre de 2026, con el mensaje de agradecimiento a Giova.' },
       { sel: '#resumenNextMatch', title: 'Próximo partido', text: 'El siguiente encuentro programado, con fecha y hora.' },
       { sel: '#resumenTeams', title: 'Equipos', text: 'Los equipos de cada división de un vistazo.' },
       { sel: '#resumenFinished', title: 'Últimos resultados', text: 'Los partidos ya jugados. Pulsa uno para ver el acta completa.' }
@@ -206,6 +253,7 @@
       { click: '[data-admin-section="community"]', sel: 'card:Palmar', title: 'Palmarés', text: 'Añade o borra los reconocimientos de la comunidad.' },
       { after: true, sel: 'card:Noticias', title: 'Noticias', text: 'Publica noticias con imagen; salen en la portada.' },
       { click: '[data-admin-section="sponsors"]', sel: 'card:Sponsors', title: 'Patrocinadores', text: 'Gestiona los patrocinadores que se muestran en la web.' },
+      { click: '[data-admin-section="sitetheme"]', sel: '#adminSiteTheme', title: 'Temática de la web', text: 'Cambia el aspecto de toda la web para todos los usuarios: activa la temática Mundial o vuelve a la normal con un botón.' },
       { click: '[data-admin-section="acts"]', sel: '#actaManagement', title: 'Actas', text: 'Elige un partido y registra goles, tarjetas, cambios, alineación y menciones. Arriba verás quién dio presente y con qué conexión.' },
       { sel: '[data-open-admin-tutorial]', title: 'Tutorial completo', text: 'Para una explicación más larga del panel, pulsa este botón cuando quieras.' }
     ]
@@ -338,7 +386,14 @@
     }, 500);
   }
 
-  function init() { addCss(); buildFab(); autoTour(); staffToast(); }
+  function init() {
+    addCss(); buildFab(); applySiteTheme(siteTheme, false); autoTour(); staffToast();
+    fetchSiteTheme();
+    setInterval(fetchSiteTheme, 60000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) fetchSiteTheme(); });
+  }
+  /* se aplica ya, antes del primer pintado, con la última temática conocida */
+  applySiteTheme(siteTheme, false);
   /* ---------- Aviso al personal: presentes con VPN / ExitLag (en cualquier página) ---------- */
   function staffToast() {
     var s = readSession();
@@ -379,6 +434,6 @@
     setInterval(check, 60000);
   }
 
-  window.HFAExtras = { startTour: function () { startTour(true); }, applyTheme: applyTheme };
+  window.HFAExtras = { startTour: function () { startTour(true); }, applyTheme: applyTheme, setSiteTheme: function (n) { applySiteTheme(n); }, getSiteTheme: function () { return siteTheme; } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

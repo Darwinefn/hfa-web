@@ -122,10 +122,13 @@
 .retiro-card{display:flex;flex-direction:column;align-items:center;gap:14px;padding:30px 24px;text-align:center;border:1px solid var(--border);border-radius:14px;background:linear-gradient(180deg,var(--panel-2),var(--panel))}
 .retiro-badge{padding:4px 12px;border-radius:999px;border:1px solid var(--green-dim);background:rgba(52,232,143,.08);color:var(--green);font:700 10px Oswald;letter-spacing:.16em;text-transform:uppercase}
 .retiro-title{margin:0;font:700 clamp(28px,5vw,44px)/1.05 Oswald;letter-spacing:.02em;color:var(--text-hi)}
-.retiro-box{min-width:min(100%,260px);padding:22px 30px;border:2px solid var(--green);border-radius:14px;background:rgba(52,232,143,.06);box-shadow:0 0 0 4px rgba(52,232,143,.07)}
-.retiro-days{font:700 clamp(54px,12vw,92px)/1 Oswald;color:var(--green);letter-spacing:-.03em}
-.retiro-unit{margin-top:2px;font:600 14px Oswald;letter-spacing:.3em;text-transform:uppercase;color:var(--text-mid)}
-.retiro-date{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font:600 13px Inter,Arial,sans-serif;color:var(--text-hi)}
+.retiro-box{width:min(100%,520px);padding:20px 22px;border:2px solid var(--green);border-radius:14px;background:rgba(52,232,143,.06);box-shadow:0 0 0 4px rgba(52,232,143,.07)}
+.retiro-count{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.retiro-cell{padding:12px 4px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,.18)}
+.retiro-cell b{display:block;font:700 clamp(30px,7vw,52px)/1 Oswald;color:var(--green);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.retiro-cell span{display:block;margin-top:6px;font:600 11px Oswald;letter-spacing:.22em;text-transform:uppercase;color:var(--text-mid)}
+.retiro-today{padding:14px 0 4px;font:700 clamp(24px,5vw,34px)/1.2 Oswald;color:var(--green)}
+.retiro-date{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font:600 13px Inter,Arial,sans-serif;color:var(--text-hi)}
 .retiro-thanks{margin:0;font:600 clamp(15px,2.6vw,19px)/1.4 Inter,Arial,sans-serif;color:var(--text-hi)}
 @media(max-width:600px){.retiro{padding:0 16px}.retiro-card{padding:24px 16px}.retiro-box{padding:18px 20px}}.home-news-card{position:relative;min-height:190px;display:flex;align-items:flex-end;overflow:hidden;border:1px solid var(--border);border-radius:10px;background:var(--panel)}.home-news-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.42}.home-news-card:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,15,13,.96),rgba(10,15,13,.45),rgba(10,15,13,.2))}.home-news-copy{position:relative;z-index:1;max-width:650px;padding:24px}.home-news-copy h2{font:700 28px Oswald}.home-news-copy p{margin-top:8px;color:var(--text-mid);font-size:13px;line-height:1.6}.home-news-controls{position:absolute;z-index:2;right:16px;bottom:16px;display:flex;align-items:center;gap:8px}.home-news-controls button{width:30px;height:30px;border:1px solid var(--border);border-radius:50%;background:rgba(10,15,13,.8);color:var(--text-hi)}.home-news-dots{display:flex;gap:5px}.home-news-dot{width:7px!important;height:7px!important;padding:0;border-radius:50%!important;background:var(--text-low)!important}.home-news-dot.active{background:var(--green)!important}
 
@@ -418,9 +421,14 @@
   <div class="retiro-card">
     <span class="retiro-badge">Anuncio</span>
     <h2 class="retiro-title">Retiro Giova</h2>
-    <div class="retiro-box" role="timer" aria-live="polite">
-      <div class="retiro-days" id="retiroDays">--</div>
-      <div class="retiro-unit" id="retiroUnit">días</div>
+    <div class="retiro-box" role="timer">
+      <div class="retiro-count" id="retiroCount">
+        <div class="retiro-cell"><b id="retiroD">--</b><span>Días</span></div>
+        <div class="retiro-cell"><b id="retiroH">--</b><span>Horas</span></div>
+        <div class="retiro-cell"><b id="retiroM">--</b><span>Min</span></div>
+        <div class="retiro-cell"><b id="retiroS">--</b><span>Seg</span></div>
+      </div>
+      <div class="retiro-today" id="retiroToday" hidden>¡Hoy es el día! 🏆</div>
       <div class="retiro-date">31 de diciembre de 2026</div>
     </div>
     <p class="retiro-thanks">Gracias por todo Giova, Te extrañaremos</p>
@@ -1333,18 +1341,29 @@
 
   // ---------- Render global ----------
   function renderRetiro(){
-    const daysEl = document.getElementById('retiroDays');
-    if (!daysEl) return;
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const target = new Date(2026, 11, 31);
-    const days = Math.round((target - today) / 86400000);
-    const unit = document.getElementById('retiroUnit');
-    if (days > 0) { daysEl.textContent = String(days); unit.textContent = days === 1 ? 'día' : 'días'; }
-    else if (days === 0) { daysEl.textContent = '¡Hoy!'; unit.textContent = 'es el día'; }
-    else { daysEl.textContent = '0'; unit.textContent = 'días'; }
+    const cells = ['retiroD','retiroH','retiroM','retiroS'].map(id => document.getElementById(id));
+    if (cells.some(c => !c)) return;
+    const target = new Date(2026, 11, 31, 0, 0, 0);
+    let diff = target - new Date();
+    const count = document.getElementById('retiroCount'), today = document.getElementById('retiroToday');
+    if (diff <= 0) {
+      const sameDay = new Date().toDateString() === target.toDateString();
+      count.hidden = true; today.hidden = false;
+      today.textContent = sameDay || diff > -86400000 ? '¡Hoy es el día! 🏆' : 'Gracias por todo, Giova 🏆';
+      return;
+    }
+    count.hidden = false; today.hidden = true;
+    const days = Math.floor(diff / 86400000); diff -= days * 86400000;
+    const hours = Math.floor(diff / 3600000); diff -= hours * 3600000;
+    const minutes = Math.floor(diff / 60000); diff -= minutes * 60000;
+    const seconds = Math.floor(diff / 1000);
+    const pad = n => String(n).padStart(2, '0');
+    cells[0].textContent = String(days);
+    cells[1].textContent = pad(hours);
+    cells[2].textContent = pad(minutes);
+    cells[3].textContent = pad(seconds);
   }
-  setInterval(renderRetiro, 60000);
+  setInterval(renderRetiro, 1000);
   function renderAll(){
     renderRetiro();
     renderHero();
