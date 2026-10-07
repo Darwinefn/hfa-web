@@ -2244,7 +2244,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const isAdmin=session.role==='admin';
     const activeTournamentOptions=state.tournaments.map(item=>'<option value="'+profileText(item.id)+'" '+(String(item.id)===String(activeTournamentId)?'selected':'')+'>'+profileText(item.name)+'</option>').join('');
     if(!selectedActaMatchId&&state.matches.length)selectedActaMatchId=state.matches[0].id;
-    const actaMatches=state.matches.filter(match=>actaDivisionFilter==='all'||divisionCode(match.division||team(match.teamAId)?.division||team(match.teamBId)?.division)===actaDivisionFilter);
+    const actaMatches=state.matches.filter(match=>(actaDivisionFilter==='all'||divisionCode(match.division||team(match.teamAId)?.division||team(match.teamBId)?.division)===actaDivisionFilter)&&(!match.finished||String(match.id)===String(selectedActaMatchId)));
     const selectedMatch=actaMatches.find(match=>match.id===selectedActaMatchId)||actaMatches[0]||null;
     if(selectedMatch&&selectedActaMatchId!==selectedMatch.id)selectedActaMatchId=selectedMatch.id;
     const matchOptions=actaMatches.length?actaMatches.map(match=>{const home=match.home||team(match.teamAId)?.name||'Equipo A',away=match.away||team(match.teamBId)?.name||'Equipo B';return '<option value="'+match.id+'" '+(match.id===selectedActaMatchId?'selected':'')+'>'+home+' vs '+away+' · '+divisionLabel(match.division||team(match.teamAId)?.division||team(match.teamBId)?.division)+' · J'+(Number(match.round)||1)+'</option>'}).join(''):'<option value="">No hay partidos en esta división</option>';
@@ -2700,8 +2700,9 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
         match.finished=true;
         await setJSON('matches',state.matches);
         selectedActaMatchId=null;
-        adminSection='acts';
+        adminSection=['admin','moderador','prueba_moderador'].includes(session.role)?'matches':'acts';
         content();
+        prepareAdminDivisions();
       }
       return;
     }

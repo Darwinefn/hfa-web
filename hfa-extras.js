@@ -577,15 +577,9 @@
     if (!foot) { foot = document.createElement('footer'); document.body.appendChild(foot); }
     foot.classList.add('hfa-footer');
     if (foot.textContent.replace(/\s+/g, ' ').indexOf('Habbo Fútbol Asociación') === -1 || foot.textContent.indexOf('Sulake Corporation ni por Habbo.') === -1) foot.innerHTML = FOOT_HTML;
-    function sync() {
-      var s = readSession(), isAdmin = !!(s && s.role === 'admin'), btn = foot.querySelector('.hfa-backup-btn');
-      if (isAdmin && !btn) {
-        btn = document.createElement('button'); btn.type = 'button'; btn.className = 'hfa-backup-btn';
-        btn.textContent = '🛡️ Copia de seguridad (Admin)'; btn.addEventListener('click', openBackupModal);
-        var wrap = document.createElement('div'); wrap.className = 'hfa-backup-wrap'; wrap.appendChild(btn); foot.appendChild(wrap);
-      } else if (!isAdmin && btn) { btn.parentNode.remove(); }
-    }
-    sync(); setInterval(sync, 3000);
+    // El acceso a las copias de seguridad ahora está solo en el panel de administración.
+    var old = foot.querySelector('.hfa-backup-wrap'); if (old) old.remove();
+
   }
 
 
@@ -621,7 +615,7 @@
       im.style.objectFit = 'cover'; im.style.objectPosition = 'center';
     }
   }
-  setInterval(function () { syncLogoutFab(); fixFaces(); }, 1200);
+  setInterval(function () { var f = document.querySelector('.hfa-x-fab [data-hfa-logout]'); if (f) f.remove(); fixFaces(); }, 1200);
 
   window.HFAExtras = { openBackup: function () { openBackupModal(); }, logout: doLogout, startTour: function () { startTour(true); }, applyTheme: applyTheme, setSiteTheme: function (n) { applySiteTheme(n); }, getSiteTheme: function () { return siteTheme; } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
