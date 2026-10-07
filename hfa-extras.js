@@ -236,7 +236,7 @@
       { click: '[data-admin-section="community"]', sel: 'card:Palmar', title: 'Palmarés', text: 'Añade o borra los reconocimientos de la comunidad.' },
       { after: true, sel: 'card:Noticias', title: 'Noticias', text: 'Publica noticias con imagen; salen en la portada.' },
       { click: '[data-admin-section="sponsors"]', sel: 'card:Sponsors', title: 'Patrocinadores', text: 'Gestiona los patrocinadores que se muestran en la web.' },
-      { click: '[data-admin-section="sitetheme"]', sel: '#adminSiteTheme', title: 'Temática de la web', text: 'Cambia el aspecto de toda la web para todos los usuarios: activa la temática Mundial o vuelve a la normal con un botón.' },
+      { click: '[data-admin-section="maintenance"]', sel: '#adminMaintenance', title: 'Modo mantenimiento', text: 'Solo los administradores. Oculta la web a todos los demás y muestra el aviso de mantenimiento con el logo de HFA.' },
       { click: '[data-admin-section="acts"]', sel: '#actaManagement', title: 'Actas', text: 'Elige un partido y registra goles, tarjetas, cambios, alineación y menciones. Arriba verás quién dio presente y con qué conexión.' },
       { sel: '[data-open-admin-tutorial]', title: 'Tutorial completo', text: 'Para una explicación más larga del panel, pulsa este botón cuando quieras.' }
     ]
