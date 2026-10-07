@@ -197,7 +197,7 @@ const fmt=n=>String(Math.round(Number(n)||0)).replace(/\B(?=(\d{3})+(?!\d))/g,'.
 const LOGO='EDITABLE_HF.png';
 const coinIcon='<span class="coin"><img src="'+LOGO+'" alt=""></span>';
 const amt=n=>'<span class="amt">'+coinIcon+fmt(n)+'</span>';
-const avatar=u=>'https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(u)+'&size=b&direction=2&head_direction=2&gesture=sml&action=std&headonly=1';
+const avatar=u=>'https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(u)+'&size=l&direction=2&head_direction=3&gesture=sml&action=std&headonly=1';
 
 let session=null,passHash='',tab='apostar',divFilter='all';
 let teams=[],matches=[],oddsById={},skew=0,cfg={minBet:10,maxBet:2000,maxLegs:8};

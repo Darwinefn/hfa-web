@@ -611,10 +611,20 @@
       if (src.indexOf('headonly=1') !== -1) continue;
       var r = ''; try { r = getComputedStyle(im).borderRadius; } catch (e) {}
       if (r.indexOf('50%') === -1 && !/avatar|mini|comment/i.test(im.className)) continue;
-      im.setAttribute('src', src.replace(/([?&])size=[a-z]/, '$1size=b') + '&headonly=1');
+      im.setAttribute('src', src.replace(/([?&])size=[a-z]/, '$1size=l') + '&headonly=1');
       im.style.objectFit = 'cover'; im.style.objectPosition = 'center';
     }
   }
+  /* si un avatar no carga, reintenta con tamaños más pequeños (l -> m -> s) */
+  document.addEventListener('error', function (ev) {
+    var im = ev.target;
+    if (!im || im.tagName !== 'IMG' || (im.src || '').indexOf('habbo-imaging/avatarimage') === -1) return;
+    var step = Number(im.getAttribute('data-fb') || 0);
+    var sizes = ['m', 's'];
+    if (step >= sizes.length) return;
+    im.setAttribute('data-fb', String(step + 1));
+    im.src = im.src.replace(/([?&])size=[a-z]/, '$1size=' + sizes[step]);
+  }, true);
   setInterval(function () { var f = document.querySelector('.hfa-x-fab [data-hfa-logout]'); if (f) f.remove(); fixFaces(); }, 1200);
 
   window.HFAExtras = { openBackup: function () { openBackupModal(); }, logout: doLogout, startTour: function () { startTour(true); }, applyTheme: applyTheme, setSiteTheme: function (n) { applySiteTheme(n); }, getSiteTheme: function () { return siteTheme; } };
