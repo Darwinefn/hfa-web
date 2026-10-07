@@ -274,6 +274,16 @@ async function attendanceIps(body) {
   };
 }
 
+// Modo mantenimiento: lo activa solo un administrador. Mientras está activo, la web solo se muestra a los admins.
+async function setMaintenance(body) {
+  const admin = await authAdmin(body);
+  if (!admin) return false;
+  const enabled = !!(body && body.enabled);
+  const message = String((body && body.message) || '').trim().slice(0, 220);
+  await setValue('maintenance', JSON.stringify({ enabled: enabled, message: message, by: admin.username, at: new Date().toISOString() }), null);
+  return true;
+}
+
 // Temática global de la web (la ven todos los usuarios). Solo la cambia un administrador.
 async function setSiteTheme(body) {
   if (!process.env.MONGODB_URI) return false;
@@ -868,6 +878,10 @@ module.exports = async (req, res) => {
         const ok = await setRole(body);
         return res.status(ok ? 200 : 403).json({ ok: ok });
       }
+      if (body.action === 'setMaintenance') {
+        const ok = await setMaintenance(body);
+        return res.status(ok ? 200 : 403).json({ ok: ok });
+      }
       if (body.action === 'setSiteTheme') {
         const ok = await setSiteTheme(body);
         return res.status(ok ? 200 : 403).json({ ok: ok });
@@ -892,7 +906,7 @@ module.exports = async (req, res) => {
       }
       const key = String(body.key || '');
       if (!/^[A-Za-z0-9:_-]{1,60}$/.test(key) || typeof body.value !== 'string') return res.status(400).json({ ok: false });
-      if (key === 'sitetheme') return res.status(403).json({ ok: false });
+      if (key === 'sitetheme' || key === 'maintenance') return res.status(403).json({ ok: false });
       await setValue(key, body.value, req);
       return res.status(200).json({ ok: true });
     }
