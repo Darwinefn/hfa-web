@@ -367,7 +367,7 @@ async function setValue(key, value, req) {
    Requiere MongoDB (MONGODB_URI).
    ===================================================================== */
 const crypto = require('crypto');
-const COIN_CFG = { welcome: 0, minBet: 10, maxBet: 2000, margin: 0.08 };   // el saldo solo lo reparte un administrador
+const COIN_CFG = { welcome: 0, minBet: 10, maxBet: 2000, margin: 0.08, maxLegs: 8, maxOdds: 200, maxPayout: 200000, maxPerMatch: 5000, maxParlaysPerRound: 3 };   // el saldo solo lo reparte un administrador
 const BACKUP_COLLS = ['app_data', 'accounts', 'role_assignments', 'wallets', 'wallet_tx', 'bets'];
 let indexesReady = false;
 
@@ -379,7 +379,8 @@ async function dbc(name) { return (await mongoDb()).collection(name); }
 async function ensureIndexes() {
   if (indexesReady) return;
   try {
-    await (await dbc('bets')).createIndex({ username: 1, matchId: 1 }, { unique: true });
+    try { await (await dbc('bets')).dropIndex('username_1_matchId_1'); } catch (e) {}   // ya se permiten varias apuestas por partido
+    await (await dbc('bets')).createIndex({ username: 1, status: 1 });
     await (await dbc('bets')).createIndex({ status: 1 });
     await (await dbc('wallet_tx')).createIndex({ username: 1, at: -1 });
     indexesReady = true;
@@ -475,32 +476,153 @@ function strength(x) {
   const v = (x.pts + 1.5) / (x.n * 3 + 3) + ((x.gf - x.ga) / (x.n + 2)) * 0.03;
   return Math.min(0.95, Math.max(0.05, v));
 }
-// Cuotas calculadas con el rendimiento real de cada equipo en la competición (+ margen de la casa).
-function computeOdds(form, m) {
-  const sa = strength(form[teamKey(m, 'A')]), sb = strength(form[teamKey(m, 'B')]);
-  const pA0 = sa / (sa + sb);
-  const pD = Math.min(0.30, Math.max(0.14, 0.28 - Math.abs(sa - sb) * 0.16));
-  const f = p => Math.min(12, Math.max(1.15, Math.round((1 - COIN_CFG.margin) / p * 100) / 100));
-  return { '1': f((1 - pD) * pA0), 'X': f(pD), '2': f((1 - pD) * (1 - pA0)) };
+/* ---------- mercados y cuotas (modelo de goles de Poisson) ---------- */
+// Un único modelo de goles genera TODOS los mercados, así las cuotas son coherentes entre sí.
+const CS_LIST = ['1-0', '2-0', '2-1', '3-0', '3-1', '3-2', '0-0', '1-1', '2-2', '3-3', '0-1', '0-2', '1-2', '0-3', '1-3', '2-3'];
+const MARKETS = {
+  '1X2': ['1', 'X', '2'],
+  'DC': ['1X', '12', 'X2'],
+  'OU15': ['O', 'U'], 'OU25': ['O', 'U'], 'OU35': ['O', 'U'],
+  'BTTS': ['Y', 'N'],
+  'HCL': ['1', 'X', '2'],      // hándicap europeo: local -1
+  'HCV': ['1', 'X', '2'],      // hándicap europeo: visitante -1
+  'FTS': ['1', '2', 'N'],      // primer equipo en marcar (N = sin goles)
+  'CS': CS_LIST.concat(['other'])
+  // 'GS' (goleador) es dinámico: depende de quién ha marcado en la liga
+};
+const MARKET_NAME = { '1X2': 'Resultado final', 'DC': 'Doble oportunidad', 'OU15': 'Total goles 1,5', 'OU25': 'Total goles 2,5', 'OU35': 'Total goles 3,5', 'BTTS': 'Ambos equipos marcan', 'CS': 'Resultado exacto' };
+
+function normName(s) { return String(s || '').trim().toLowerCase(); }
+// Lado del primer gol según el acta (por minuto; si no hay minuto, por orden de registro).
+function firstGoalSide(m) {
+  const goals = (m && Array.isArray(m.goals)) ? m.goals.filter(g => g && (g.side === 'A' || g.side === 'B')) : [];
+  if (!goals.length) return null;
+  let best = goals[0], bm = parseFloat(best.minute);
+  goals.forEach(g => { const v = parseFloat(g.minute); if (!isNaN(v) && (isNaN(bm) || v < bm)) { best = g; bm = v; } });
+  return best.side;
 }
-const PICK_LABEL = { '1': 'Gana local', 'X': 'Empate', '2': 'Gana visitante' };
+// true = acierta, false = falla, null = anulada (datos insuficientes en el acta)
+function selWins(market, sel, sa, sb, m) {
+  const t = sa + sb;
+  switch (market) {
+    case 'HCL': return sel === '1' ? sa - 1 > sb : sel === 'X' ? sa - 1 === sb : sa - 1 < sb;
+    case 'HCV': return sel === '1' ? sa > sb - 1 : sel === 'X' ? sa === sb - 1 : sa < sb - 1;
+    case 'FTS': {
+      if (t === 0) return sel === 'N';
+      const s = firstGoalSide(m);
+      if (!s) return null;
+      return sel === (s === 'A' ? '1' : '2');
+    }
+    case 'GS': {
+      const name = normName(String(sel).slice(2));
+      const goals = (m && Array.isArray(m.goals)) ? m.goals : [];
+      return goals.some(g => g && normName(g.player) === name);
+    }
+    case '1X2': return sel === '1' ? sa > sb : sel === '2' ? sa < sb : sa === sb;
+    case 'DC': return sel === '1X' ? sa >= sb : sel === 'X2' ? sa <= sb : sa !== sb;
+    case 'OU15': return sel === 'O' ? t > 1.5 : t < 1.5;
+    case 'OU25': return sel === 'O' ? t > 2.5 : t < 2.5;
+    case 'OU35': return sel === 'O' ? t > 3.5 : t < 3.5;
+    case 'BTTS': return sel === 'Y' ? (sa > 0 && sb > 0) : !(sa > 0 && sb > 0);
+    case 'CS': return sel === 'other' ? CS_LIST.indexOf(sa + '-' + sb) === -1 : sel === sa + '-' + sb;
+  }
+  return false;
+}
+function legLabel(market, sel, home, away) {
+  if (market === 'HCL') return sel === '1' ? home + ' (-1)' : sel === '2' ? away + ' (+1)' : 'Empate con hándicap (-1)';
+  if (market === 'HCV') return sel === '1' ? home + ' (+1)' : sel === '2' ? away + ' (-1)' : 'Empate con hándicap (+1)';
+  if (market === 'FTS') return sel === '1' ? 'Primer gol: ' + home : sel === '2' ? 'Primer gol: ' + away : 'Sin goles (0-0)';
+  if (market === 'GS') return String(sel).slice(2) + ' marca en cualquier momento';
+  if (market === '1X2') return sel === '1' ? 'Gana ' + home : sel === '2' ? 'Gana ' + away : 'Empate';
+  if (market === 'DC') return sel === '1X' ? home + ' o empate' : sel === 'X2' ? away + ' o empate' : home + ' o ' + away;
+  if (market === 'BTTS') return sel === 'Y' ? 'Ambos marcan: Sí' : 'Ambos marcan: No';
+  if (market.indexOf('OU') === 0) return (sel === 'O' ? 'Más de ' : 'Menos de ') + (market === 'OU15' ? '1,5' : market === 'OU25' ? '2,5' : '3,5') + ' goles';
+  if (market === 'CS') return sel === 'other' ? 'Resultado exacto: otro' : 'Resultado exacto ' + sel;
+  return sel;
+}
+
+function poissonP(l, k) { let p = Math.exp(-l); for (let i = 1; i <= k; i++) p *= l / i; return p; }
+function leagueAvg(form) {
+  let g = 0, n = 0;
+  Object.keys(form).forEach(k => { g += form[k].gf; n += form[k].n; });
+  return n >= 6 ? Math.min(4, Math.max(0.6, g / n)) : 1.6;
+}
+function teamRate(x, avg) {                      // ataque y defensa relativos a la media, suavizados
+  const k = 3, n = x ? x.n : 0, gf = x ? x.gf : 0, ga = x ? x.ga : 0;
+  return { att: ((gf + k * avg) / (n + k)) / avg, def: ((ga + k * avg) / (n + k)) / avg };
+}
+// Goles por jugador en partidos ya finalizados, por equipo.
+function scorerForm(matches) {
+  const t = {};
+  matches.forEach(m => {
+    if (!m.finished || !Array.isArray(m.goals)) return;
+    m.goals.forEach(g => {
+      if (!g || !g.player || (g.side !== 'A' && g.side !== 'B')) return;
+      const k = teamKey(m, g.side), x = t[k] || (t[k] = { total: 0, players: {} });
+      const name = String(g.player).trim();
+      x.total++; x.players[name] = (x.players[name] || 0) + 1;
+    });
+  });
+  return t;
+}
+function oddFromP(p, market) {
+  const margin = market === 'CS' ? 0.16 : COIN_CFG.margin;
+  return Math.min(60, Math.max(1.03, Math.round((1 - margin) / Math.max(p, 0.0001) * 100) / 100));
+}
+// Devuelve { mercado: { seleccion: cuota } } para un partido.
+function computeMarkets(form, m, scorers) {
+  const avg = leagueAvg(form);
+  const A = teamRate(form[teamKey(m, 'A')], avg), B = teamRate(form[teamKey(m, 'B')], avg);
+  const la = Math.min(4, Math.max(0.35, avg * A.att * B.def)), lb = Math.min(4, Math.max(0.35, avg * B.att * A.def));
+  const N = 9, grid = []; let total = 0;
+  for (let i = 0; i < N; i++) { grid[i] = []; for (let j = 0; j < N; j++) { grid[i][j] = poissonP(la, i) * poissonP(lb, j); total += grid[i][j]; } }
+  const out = {};
+  Object.keys(MARKETS).forEach(mk => {
+    if (mk === 'FTS') return;
+    out[mk] = {};
+    MARKETS[mk].forEach(sel => {
+      let p = 0;
+      for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) if (selWins(mk, sel, i, j)) p += grid[i][j];
+      out[mk][sel] = oddFromP(p / total, mk);
+    });
+  });
+  const p00 = grid[0][0] / total, pAny = 1 - p00, pFirstA = pAny * la / (la + lb);
+  out.FTS = { '1': oddFromP(pFirstA, 'CS'), '2': oddFromP(pAny - pFirstA, 'CS'), 'N': oddFromP(p00, 'CS') };
+  // Goleador: los 4 máximos anotadores de cada equipo (con al menos 1 gol esta temporada)
+  const gs = {};
+  [['A', la], ['B', lb]].forEach(pair => {
+    const x = scorers && scorers[teamKey(m, pair[0])];
+    if (!x) return;
+    Object.keys(x.players).sort((a, b) => x.players[b] - x.players[a]).slice(0, 4).forEach(name => {
+      const p = 1 - Math.exp(-pair[1] * x.players[name] / (x.total + 1));
+      gs['P:' + name] = Math.min(30, Math.max(1.2, oddFromP(p, 'CS')));
+    });
+  });
+  if (Object.keys(gs).length) out.GS = gs;
+  return out;
+}
 
 async function betOdds() {
   const matches = await loadMatches();
   if (!matches) return { ok: false };
-  const now = Date.now(), form = teamForm(matches), list = [];
+  const now = Date.now(), form = teamForm(matches), sc = scorerForm(matches), list = [];
   matches.forEach(m => {
     if (!m || !m.id) return;
-    const state = matchState(m, now);
-    list.push({ id: String(m.id), state: state, kickoff: kickoffMs(m), odds: computeOdds(form, m) });
+    const state = matchState(m, now), markets = state === 'finished' ? {} : computeMarkets(form, m, sc);
+    list.push({ id: String(m.id), state: state, kickoff: kickoffMs(m), markets: markets, odds: markets['1X2'] || {} });
   });
-  return { ok: true, now: now, matches: list, config: { minBet: COIN_CFG.minBet, maxBet: COIN_CFG.maxBet } };
+  return { ok: true, now: now, matches: list, config: { minBet: COIN_CFG.minBet, maxBet: COIN_CFG.maxBet, maxLegs: COIN_CFG.maxLegs, maxParlaysPerRound: COIN_CFG.maxParlaysPerRound } };
 }
 
 /* ---------- liquidación automática (sincronizada con los resultados) ---------- */
-async function finishBet(b, status, payout, note, result) {
+// Las apuestas antiguas (solo 1X2) se tratan como una apuesta simple de una selección.
+function legsOf(b) {
+  if (Array.isArray(b.legs) && b.legs.length) return b.legs;
+  return [{ matchId: b.matchId, market: '1X2', sel: b.pick, odds: b.odds, home: b.home, away: b.away, status: 'open' }];
+}
+async function finishBet(b, status, payout, note, legs) {
   const bets = await dbc('bets');
-  const r = await bets.updateOne({ _id: b._id, status: 'open' }, { $set: { status: status, payout: payout, settledAt: nowIso(), result: result || '' } });
+  const r = await bets.updateOne({ _id: b._id, status: 'open' }, { $set: { status: status, payout: payout, settledAt: nowIso(), legs: legs } });
   if (!r.modifiedCount) return;               // otro proceso ya la liquidó: nunca se paga dos veces
   if (payout > 0) {
     const w = await credit(b.username, payout);
@@ -518,14 +640,30 @@ async function settleBets(onlyUser) {
   if (!matches || !matches.length) return;
   const byId = {}; matches.forEach(m => { if (m && m.id) byId[String(m.id)] = m; });
   for (const b of open) {
-    const m = byId[b.matchId];
-    if (!m) { await finishBet(b, 'void', b.stake, 'Partido cancelado · apuesta devuelta', 'cancelado'); continue; }
-    if (!m.finished) continue;
-    const sa = Number(m.scoreA) || 0, sb = Number(m.scoreB) || 0;
-    const res = sa > sb ? '1' : sa < sb ? '2' : 'X';
-    const score = sa + '-' + sb;
-    if (res === b.pick) await finishBet(b, 'won', Math.floor(b.stake * b.odds), 'Apuesta ganada · ' + b.home + ' ' + score + ' ' + b.away, score);
-    else await finishBet(b, 'lost', 0, '', score);
+    const legs = legsOf(b).map(l => Object.assign({}, l));
+    let lost = false, pending = false, changed = false;
+    legs.forEach(l => {
+      if (l.status && l.status !== 'open') return;
+      const m = byId[String(l.matchId)];
+      if (!m) { l.status = 'void'; changed = true; return; }          // partido eliminado: selección anulada
+      if (!m.finished) { pending = true; return; }
+      const sa = Number(m.scoreA) || 0, sb = Number(m.scoreB) || 0;
+      const w = selWins(l.market, l.sel, sa, sb, m);
+      l.status = w === null ? 'void' : w ? 'won' : 'lost';
+      l.score = sa + '-' + sb; changed = true;
+    });
+    lost = legs.some(l => l.status === 'lost');
+    const title = legs.length > 1 ? 'Combinada de ' + legs.length + ' selecciones' : legs[0].home + ' vs ' + legs[0].away;
+    if (lost) { await finishBet(b, 'lost', 0, '', legs); continue; }
+    if (pending || legs.some(l => !l.status || l.status === 'open')) {
+      if (changed) await bets.updateOne({ _id: b._id, status: 'open' }, { $set: { legs: legs } });
+      continue;
+    }
+    const alive = legs.filter(l => l.status === 'won');
+    if (!alive.length) { await finishBet(b, 'void', b.stake, 'Apuesta anulada · ' + title + ' · importe devuelto', legs); continue; }
+    const odds = alive.reduce((p, l) => p * Number(l.odds), 1);     // las selecciones anuladas cuentan como cuota 1
+    const payout = Math.min(COIN_CFG.maxPayout, Math.floor(b.stake * odds));
+    await finishBet(b, 'won', payout, 'Apuesta ganada · ' + title, legs);
   }
 }
 
@@ -543,7 +681,7 @@ async function walletGet(body) {
   const sums = await (await dbc('wallet_tx')).aggregate([{ $match: { username: id } }, { $group: { _id: { $gt: ['$amount', 0] }, total: { $sum: '$amount' } } }]).toArray();
   let income = 0, expense = 0;
   sums.forEach(s => { if (s._id) income = s.total; else expense = -s.total; });
-  return { ok: true, wallet: { username: wallet.username, number: wallet.number, balance: wallet.balance, createdAt: wallet.createdAt }, income: income, expense: expense, tx: tx, bets: bets, config: { minBet: COIN_CFG.minBet, maxBet: COIN_CFG.maxBet }, now: Date.now() };
+  return { ok: true, wallet: { username: wallet.username, number: wallet.number, balance: wallet.balance, createdAt: wallet.createdAt }, income: income, expense: expense, tx: tx, bets: bets, config: { minBet: COIN_CFG.minBet, maxBet: COIN_CFG.maxBet, maxLegs: COIN_CFG.maxLegs }, now: Date.now() };
 }
 
 async function betPlace(body) {
@@ -551,29 +689,52 @@ async function betPlace(body) {
   if (!account) return { ok: false, error: 'auth' };
   await ensureIndexes();
   const id = String(account._id);
-  const pick = String((body && body.pick) || '');
   const stake = Math.floor(Number(body && body.stake));
-  if (['1', 'X', '2'].indexOf(pick) === -1) return { ok: false, error: 'pick' };
   if (!(stake >= COIN_CFG.minBet && stake <= COIN_CFG.maxBet)) return { ok: false, error: 'stake', min: COIN_CFG.minBet, max: COIN_CFG.maxBet };
+  let reqLegs = Array.isArray(body && body.legs) ? body.legs : [];
+  if (!reqLegs.length && body && body.matchId && body.pick) reqLegs = [{ matchId: body.matchId, market: '1X2', sel: body.pick }];
+  if (!reqLegs.length || reqLegs.length > COIN_CFG.maxLegs) return { ok: false, error: 'legs', max: COIN_CFG.maxLegs };
   const matches = await loadMatches();
-  const matchId = String((body && body.matchId) || '');
-  const m = matches && matches.find(x => x && String(x.id) === matchId);
-  if (!m) return { ok: false, error: 'match' };
-  if (matchState(m, Date.now()) !== 'open') return { ok: false, error: 'closed' };
-  const home = String(m.home || '').trim(), away = String(m.away || '').trim();
-  if (!home || !away) return { ok: false, error: 'match' };
+  if (!matches) return { ok: false, error: 'match' };
+  const form = teamForm(matches), sc = scorerForm(matches), now = Date.now(), seen = {}, legs = [];
+  let total = 1;
+  for (const rl of reqLegs) {
+    const matchId = String((rl && rl.matchId) || ''), market = String((rl && rl.market) || ''), sel = String((rl && rl.sel) || '');
+    const m = matches.find(x => x && String(x.id) === matchId);
+    if (!m) return { ok: false, error: 'match' };
+    if (seen[matchId]) return { ok: false, error: 'sameMatch' };      // una sola selección por partido en una combinada
+    seen[matchId] = 1;
+    if (matchState(m, now) !== 'open') return { ok: false, error: 'closed' };
+    const home = String(m.home || '').trim(), away = String(m.away || '').trim();
+    if (!home || !away) return { ok: false, error: 'match' };
+    const mk = computeMarkets(form, m, sc)[market];
+    if (!mk || mk[sel] === undefined) return { ok: false, error: 'pick' };
+    const odds = mk[sel];
+    total *= odds;
+    legs.push({ matchId: matchId, market: market, sel: sel, odds: odds, home: home, away: away, label: legLabel(market, sel, home, away), status: 'open', round: m.round || '', division: m.division || '', rk: m.round ? String(m.division || '-') + '|' + m.round : '' });
+  }
+  total = Math.min(COIN_CFG.maxOdds, Math.round(total * 100) / 100);
+  // límite de combinadas por jornada
+  if (legs.length > 1) {
+    const betsCol = await dbc('bets');
+    for (const rk of Array.from(new Set(legs.map(l => l.rk).filter(Boolean)))) {
+      const n = await betsCol.countDocuments({ username: id, type: 'parlay', 'legs.rk': rk });
+      if (n >= COIN_CFG.maxParlaysPerRound) return { ok: false, error: 'parlayLimit', max: COIN_CFG.maxParlaysPerRound };
+    }
+  }
+  // límite de exposición por partido (evita abusos con muchas apuestas al mismo partido)
+  const bets = await dbc('bets');
+  for (const l of legs) {
+    const mine = await bets.find({ username: id, status: 'open', $or: [{ matchId: l.matchId }, { 'legs.matchId': l.matchId }] }).toArray();
+    if (mine.reduce((s, x) => s + x.stake, 0) + stake > COIN_CFG.maxPerMatch) return { ok: false, error: 'limit', max: COIN_CFG.maxPerMatch };
+  }
   await openWallet(account);
-  const odds = computeOdds(teamForm(matches), m)[pick];
   const after = await debit(id, stake);
   if (!after) return { ok: false, error: 'funds' };
-  const bet = { _id: rid(), username: id, display: account.username, matchId: matchId, home: home, away: away, pick: pick, odds: odds, stake: stake, status: 'open', payout: 0, placedAt: nowIso(), kickoff: kickoffMs(m) };
-  try {
-    await (await dbc('bets')).insertOne(bet);
-  } catch (e) {
-    await credit(id, stake);                   // ya tenía una apuesta en este partido: se devuelve el dinero
-    return { ok: false, error: 'dup' };
-  }
-  await addTx(id, 'bet', -stake, after.balance, 'Apuesta · ' + home + ' vs ' + away + ' · ' + PICK_LABEL[pick], bet._id);
+  const bet = { _id: rid(), username: id, display: account.username, type: legs.length > 1 ? 'parlay' : 'single', legs: legs, odds: total, stake: stake, status: 'open', payout: 0, placedAt: nowIso() };
+  try { await bets.insertOne(bet); } catch (e) { await credit(id, stake); return { ok: false, error: 'net' }; }
+  const note = legs.length > 1 ? 'Combinada de ' + legs.length + ' · cuota ' + total.toFixed(2) : 'Apuesta · ' + legs[0].home + ' vs ' + legs[0].away + ' · ' + legs[0].label;
+  await addTx(id, 'bet', -stake, after.balance, note, bet._id);
   return { ok: true, bet: bet, balance: after.balance };
 }
 
