@@ -32,7 +32,7 @@
 
   /* ---------- Temática global de la web (la decide el administrador) ---------- */
   var SITE_KEY = 'hfa:siteTheme';
-  function readSiteCache() { try { return localStorage.getItem(SITE_KEY) === 'normal' ? 'normal' : 'mundial'; } catch (e) { return 'mundial'; } }
+  function readSiteCache() { try { return 'normal'; } catch (e) { return 'normal'; } }
   var siteTheme = readSiteCache();
 
   function readTheme() { try { return localStorage.getItem(THEME_KEY) || 'oscuro'; } catch (e) { return 'oscuro'; } }
@@ -54,25 +54,11 @@
   }
   applyTheme(readTheme());
 
-  var MUNDIAL_CSS = [
-    ':root{--bg:#050a18 !important;--panel:#0b1330 !important;--panel-2:#101b3f !important;--border:#243667 !important;--green:#ffc72c !important;--green-dim:#9c7512 !important;--amber:#ff9d4d !important;--red:#ff5a5f !important;--text-hi:#f6f8ff !important;--text-mid:#aab6dc !important;--text-low:#6d7cab !important}',
-    'html{background:#050a18}',
-    'body{background:radial-gradient(900px 420px at 50% -80px,rgba(0,170,80,.30),transparent 72%),repeating-linear-gradient(90deg,rgba(0,140,66,.06) 0 80px,rgba(0,0,0,0) 80px 160px),#050a18 !important;background-attachment:fixed !important}',
-    'body::before{content:"";position:fixed;top:0;left:0;right:0;height:4px;z-index:10001;background:linear-gradient(90deg,#ffc72c 0 20%,#00a651 20% 40%,#e63946 40% 60%,#1d6fe0 60% 80%,#ffffff 80%)}',
-    'header{background:linear-gradient(180deg,rgba(10,18,48,.97),rgba(6,12,32,.95)) !important;border-bottom:1px solid rgba(255,199,44,.5) !important;box-shadow:0 6px 24px rgba(0,0,0,.4)}',
-    '.hero{background:radial-gradient(620px 260px at 50% 0,rgba(255,199,44,.14),transparent 70%)}',
-    '.hero::before{content:"🏆  EDICIÓN MUNDIAL  ⚽";display:inline-block;padding:7px 18px;border:1px solid var(--green);border-radius:999px;background:rgba(255,199,44,.10);color:var(--green);font:700 12px Oswald,sans-serif;letter-spacing:.22em}',
-    '.hero-name{text-shadow:0 0 30px rgba(255,199,44,.38)}',
-    '.eyebrow::before{content:"🏆 "}',
-    '.ticker{background:linear-gradient(90deg,#ffc72c,#ffe27a,#ffc72c) !important;color:#1b1400 !important;border-top:2px solid #fff3c4;border-bottom:2px solid #b88a0c}',
-    '.btn-primary,.btn.btn-primary{background:linear-gradient(180deg,#ffd75a,#ffbf1f) !important;border-color:#ffd75a !important;color:#241a00 !important}',
-    '.content-card,.panel-card,.home-news-card,.retiro-card,.profile-header-card{box-shadow:inset 0 2px 0 rgba(255,199,44,.55),0 12px 34px rgba(0,0,0,.35)}',
-    '.retiro-card{background:linear-gradient(180deg,rgba(0,166,81,.16),rgba(11,19,48,.96)) !important;border-color:rgba(255,199,44,.5) !important}',
-    '.retiro-cell{background:linear-gradient(180deg,rgba(255,199,44,.14),rgba(255,199,44,.04)) !important}'
-  ].join('\n');
+  var MUNDIAL_CSS = ''; // la temática Mundial se ha retirado
+
 
   function applySiteTheme(name, persist) {
-    siteTheme = name === 'normal' ? 'normal' : 'mundial';
+    siteTheme = 'normal';
     var tag = document.getElementById('hfaSiteThemeStyle');
     if (!tag) { tag = document.createElement('style'); tag.id = 'hfaSiteThemeStyle'; (document.head || document.documentElement).appendChild(tag); }
     tag.textContent = siteTheme === 'mundial' ? MUNDIAL_CSS : '';
@@ -84,14 +70,7 @@
     try { window.dispatchEvent(new CustomEvent('hfa:sitetheme', { detail: siteTheme })); } catch (e) {}
   }
 
-  function fetchSiteTheme() {
-    fetch('/api/db?key=sitetheme', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (res) {
-      if (!res || !res.ok) return;
-      var name = 'mundial';
-      if (typeof res.value === 'string') { try { var v = JSON.parse(res.value); if (v && v.theme === 'normal') name = 'normal'; } catch (e) {} }
-      if (name !== siteTheme) applySiteTheme(name); else { try { localStorage.setItem(SITE_KEY, name); } catch (e) {} }
-    }).catch(function () {});
-  }
+  function fetchSiteTheme() { /* sin temática global: todos ven la web normal */ }
 
   var BASE_CSS = '.hfa-x-fab{position:fixed;left:16px;bottom:16px;z-index:9990;display:flex;gap:8px}.hfa-x-fab button{border:1px solid var(--border,#22302a);background:var(--panel,#121a17);color:var(--text-hi,#f2f6f4);border-radius:8px;padding:10px 13px;font:600 13px Inter,Arial,sans-serif;cursor:pointer;box-shadow:0 6px 18px #0005}.hfa-x-fab button:hover{border-color:var(--green,#34e88f)}.hfa-x-theme-panel{position:fixed;left:16px;bottom:64px;z-index:9991;min-width:220px;max-height:min(70vh,430px);overflow:auto;padding:12px;border:1px solid var(--border,#22302a);border-radius:10px;background:var(--panel,#121a17);color:var(--text-hi,#f2f6f4);font:13px Inter,Arial,sans-serif;box-shadow:0 14px 40px #0008}.hfa-x-theme-panel[hidden]{display:none}.hfa-x-theme-panel strong{display:block;margin-bottom:8px}.hfa-x-theme-opt{display:flex;align-items:center;gap:10px;width:100%;padding:8px 9px;margin-top:4px;border:1px solid transparent;border-radius:7px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}.hfa-x-theme-opt:hover{background:var(--panel-2,#16201c)}.hfa-x-theme-opt[aria-pressed=true]{border-color:var(--green,#34e88f)}.hfa-x-dot{width:16px;height:16px;border-radius:50%;border:1px solid #0006;flex:none}' +
     '.hfa-staff-toast{position:fixed;right:16px;bottom:16px;z-index:9995;width:min(340px,calc(100vw - 32px));padding:14px 16px;border:1px solid #ff7a7a;border-left-width:5px;border-radius:10px;background:var(--panel,#121a17);color:var(--text-hi,#f2f6f4);font:13px/1.45 Inter,Arial,sans-serif;box-shadow:0 14px 40px #000a}.hfa-staff-toast b{display:block;color:#ff9a9a;font-size:14px}.hfa-staff-toast span{display:block;margin:4px 0 10px;color:var(--text-mid,#9fb3ac)}.hfa-staff-toast div{display:flex;gap:8px}.hfa-staff-toast a,.hfa-staff-toast button{padding:7px 12px;border-radius:6px;border:1px solid var(--border,#22302a);background:var(--panel-2,#16201c);color:inherit;font:600 12px Inter,Arial,sans-serif;text-decoration:none;cursor:pointer}.hfa-staff-toast a{background:#ff7a7a;border-color:#ff7a7a;color:#1a0707}@media(max-width:520px){.hfa-staff-toast{bottom:76px}}.hfa-tour-shield{position:fixed;inset:0;z-index:30000;background:transparent}.hfa-tour-hole{position:fixed;z-index:30001;border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.66),0 0 0 3px var(--green,#34e88f);pointer-events:none}.hfa-tour-hole.full{box-shadow:none;background:rgba(0,0,0,.66);border-radius:0}.hfa-tour-card{position:fixed;z-index:30002;width:min(350px,calc(100vw - 24px));padding:16px;border:1px solid var(--green,#34e88f);border-radius:10px;background:var(--panel,#121a17);color:var(--text-hi,#f2f6f4);font:14px/1.5 Inter,Arial,sans-serif;box-shadow:0 18px 50px #000a}.hfa-tour-card h4{margin:0 0 6px;font-size:15px;color:var(--green,#34e88f)}.hfa-tour-card p{margin:0 0 14px;color:var(--text-mid,#9fb3ac)}.hfa-tour-row{display:flex;align-items:center;justify-content:space-between;gap:8px}.hfa-tour-row small{color:var(--text-low,#5c706a)}.hfa-tour-row button{border:1px solid var(--border,#22302a);background:var(--panel-2,#16201c);color:var(--text-hi,#f2f6f4);border-radius:6px;padding:7px 12px;font:600 12px Inter,Arial,sans-serif;cursor:pointer}.hfa-tour-row button.primary{background:var(--green,#34e88f);border-color:var(--green,#34e88f);color:#05130c}.hfa-tour-row button.hfa-tour-skip{background:none;border:0;color:var(--text-low,#5c706a);text-decoration:underline}@media(max-width:520px){.hfa-x-fab{bottom:76px}.hfa-x-theme-panel{bottom:124px}}';
@@ -626,6 +605,114 @@
     im.src = im.src.replace(/([?&])size=[a-z]/, '$1size=' + sizes[step]);
   }, true);
   setInterval(function () { var f = document.querySelector('.hfa-x-fab [data-hfa-logout]'); if (f) f.remove(); fixFaces(); }, 1200);
+
+  /* ---------- MODO MANTENIMIENTO (solo los administradores ven la web) ---------- */
+  var MAINT_KEY = 'hfa:maint';
+  var maint = { enabled: false, message: '' }, maintOverlayShown = false;
+  var MAINT_CSS = 'html.hfa-maint body>*:not(#hfaMaint){display:none!important}html.hfa-maint{overflow:hidden}' +
+    '#hfaMaint{position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;color:#f2f6f4;font-family:Inter,Arial,sans-serif;background:radial-gradient(ellipse 700px 460px at 50% 38%,rgba(52,232,143,.16),transparent 65%),#070c0a;overflow:auto}' +
+    '.hm-logo{position:relative;width:min(240px,56vw);aspect-ratio:1;display:grid;place-items:center;margin-bottom:26px}' +
+    '.hm-logo img{position:relative;width:78%;height:78%;object-fit:contain;animation:hmFloat 3.4s ease-in-out infinite;filter:drop-shadow(0 12px 30px rgba(52,232,143,.35))}' +
+    '.hm-ring{position:absolute;inset:0;border-radius:50%;border:2px dashed rgba(52,232,143,.45);animation:hmSpin 14s linear infinite}' +
+    '.hm-ring.r2{inset:9%;border-style:solid;border-color:rgba(52,232,143,.16);border-top-color:#34e88f;animation:hmSpin 2.4s linear infinite}' +
+    '.hm-pulse{position:absolute;inset:14%;border-radius:50%;background:radial-gradient(circle,rgba(52,232,143,.28),transparent 70%);animation:hmPulse 2.6s ease-in-out infinite}' +
+    '.hm-t{font:700 clamp(30px,7vw,56px)/1.05 Oswald,Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase}.hm-t span{color:#34e88f}' +
+    '.hm-s{margin-top:14px;max-width:520px;font-size:15px;line-height:1.7;color:#9fb3ac}' +
+    '.hm-bar{margin-top:26px;width:min(260px,70vw);height:4px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}.hm-bar i{display:block;width:40%;height:100%;border-radius:4px;background:linear-gradient(90deg,transparent,#34e88f,transparent);animation:hmBar 1.6s ease-in-out infinite}' +
+    '.hm-admin{margin-top:34px;font-size:12px;color:#5c706a}.hm-admin button{background:none;border:0;color:#5c706a;text-decoration:underline;cursor:pointer;font:inherit;padding:2px 6px}.hm-admin button:hover{color:#9fb3ac}' +
+    '.hm-form{display:none;margin:14px auto 0;gap:8px;flex-direction:column;width:min(280px,80vw)}.hm-form.open{display:flex}.hm-form input{padding:10px 12px;border:1px solid #22302a;border-radius:8px;background:#0d1512;color:#f2f6f4;font:14px Inter,Arial,sans-serif}.hm-form button{padding:10px;border:0;border-radius:8px;background:#34e88f;color:#05130c;font:700 13px Inter,Arial,sans-serif;cursor:pointer}.hm-err{min-height:16px;color:#ff8a8a;font-size:12px}' +
+    '@keyframes hmFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-10px) scale(1.03)}}@keyframes hmSpin{to{transform:rotate(360deg)}}@keyframes hmPulse{0%,100%{opacity:.45;transform:scale(.92)}50%{opacity:1;transform:scale(1.08)}}@keyframes hmBar{0%{transform:translateX(-120%)}100%{transform:translateX(280%)}}' +
+    '@media(prefers-reduced-motion:reduce){.hm-logo img,.hm-ring,.hm-pulse,.hm-bar i{animation:none!important}}' +
+    '.hm-badge{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9996;padding:8px 16px;border:1px solid #ff9d4d;border-radius:999px;background:#121a17;color:#ff9d4d;font:600 12px Inter,Arial,sans-serif;box-shadow:0 8px 24px #0009;white-space:nowrap}';
+  (function () { var st = document.createElement('style'); st.textContent = MAINT_CSS; (document.head || document.documentElement).appendChild(st); })();
+
+  function isAdminNow() { var s = readSession(); return !!(s && s.role === 'admin'); }
+  function setMaintClass(on) { document.documentElement.classList.toggle('hfa-maint', !!on); }
+  // Decisión inmediata con el último estado conocido, para no enseñar la web ni un instante.
+  try { if (localStorage.getItem(MAINT_KEY) === '1' && !isAdminNow()) setMaintClass(true); } catch (e) {}
+
+  function maintText() { return maint.message || 'Estamos mejorando HFA para ti. Volveremos muy pronto, gracias por tu paciencia. ⚽'; }
+  function sha256(t) { return crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)).then(function (b) { return Array.prototype.map.call(new Uint8Array(b), function (x) { return x.toString(16).padStart(2, '0'); }).join(''); }); }
+  function maintAdminLogin(user, pass, errEl) {
+    errEl.textContent = 'Comprobando…';
+    fetch('/api/db?key=accounts', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (res) {
+      var accs = []; try { accs = JSON.parse(res.value || '[]'); } catch (e) {}
+      var acc = accs.find(function (a) { return String(a.username).toLowerCase() === String(user).trim().toLowerCase(); });
+      return sha256(pass).then(function (h) {
+        if (!acc || acc.passHash !== h || acc.role !== 'admin') { errEl.textContent = 'Acceso solo para administradores.'; return; }
+        try { localStorage.setItem('hfa:session', JSON.stringify({ username: acc.username, role: acc.role })); localStorage.setItem('hfa:adminAuth', acc.passHash); } catch (e) {}
+        location.reload();
+      });
+    }).catch(function () { errEl.textContent = 'No se pudo conectar. Inténtalo de nuevo.'; });
+  }
+  function buildMaintOverlay() {
+    var box = document.getElementById('hfaMaint');
+    if (box) { var p = box.querySelector('.hm-s'); if (p) p.textContent = maintText(); return; }
+    box = document.createElement('div'); box.id = 'hfaMaint'; box.setAttribute('role', 'alert');
+    var logged = !!readSession();
+    box.innerHTML = '<div class="hm-logo"><div class="hm-pulse"></div><div class="hm-ring"></div><div class="hm-ring r2"></div><img src="EDITABLE_HF.png" alt="HFA"></div>' +
+      '<h1 class="hm-t">Estamos en <span>mantenimiento</span></h1><p class="hm-s"></p><div class="hm-bar"><i></i></div>' +
+      '<div class="hm-admin"><button type="button" data-hm-open>Acceso administrador</button>' + (logged ? '<button type="button" data-hfa-logout>Cerrar sesión</button>' : '') +
+      '<form class="hm-form" novalidate><input name="u" placeholder="Usuario" autocomplete="username"><input name="p" type="password" placeholder="Contraseña" autocomplete="current-password"><div class="hm-err" role="status"></div><button type="submit">Entrar</button></form></div>';
+    box.querySelector('.hm-s').textContent = maintText();
+    document.body.appendChild(box);
+    box.querySelector('[data-hm-open]').addEventListener('click', function () { box.querySelector('.hm-form').classList.toggle('open'); });
+    box.querySelector('.hm-form').addEventListener('submit', function (ev) { ev.preventDefault(); var f = ev.target; maintAdminLogin(f.u.value, f.p.value, f.querySelector('.hm-err')); });
+    maintOverlayShown = true;
+  }
+  function removeMaintOverlay() { var box = document.getElementById('hfaMaint'); if (box) box.remove(); }
+  function applyMaint() {
+    var show = maint.enabled && !isAdminNow();
+    setMaintClass(show);
+    if (show) { if (document.body) buildMaintOverlay(); else document.addEventListener('DOMContentLoaded', buildMaintOverlay); }
+    else {
+      if (maintOverlayShown) { maintOverlayShown = false; removeMaintOverlay(); location.reload(); return; }   // el mantenimiento terminó: recarga la web
+      removeMaintOverlay();
+    }
+    var badge = document.getElementById('hfaMaintBadge');
+    if (maint.enabled && isAdminNow()) {
+      if (!badge && document.body) { badge = document.createElement('div'); badge.id = 'hfaMaintBadge'; badge.className = 'hm-badge'; badge.textContent = '🛠️ Modo mantenimiento ACTIVO · solo los admins ven la web'; document.body.appendChild(badge); }
+    } else if (badge) badge.remove();
+  }
+  function fetchMaint() {
+    fetch('/api/db?key=maintenance', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (res) {
+      if (!res || !res.ok) return;
+      var v = { enabled: false, message: '' };
+      if (typeof res.value === 'string') { try { var p = JSON.parse(res.value); v.enabled = !!p.enabled; v.message = p.message || ''; } catch (e) {} }
+      maint = v;
+      try { localStorage.setItem(MAINT_KEY, v.enabled ? '1' : '0'); } catch (e) {}
+      applyMaint(); syncMaintCard();
+    }).catch(function () {});
+  }
+  function syncMaintCard() {
+    var st = document.getElementById('maintStatus'); if (!st) return;
+    st.textContent = maint.enabled ? '🔴 ACTIVO · solo los administradores ven la web' : '🟢 Desactivado · la web es visible para todos';
+    var btn = document.querySelector('[data-maint-toggle]');
+    if (btn) { btn.textContent = maint.enabled ? 'Desactivar mantenimiento' : 'Activar modo mantenimiento'; btn.classList.toggle('btn-primary', !maint.enabled); }
+    var ta = document.getElementById('maintMsg');
+    if (ta && !ta.getAttribute('data-touched') && document.activeElement !== ta) ta.value = maint.message || '';
+  }
+  document.addEventListener('input', function (e) { if (e.target && e.target.id === 'maintMsg') e.target.setAttribute('data-touched', '1'); });
+  document.addEventListener('click', function (e) {
+    var tg = e.target.closest ? e.target.closest('[data-maint-toggle],[data-maint-save]') : null; if (!tg) return;
+    var a = bkAuth(); if (!a) { window.alert('Necesitas iniciar sesión como administrador.'); return; }
+    var ta = document.getElementById('maintMsg'), msg = ta ? ta.value : '';
+    var enable = tg.hasAttribute('data-maint-toggle') ? !maint.enabled : maint.enabled;
+    if (tg.hasAttribute('data-maint-toggle') && enable && !window.confirm('Se ocultará la web para TODOS los usuarios y roles. Solo los administradores podrán entrar. ¿Activar el modo mantenimiento?')) return;
+    tg.disabled = true;
+    fetch('/api/db', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'setMaintenance', adminUser: a.adminUser, adminHash: a.adminHash, enabled: enable, message: msg }) })
+      .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
+      .then(function (d) {
+        tg.disabled = false;
+        if (!d || !d.ok) { window.alert('No se pudo cambiar el modo mantenimiento. Comprueba que has iniciado sesión como administrador.'); return; }
+        maint = { enabled: enable, message: msg.trim().slice(0, 220) };
+        try { localStorage.setItem(MAINT_KEY, enable ? '1' : '0'); } catch (er) {}
+        applyMaint(); syncMaintCard();
+      }).catch(function () { tg.disabled = false; window.alert('No se pudo conectar con el servidor.'); });
+  });
+  fetchMaint(); setInterval(fetchMaint, 30000); setInterval(syncMaintCard, 1500);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) fetchMaint(); });
+  window.addEventListener('storage', function (ev) { if (ev.key === 'hfa:session') applyMaint(); });
 
   window.HFAExtras = { openBackup: function () { openBackupModal(); }, logout: doLogout, startTour: function () { startTour(true); }, applyTheme: applyTheme, setSiteTheme: function (n) { applySiteTheme(n); }, getSiteTheme: function () { return siteTheme; } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
