@@ -764,6 +764,23 @@ async function walletList(body) {
   return { ok: true, rows: accounts.map(a => ({ username: a.username, balance: bal[String(a._id)] || 0 })) };
 }
 
+// Solo admin: revierte en las wallets TODAS las apuestas hechas sobre partidos de la simulación y las borra.
+async function simPurge(body) {
+  const admin = await authAdmin(body);
+  if (!admin) return { ok: false, error: 'auth' };
+  const bets = await dbc('bets'), wallets = await dbc('wallets'), txs = await dbc('wallet_tx');
+  const list = await bets.find({ $or: [{ matchId: /^sim-/ }, { 'legs.matchId': /^sim-/ }] }).toArray();
+  for (const b of list) {
+    const cashed = (b.status === 'won' || b.status === 'void') ? (b.payout || 0) : 0;   // apostar restó el importe; cobrar sumó el premio
+    const delta = b.stake - cashed;
+    if (delta) await wallets.updateOne({ _id: b.username }, { $inc: { balance: delta } });
+    await wallets.updateOne({ _id: b.username, balance: { $lt: 0 } }, { $set: { balance: 0 } });
+    await txs.deleteMany({ ref: b._id });
+    await bets.deleteOne({ _id: b._id });
+  }
+  return { ok: true, count: list.length };
+}
+
 // Solo admin: ingresar o retirar HFA COIN a una cuenta (premios, correcciones...).
 async function walletAdmin(body) {
   const admin = await authAdmin(body);
@@ -863,6 +880,138 @@ async function backupAction(body) {
   return { ok: false, error: 'op' };
 }
 
+/* =====================================================================
+   SIMULACIÓN: equipos, plantillas y partidos imaginarios (solo ADMIN)
+   Todo lo creado lleva el prefijo "sim-" / la marca sim:true, así se puede retirar
+   sin tocar ningún dato real. Antes de cargar se guarda una copia automática.
+   ===================================================================== */
+const SIM_TID = 'sim-torneo';
+const SIM_TEAMS = [
+  ['Leones del Norte', '#c0392b', 'L'], ['Tigres Habbo', '#e67e22', 'T'], ['Real Pixel', '#2980b9', 'R'], ['Atlético Furni', '#8e44ad', 'A'],
+  ['Dragones Verdes', '#27ae60', 'D'], ['Nébula CD', '#16a085', 'N'], ['Estrella Roja', '#d35400', 'E'], ['Halcones de Plata', '#7f8c8d', 'H']
+];
+const SIM_STRENGTH = [1.55, 1.35, 1.2, 1.1, 1.0, 0.9, 0.8, 0.7];
+const SIM_ADJ = ['Rayo', 'Turbo', 'Pixel', 'Furni', 'Neon', 'Cobre', 'Norte', 'Sol', 'Luna', 'Fuego', 'Hielo', 'Trueno', 'Alfa', 'Beta', 'Gamma', 'Delta', 'Viento', 'Roca', 'Aguila', 'Sombra'];
+const SIM_NOUN = ['Gol', 'Zurdo', 'Muro', 'Crack', 'Rapido', 'Capi'];
+
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function simCrest(color, letter) {
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path d="M32 3 57 12v21c0 15-11 24-25 29C18 57 7 48 7 33V12z" fill="' + color + '" stroke="#fff" stroke-width="3"/><text x="32" y="43" font-family="Arial Black,Arial" font-size="27" font-weight="900" text-anchor="middle" fill="#fff">' + letter + '</text></svg>';
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+function madridToday() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(new Date()); }
+function addDays(ymd, n) { const p = ymd.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2] + n)).toISOString().slice(0, 10); }
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function simBuild(existingNames) {
+  const rnd = mulberry32(20261008), taken = new Set(existingNames.map(normName));
+  const teams = [], used = new Set();
+  let idx = 0;
+  SIM_TEAMS.forEach((t, ti) => {
+    const players = [];
+    for (let k = 0; k < 14; k++) {
+      let name = SIM_ADJ[idx % SIM_ADJ.length] + SIM_NOUN[Math.floor(idx / SIM_ADJ.length) % SIM_NOUN.length]; idx++;
+      while (taken.has(normName(name)) || used.has(normName(name))) name += Math.floor(rnd() * 90 + 10);
+      used.add(normName(name)); players.push(name);
+    }
+    teams.push({ id: 'sim-t' + (ti + 1), name: t[0] + ' (Sim)', division: '1', players: players, crest: simCrest(t[1], t[2]), sim: true });
+  });
+  const pick = (arr, w) => { const tot = w.reduce((a, b) => a + b, 0); let r = rnd() * tot; for (let i = 0; i < arr.length; i++) { r -= w[i]; if (r <= 0) return arr[i]; } return arr[arr.length - 1]; };
+  const poisson = l => { const L = Math.exp(-l); let k = 0, p = 1; do { k++; p *= rnd(); } while (p > L); return k - 1; };
+  const posW = (i, kind) => { const pos = i === 0 ? 'GK' : i <= 5 ? 'DEF' : i <= 9 ? 'MED' : 'DEL'; return ({ goal: { GK: 0.05, DEF: 1, MED: 3, DEL: 6 }, assist: { GK: 0.2, DEF: 1.5, MED: 4, DEL: 3 } })[kind][pos]; };
+
+  // calendario todos contra todos (método del círculo): 7 jornadas x 4 partidos
+  const rot = teams.map((t, i) => i), rounds = [];
+  for (let r = 0; r < 7; r++) {
+    const pairs = [];
+    for (let i = 0; i < 4; i++) { const a = rot[i], b = rot[7 - i]; pairs.push((r + i) % 2 === 0 ? [a, b] : [b, a]); }
+    rounds.push(pairs); rot.splice(1, 0, rot.pop());
+  }
+  const today = madridToday();
+  const hourNow = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', hour: '2-digit', hour12: false }).format(new Date())) % 24;
+  const slots = ['19:00', '20:00', '21:00', '22:00'];
+  const matches = [];
+  rounds.forEach((pairs, ri) => {
+    const round = ri + 1;
+    pairs.forEach((pair, pi) => {
+      const A = teams[pair[0]], B = teams[pair[1]];
+      let date, time, finished = false;
+      if (round <= 3) { date = addDays(today, -(4 - round) * 7); time = slots[pi]; finished = true; }
+      else if (round === 4) { if (pi === 0) { date = today; time = pad2(Math.max(0, hourNow - 1)) + ':00'; } else { date = addDays(today, 1); time = slots[pi]; } }
+      else { date = addDays(today, (round - 4) * 3 + 1); time = slots[pi]; }
+      const m = { id: 'sim-m' + round + '-' + (pi + 1), teamAId: A.id, teamBId: B.id, home: A.name, away: B.name, date: date, time: time, round: round, division: '1', tournamentId: SIM_TID, finished: false, acta: '', attendance: {}, sim: true };
+      if (finished) {
+        const sa = SIM_STRENGTH[pair[0]], sb = SIM_STRENGTH[pair[1]];
+        const la = 1.35 * Math.sqrt(sa / sb) * 1.08, lb = 1.35 * Math.sqrt(sb / sa);
+        const ga = poisson(la), gb = poisson(lb), goals = [];
+        [['A', ga, A], ['B', gb, B]].forEach(x => {
+          for (let g = 0; g < x[1]; g++) {
+            const w = x[2].players.map((_, i) => posW(i, 'goal')), scorer = pick(x[2].players, w);
+            const others = x[2].players.filter(p => p !== scorer), aw = others.map(p => posW(x[2].players.indexOf(p), 'assist'));
+            goals.push({ player: scorer, assist: rnd() < 0.6 ? pick(others, aw) : '', minute: String(1 + Math.floor(rnd() * 90)), side: x[0] });
+          }
+        });
+        goals.sort((p, q) => Number(p.minute) - Number(q.minute));
+        const cards = [];
+        for (let c = Math.floor(rnd() * 4); c > 0; c--) { const side = rnd() < 0.5 ? 'A' : 'B', T = side === 'A' ? A : B; cards.push({ player: T.players[1 + Math.floor(rnd() * 13)], type: rnd() < 0.1 ? 'roja' : 'amarilla', minute: String(5 + Math.floor(rnd() * 85)), side: side }); }
+        const winner = ga >= gb ? A : B, top = goals.length ? goals[0].player : winner.players[6];
+        Object.assign(m, { finished: true, scoreA: ga, scoreB: gb, goals: goals, cards: cards, subs: [], lineupA: A.players.slice(0, 11), lineupB: B.players.slice(0, 11), mvp: top });
+      }
+      matches.push(m);
+    });
+  });
+  return { teams: teams, matches: matches, tournament: { id: SIM_TID, name: '🧪 Simulación HFA', sim: true } };
+}
+async function readList(key) { try { const v = JSON.parse((await getValue(key)) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+
+async function simStatus() {
+  const teams = (await readList('teams')).filter(t => t && t.sim), matches = (await readList('matches')).filter(m => m && m.sim);
+  const bets = (await (await dbc('bets')).find({}).toArray()).filter(b => legsOf(b).some(l => String(l.matchId).indexOf('sim-') === 0));
+  return { loaded: teams.length > 0 || matches.length > 0, teams: teams.length, matches: matches.length, finished: matches.filter(m => m.finished).length, bets: bets.length };
+}
+async function simulationAction(body) {
+  const admin = await authAdmin(body);
+  if (!admin) return { ok: false, error: 'auth' };
+  const op = String(body.op || '');
+  if (op === 'status') return Object.assign({ ok: true }, await simStatus());
+
+  if (op === 'load') {
+    const st = await simStatus();
+    if (st.loaded) return { ok: false, error: 'exists' };
+    await makeSnapshot(admin.username, 'Automática · antes de la simulación');
+    const teams = await readList('teams'), matches = await readList('matches'), tournaments = await readList('tournaments');
+    const existingNames = [].concat(teams.map(t => t.name), teams.reduce((a, t) => a.concat(t.players || []), []));
+    const sim = simBuild(existingNames);
+    await setValue('teams', JSON.stringify(teams.concat(sim.teams)), null);
+    await setValue('matches', JSON.stringify(matches.concat(sim.matches)), null);
+    await setValue('tournaments', JSON.stringify(tournaments.filter(t => t.id !== SIM_TID).concat([sim.tournament])), null);
+    return Object.assign({ ok: true }, await simStatus());
+  }
+
+  if (op === 'clear') {
+    const teams = (await readList('teams')).filter(t => !(t && t.sim));
+    const matches = (await readList('matches')).filter(m => !(m && m.sim));
+    const tournaments = (await readList('tournaments')).filter(t => !(t && t.sim));
+    await setValue('teams', JSON.stringify(teams), null);
+    await setValue('matches', JSON.stringify(matches), null);
+    await setValue('tournaments', JSON.stringify(tournaments), null);
+    // apuestas hechas sobre partidos de simulación: se deshace su efecto en las wallets y se borran
+    const betsCol = await dbc('bets'), wallets = await dbc('wallets');
+    const simBets = (await betsCol.find({}).toArray()).filter(b => legsOf(b).some(l => String(l.matchId).indexOf('sim-') === 0));
+    for (const b of simBets) {
+      const w = await wallets.findOne({ _id: b.username });
+      if (w) await wallets.updateOne({ _id: b.username }, { $set: { balance: Math.max(0, (w.balance || 0) + b.stake - (b.payout || 0)) } });
+    }
+    if (simBets.length) {
+      const ids = simBets.map(b => b._id);
+      await (await dbc('wallet_tx')).deleteMany({ ref: { $in: ids } });
+      await betsCol.deleteMany({ _id: { $in: ids } });
+    }
+    return Object.assign({ ok: true, removedBets: simBets.length }, await simStatus());
+  }
+  return { ok: false, error: 'op' };
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   try {
@@ -887,7 +1036,9 @@ module.exports = async (req, res) => {
         return res.status(ok ? 200 : 403).json({ ok: ok });
       }
       if (body.action === 'walletGet') { const r = await walletGet(body); return res.status(r.ok ? 200 : 403).json(r); }
+      if (body.action === 'simulation') { const r = await simulationAction(body); return res.status(r.ok ? 200 : (r.error === 'auth' ? 403 : 400)).json(r); }
       if (body.action === 'walletList') { const r = await walletList(body); return res.status(r.ok ? 200 : 403).json(r); }
+      if (body.action === 'simPurge') { const r = await simPurge(body); return res.status(r.ok ? 200 : 403).json(r); }
       if (body.action === 'walletAdmin') { const r = await walletAdmin(body); return res.status(r.ok ? 200 : 403).json(r); }
       if (body.action === 'walletTop') { return res.status(200).json(await walletTop()); }
       if (body.action === 'betOdds') { return res.status(200).json(await betOdds()); }
