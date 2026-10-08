@@ -80,6 +80,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
 .hfa-pop .player-detail-meta{font-size:12px;line-height:1.6}
 .hfa-pop .player-directory-avatar{width:44px;height:54px;object-fit:cover;object-position:center;border-radius:50%}
 .hfa-pop .player-directory-meta{display:block;margin-top:2px;font-size:11px;color:var(--text-mid,#9fb3ac)}
+.cmp-open{padding:6px 12px;font-size:12px;border-radius:999px}
 .cmp-pick{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:end;margin:12px 0 16px}
 .cmp-pick label{display:block;margin-bottom:6px;font-size:12px;font-weight:600;color:var(--text-mid)}
 .cmp-pick select{width:100%}
@@ -1030,13 +1031,13 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     return '<div class="cmp-pick"><div><label for="cmpA">Jugador 1</label><select id="cmpA" class="input">'+opts(cmpA)+'</select></div><button type="button" class="btn" id="cmpSwap" title="Intercambiar">⇄</button><div><label for="cmpB">Jugador 2</label><select id="cmpB" class="input">'+opts(cmpB)+'</select></div></div>'+
       '<div class="cmp-heads">'+head(A,'a')+'<div class="cmp-vs">VS</div>'+head(B,'b')+'</div>'+body+'<div class="cmp-verdict">'+verdict+'</div><div class="muted" style="margin-top:8px;font-size:11px">Estadísticas del torneo activo. Los partidos no cuentan para decidir quién lidera.</div>';
   }
-  function hfaCompareCard(){return '<div class="content-card" id="cmpCard" style="margin-top:18px"><div class="admin-title">⚖️ Comparar jugadores</div><div id="cmpBody">'+hfaCompareBody()+'</div></div>'}
+  function hfaCompareCard(){return '<div id="cmpCard" style="margin-top:14px"><button type="button" class="btn cmp-open" data-cmp-open>⚖️ Comparar jugadores</button></div>'}
   function cmpRefresh(){const b=document.getElementById('cmpBody');if(b)b.innerHTML=hfaCompareBody()}
   document.addEventListener('change',function(e){
     if(e.target.id==='cmpA'){cmpA=e.target.value;cmpRefresh()}
     else if(e.target.id==='cmpB'){cmpB=e.target.value;cmpRefresh()}
   });
-  document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('#cmpSwap')){const t=cmpA;cmpA=cmpB;cmpB=t;cmpRefresh()}});
+  document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('[data-cmp-open]')){hfaPopup('<div class="admin-title" style="margin:0 36px 4px 0">⚖️ Comparar jugadores</div><div id="cmpBody">'+hfaCompareBody()+'</div>');return}if(e.target.closest&&e.target.closest('#cmpSwap')){const t=cmpA;cmpA=cmpB;cmpB=t;cmpRefresh()}});
   function hfaPopup(html){
     const overlay=document.createElement('div');overlay.className='hfa-pop-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
     overlay.innerHTML='<div class="hfa-pop"><button type="button" class="hfa-pop-x" aria-label="Cerrar">&times;</button><div class="hfa-pop-body">'+html+'</div></div>';
