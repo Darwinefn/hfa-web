@@ -122,7 +122,6 @@
       return 'seccion:' + view + (view === 'comunidad' && params.get('sub') ? ':' + params.get('sub') : '');
     }
     if (page.indexOf('clasificacion') === 0) return 'clasificacion';
-    if (page.indexOf('apuestas') === 0) return 'apuestas';
     return 'inicio';
   }
 
@@ -156,11 +155,6 @@
       { sel: '#resumenNextMatch', title: 'Próximo partido', text: 'El siguiente encuentro programado, con fecha y hora.' },
       { sel: '#resumenTeams', title: 'Equipos', text: 'Los equipos de cada división de un vistazo.' },
       { sel: '#resumenFinished', title: 'Últimos resultados', text: 'Los partidos ya jugados. Pulsa uno para ver el acta completa.' }
-    ],
-    'apuestas': [
-      { sel: '#heroNote', title: 'HFA COIN', text: 'La moneda oficial de la HFA. Se usa para apostar en los partidos y se guarda en tu wallet.' },
-      { sel: '#tabs', title: 'Apuestas y wallet', text: 'Elige un partido, mira tus apuestas, gestiona tu cuenta HFA COIN (movimientos y transferencias) o consulta el ranking.' },
-      { sel: '#view', title: 'Cómo apostar', text: 'Pulsa una cuota (Local, Empate o Visitante), escribe el importe y confirma. Las ganancias se ingresan solas cuando termina el partido.' }
     ],
     'clasificacion': [
       { sel: '#classificationNav', title: 'Menú', text: 'Navega por el resto de secciones de la web.' },
@@ -713,142 +707,6 @@
   fetchMaint(); setInterval(fetchMaint, 30000); setInterval(syncMaintCard, 1500);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) fetchMaint(); });
   window.addEventListener('storage', function (ev) { if (ev.key === 'hfa:session') applyMaint(); });
-
-  /* ---------- SIMULACIÓN (solo admin): 8 equipos, 4 jugadores imaginarios, 10 jornadas ---------- */
-  var SIM_T = 'sim-torneo';
-  var SIM_DATA = [
-    ['Leones del Norte', ['SimLeoRayo', 'SimLeoMuro', 'SimLeoFlecha', 'SimLeoTrueno'], 1.6],
-    ['Tigres Dorados', ['SimTigreAlex', 'SimTigreZaza', 'SimTigreNeo', 'SimTigreBolt'], 1.4],
-    ['Águilas Rojas', ['SimAguilaVuelo', 'SimAguilaCima', 'SimAguilaSol', 'SimAguilaRizo'], 1.25],
-    ['Lobos Grises', ['SimLoboAlfa', 'SimLoboNiebla', 'SimLoboRuta', 'SimLoboLuna'], 1.1],
-    ['Dragones Azules', ['SimDragonFuego', 'SimDragonHielo', 'SimDragonEscama', 'SimDragonAla'], 1.0],
-    ['Halcones FC', ['SimHalconMira', 'SimHalconPico', 'SimHalconViento', 'SimHalconGiro'], 0.9],
-    ['Toros Bravos', ['SimToroCaña', 'SimToroEmbiste', 'SimToroArena', 'SimToroMole'], 0.8],
-    ['Panteras Negras', ['SimPanteraSombra', 'SimPanteraSalto', 'SimPanteraNoche', 'SimPanteraGarra'], 0.7]
-  ];
-  function simGet(key) {
-    return fetch('/api/db?key=' + encodeURIComponent(key), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
-      if (!d || !d.ok) throw new Error('api');
-      if (!d.value) return [];
-      var v = JSON.parse(d.value); return Array.isArray(v) ? v : [];
-    });
-  }
-  function simSet(key, val) {
-    var t = JSON.stringify(val); try { localStorage.setItem('hfa:' + key, t); } catch (e) {}
-    return fetch('/api/db', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: key, value: t }) }).then(function (r) { if (!r.ok) throw new Error('api'); });
-  }
-  function isSim(x) { return !!(x && (x.sim || String(x.id || '').indexOf('sim-') === 0)); }
-  function pad2(n) { return (n < 10 ? '0' : '') + n; }
-  function simFixtures(n) {                    // método del círculo: todos contra todos
-    var arr = [], rounds = [], r, i;
-    for (i = 0; i < n; i++) arr.push(i);
-    for (r = 0; r < n - 1; r++) {
-      var pairs = [];
-      for (i = 0; i < n / 2; i++) { var a = arr[i], b = arr[n - 1 - i]; pairs.push(r % 2 === 0 ? [a, b] : [b, a]); }
-      rounds.push(pairs); arr.splice(1, 0, arr.pop());
-    }
-    return rounds;
-  }
-  function simSay(t, err) { var el = document.getElementById('simMsg'); if (el) { el.textContent = t; el.style.color = err ? '#ff8a8a' : '#34e88f'; } }
-  function simBusy(on) { document.querySelectorAll('[data-sim]').forEach(function (b) { b.disabled = on; }); }
-
-  function simLoad() {
-    return bkCall({ op: 'save', label: 'Automática · antes de la simulación' }).then(function () {
-      simSay('Copia de seguridad guardada. Creando la simulación…');
-      return Promise.all([simGet('teams'), simGet('tournaments'), simGet('matches')]);
-    }).then(function (all) {
-      var teams = all[0], tournaments = all[1], matches = all[2];
-      if (teams.some(isSim) || tournaments.some(isSim) || matches.some(isSim)) throw new Error('La simulación ya está cargada.');
-      var taken = {}; teams.forEach(function (t) { taken[String(t.name).toLowerCase()] = 1; });
-      var simTeams = SIM_DATA.map(function (d, i) {
-        var name = d[0]; if (taken[name.toLowerCase()]) name += ' (Sim)';
-        return { id: 'sim-t' + (i + 1), name: name, division: '1', players: d[1].slice(), crest: '', sim: true };
-      });
-      var rounds = simFixtures(8), all10 = rounds.concat(rounds.slice(0, 3).map(function (rd) { return rd.map(function (p) { return [p[1], p[0]]; }); }));
-      var base = new Date(); base.setHours(0, 0, 0, 0);
-      var created = [];
-      all10.forEach(function (rd, ri) {
-        var d = new Date(base.getTime() + (ri + 1) * 86400000), date = d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
-        rd.forEach(function (p, k) {
-          var A = simTeams[p[0]], B = simTeams[p[1]];
-          created.push({ id: 'sim-m' + (ri + 1) + '-' + (k + 1), teamAId: A.id, teamBId: B.id, home: A.name, away: B.name, date: date, time: pad2(18 + Math.floor(k / 2)) + ':' + (k % 2 ? '30' : '00'), round: ri + 1, division: '1', tournamentId: SIM_T, finished: false, acta: '', attendance: {}, sim: true });
-        });
-      });
-      tournaments.push({ id: SIM_T, name: '🧪 Simulación HFA', sim: true });
-      return simSet('tournaments', tournaments).then(function () { return simSet('teams', teams.concat(simTeams)); }).then(function () { return simSet('matches', matches.concat(created)); });
-    }).then(function () { try { localStorage.setItem('hfa:activeTournament', SIM_T); } catch (e) {} });
-  }
-  function poisson(l) { var L = Math.exp(-l), k = 0, p = 1; do { k++; p *= Math.random(); } while (p > L && k < 12); return k - 1; }
-  function pickWeighted(players) { var w = [4, 3, 2, 1], tot = 0, i; for (i = 0; i < players.length; i++) tot += w[i] || 1; var r = Math.random() * tot; for (i = 0; i < players.length; i++) { r -= (w[i] || 1); if (r <= 0) return players[i]; } return players[0]; }
-  function simPlayMatch(m, teams) {
-    var A = teams.find(function (t) { return t.id === m.teamAId; }), B = teams.find(function (t) { return t.id === m.teamBId; });
-    if (!A || !B) return;
-    function strength(t) { var d = SIM_DATA.find(function (x) { return x[1][0] === (t.players || [])[0]; }); return d ? d[2] : 1; }
-    var sa = strength(A), sb = strength(B);
-    var ga = Math.min(6, poisson(1.3 * Math.sqrt(sa / sb) * 1.08)), gb = Math.min(6, poisson(1.3 * Math.sqrt(sb / sa)));
-    var goals = [];
-    function add(team, side, n) {
-      for (var i = 0; i < n; i++) {
-        var scorer = pickWeighted(team.players), mates = team.players.filter(function (p) { return p !== scorer; });
-        goals.push({ player: scorer, assist: Math.random() < 0.7 ? mates[Math.floor(Math.random() * mates.length)] : '', minute: String(1 + Math.floor(Math.random() * 90)), side: side });
-      }
-    }
-    add(A, 'A', ga); add(B, 'B', gb);
-    goals.sort(function (x, y) { return Number(x.minute) - Number(y.minute); });
-    m.goals = goals; m.scoreA = ga; m.scoreB = gb; m.finished = true; m.acta = 'Partido simulado';
-    m.cards = []; m.subs = []; m.mentions = []; m.lineupA = []; m.lineupB = [];
-    m.mvp = goals.length ? goals[0].player : '';
-  }
-  function simPlay(all) {
-    return Promise.all([simGet('matches'), simGet('teams')]).then(function (r) {
-      var matches = r[0], teams = r[1], pending = matches.filter(function (m) { return isSim(m) && !m.finished; });
-      if (!pending.length) throw new Error('No quedan partidos de la simulación por jugar.');
-      var first = Math.min.apply(null, pending.map(function (m) { return Number(m.round) || 1; }));
-      var played = 0;
-      pending.forEach(function (m) { if (all || (Number(m.round) || 1) === first) { simPlayMatch(m, teams); played++; } });
-      return simSet('matches', matches).then(function () { return played; });
-    });
-  }
-  function simRemove() {
-    var a = bkAuth(); if (!a) return Promise.reject(new Error('Necesitas iniciar sesión como administrador.'));
-    return fetch('/api/db', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ action: 'simPurge' }, a)) })
-      .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
-      .then(function (d) {
-        if (!d || !d.ok) throw new Error('El servidor no pudo revertir las apuestas de la simulación (¿API sin actualizar?). No se ha borrado nada.');
-        return Promise.all([simGet('teams'), simGet('tournaments'), simGet('matches')]);
-      }).then(function (all) {
-        var teams = all[0].filter(function (t) { return !isSim(t); }), tournaments = all[1].filter(function (t) { return !isSim(t); });
-        var matches = all[2].filter(function (m) { return !isSim(m) && String(m.teamAId || '').indexOf('sim-') !== 0 && String(m.teamBId || '').indexOf('sim-') !== 0; });
-        return simSet('matches', matches).then(function () { return simSet('teams', teams); }).then(function () { return simSet('tournaments', tournaments); });
-      }).then(function () { try { if (localStorage.getItem('hfa:activeTournament') === SIM_T) localStorage.removeItem('hfa:activeTournament'); } catch (e) {} });
-  }
-  var simStatusLoaded = false;
-  function simRefreshStatus() {
-    var st = document.getElementById('simStatus'); if (!st) { simStatusLoaded = false; return; }
-    if (simStatusLoaded) return; simStatusLoaded = true;
-    simGet('matches').then(function (ms) {
-      var sim = ms.filter(isSim), done = sim.filter(function (m) { return m.finished; }).length;
-      st.textContent = sim.length ? '🧪 Simulación cargada · 8 equipos · ' + sim.length + ' partidos · ' + done + ' jugados' : '⚪ No hay simulación cargada · la web está como siempre';
-    }).catch(function () { st.textContent = 'No se pudo leer el estado.'; });
-  }
-  setInterval(simRefreshStatus, 1500);
-  document.addEventListener('click', function (e) {
-    var b = e.target.closest ? e.target.closest('[data-sim]') : null; if (!b) return;
-    if (!bkAuth()) { window.alert('Necesitas iniciar sesión como administrador.'); return; }
-    var act = b.getAttribute('data-sim'), job;
-    if (act === 'load') {
-      if (!window.confirm('Se guardará una copia de seguridad y se añadirán 8 equipos imaginarios (4 jugadores cada uno) y 10 jornadas de partidos en un torneo aparte "🧪 Simulación HFA". Tus datos reales no se tocan. ¿Continuar?')) return;
-      simSay('Guardando copia de seguridad…'); job = simLoad().then(function () { return '✔ Simulación cargada. Recargando…'; });
-    } else if (act === 'next' || act === 'all') {
-      simSay('Jugando partidos…'); job = simPlay(act === 'all').then(function (n) { return '✔ ' + n + ' partido(s) simulados. Las apuestas se pagan solas. Recargando…'; });
-    } else if (act === 'remove') {
-      if (!window.confirm('Se eliminará TODO lo de la simulación (equipos, jugadores, partidos, goles y estadísticas) y se revertirán en las wallets las apuestas hechas sobre ella. La web quedará como estaba. ¿Continuar?')) return;
-      simSay('Revirtiendo la simulación…'); job = simRemove().then(function () { return '✔ Simulación eliminada. La web vuelve a estar como antes. Recargando…'; });
-    } else return;
-    simBusy(true);
-    job.then(function (msg) { simSay(msg); setTimeout(function () { location.reload(); }, 1300); })
-       .catch(function (er) { simSay(er.message || 'No se pudo completar la operación.', true); simBusy(false); });
-  });
 
   window.HFAExtras = { openBackup: function () { openBackupModal(); }, logout: doLogout, startTour: function () { startTour(true); }, applyTheme: applyTheme, setSiteTheme: function (n) { applySiteTheme(n); }, getSiteTheme: function () { return siteTheme; } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
