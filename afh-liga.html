@@ -796,7 +796,7 @@
           <a href="seccion.html?view=comunidad&sub=jugadores">Jugadores</a>
         </div>
       </div>`;
-    const navItems = links.filter(link => link[1] !== 'Inicio' && link[1] !== 'Clasificación' && (link[1] !== 'Admin' || ['admin','prueba_moderador','moderador','arbitro'].includes(session?.role))).map(link => `<a href="${link[0]}" class="${link[2]} ${link[1] === 'Admin' ? 'nav-admin' : ''}">${link[1]}</a>`).join('');
+    const navItems = links.filter(link => link[1] !== 'Inicio' && link[1] !== 'Clasificación' && (link[1] !== 'Admin' || ['admin','prueba_moderador','moderador','arbitro'].includes(session?.role))).map(link => `<a href="${link[0]}"${/^https?:/.test(link[0]) ? ' target="_blank" rel="noopener noreferrer"' : ''} class="${link[2]} ${link[1] === 'Admin' ? 'nav-admin' : ''}">${link[1]}</a>`).join('');
     document.getElementById('mainNav').innerHTML = session ? `<a href="#resumen" class="">Inicio</a>${communityMenu}<a href="clasificacion.html" class="">Clasificación</a>${navItems}` : navItems;
   }
   function renderNavAuth(){

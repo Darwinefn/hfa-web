@@ -435,13 +435,13 @@
       .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
       .then(function (d) { if (!d || !d.ok) throw new Error('El servidor rechazó la operación (¿sesión de admin caducada o API sin actualizar?).'); return d; });
   }
-  var BK_COLLS = ['app_data', 'accounts', 'role_assignments', 'wallets', 'wallet_tx', 'bets'];
+  var BK_COLLS = ['app_data', 'accounts', 'role_assignments'];
 
   function openBackupModal() {
     var old = document.getElementById('hfaBackup'); if (old) old.remove();
     var over = document.createElement('div'); over.id = 'hfaBackup'; over.className = 'hfa-bk-over';
     over.innerHTML = '<div class="hfa-bk" role="dialog" aria-modal="true"><button class="hfa-bk-close" type="button" data-bk-close aria-label="Cerrar">&times;</button>' +
-      '<h3>🛡️ Copias de seguridad</h3><p class="sub">Solo administradores. Incluye partidos, equipos, cuentas, roles, wallets y apuestas.</p>' +
+      '<h3>🛡️ Copias de seguridad</h3><p class="sub">Solo administradores. Incluye partidos, equipos, cuentas y roles.</p>' +
       '<h4>En el servidor</h4><div class="hfa-bk-row"><button type="button" class="primary" data-bk-save>Guardar copia ahora</button></div>' +
       '<div class="hfa-bk-list" id="hfaBkList" style="margin-top:10px"><small>Cargando copias…</small></div>' +
       '<h4>En tu ordenador</h4><div class="hfa-bk-row"><button type="button" data-bk-download>⬇ Descargar copia (.json)</button><button type="button" data-bk-upload>⬆ Restaurar desde archivo</button><input type="file" id="hfaBkFile" accept="application/json,.json" hidden></div>' +
