@@ -95,6 +95,23 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
 .cmp-bars{display:flex;flex-direction:column;gap:3px}.cmp-bar{display:block;height:6px;border-radius:3px;background:rgba(52,232,143,.35);min-width:2px}.cmp-bar.b{background:rgba(255,157,77,.35)}.cmp-bar.a.win{background:#34e88f}.cmp-bar.b.win{background:#ff9d4d}
 .cmp-verdict{margin-top:12px;padding:10px 12px;border-radius:8px;background:rgba(52,232,143,.08);text-align:center;font-weight:700;font-size:13px}
 @media(max-width:560px){.cmp-pick{grid-template-columns:1fr}.cmp-pick .btn{justify-self:center}.cmp-row{grid-template-columns:44px 1fr 44px}}
+.fixture-actions.summary-only{justify-content:flex-end}
+.public-match-card .fixture-actions{justify-content:flex-end;border-top:1px solid var(--border)}
+.summary-lineup-grid{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:20px;align-items:start}
+.summary-lineup-grid.single{grid-template-columns:minmax(0,340px)}
+.summary-lineup-field{min-width:0}
+.summary-video{min-width:0;padding:14px;border:1px solid var(--border);border-radius:12px;background:#0c1117}
+.summary-video-thumb{position:relative;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#000;cursor:pointer}
+.summary-video-thumb img,.summary-video-thumb iframe{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover}
+.summary-video-badge{position:absolute;right:10px;bottom:10px;display:flex;align-items:center;gap:8px;line-height:1;filter:drop-shadow(0 2px 6px #000a)}
+.summary-video-badge .yt-ic{display:block}
+.summary-video-dur{padding:3px 6px;border-radius:5px;background:rgba(0,0,0,.78);color:#fff;font:600 13px Inter,sans-serif}.summary-video-dur:empty{display:none}
+.summary-video-thumb:hover .yt-ic{transform:scale(1.1)}
+.summary-video-thumb.playing{cursor:default}
+.summary-video-title{margin-top:12px;font:600 17px/1.3 Oswald,sans-serif;color:var(--text-hi,#f2f6f4)}
+.summary-video-sub{margin-top:4px;font-size:13px;color:var(--text-mid,#9fb3ac)}
+.summary-video-sub a{color:inherit}.summary-video-sub a:hover{color:var(--green,#34e88f)}
+@media(max-width:760px){.summary-lineup-grid,.summary-lineup-grid.single{grid-template-columns:1fr}}
 </style><style>.admin-player-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}.admin-player-row{padding:14px;border:1px solid var(--border);border-radius:9px;background:var(--panel-2)}.admin-player-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.admin-player-role{max-width:220px;margin-top:12px}.admin-division-group{margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}.admin-division-group:first-of-type{margin-top:14px}.admin-division-buttons{display:flex;gap:7px;flex-wrap:wrap}.admin-division-button{min-width:42px;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel);color:var(--text-mid);font:700 10px Oswald}.admin-division-button.active{border-color:var(--green);background:rgba(52,232,143,.14);color:var(--green)}.admin-player-row>[data-user-role]{max-width:220px;margin-top:12px}.admin-section-note{margin-top:5px;color:var(--text-mid);font-size:11px;line-height:1.5}</style>
 <style>.admin-tools .content-card:has(#sponsorInput){display:none}</style>
 <style>.admin-division-results{display:flex;flex-direction:column;gap:8px;margin-top:14px}.admin-division-result{border:1px solid var(--border);border-radius:8px;background:var(--panel-2);overflow:hidden}.admin-division-player{display:flex;align-items:center;justify-content:space-between;width:100%;padding:13px 14px;border:0;background:transparent;color:var(--text-hi);text-align:left}.admin-division-player:hover{background:rgba(52,232,143,.08)}.admin-division-player small{color:var(--green);font-size:10px}.admin-division-menu{padding:0 14px 14px;border-top:1px solid var(--border)}.admin-division-menu .btn{margin-top:14px}</style>
@@ -1123,6 +1140,48 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   }
   function playerCards(players){const canSendOffers=session?.role==='dueno';return players.length?players.map(player=>'<div class="panel-card"><img class="profile-avatar" style="width:64px;height:82px" src="https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(player)+'&size=m&direction=2&head_direction=2&gesture=sml&action=std" alt="Keko de '+player+'"><div class="match-name" style="margin-top:8px">'+player+'</div>'+(canSendOffers?'<button class="btn btn-primary" data-send-offer="'+player+'" style="margin-top:10px">Enviar oferta</button>':'')+'</div>').join(''):'<div class="empty">No hay jugadores registrados en tu equipo.</div>'}
   function matchRoundLabel(value){const numeric=Number(value);if(Number.isFinite(numeric)&&numeric>0)return 'J'+numeric;const found=String(value||'').match(/\d+/);return 'J'+(found?Number(found[0]):1)}
+  function hfaYtId(url){
+    const m=String(url||'').trim().match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/|v\/))([A-Za-z0-9_-]{11})/);
+    return m?m[1]:'';
+  }
+  function hfaApplyYoutube(match){
+    const el=document.getElementById('actaYoutube');if(!el||!match)return;
+    const v=el.value.trim(),hint=document.getElementById('saveActaHint');
+    if(!v){match.youtube='';if(hint)hint.textContent='';return}
+    if(!hfaYtId(v)){if(hint){hint.textContent='El enlace de YouTube no es válido. Se ha mantenido el anterior.';hint.style.color='#ff8a8a'}return}
+    match.youtube=v;if(hint)hint.textContent='';
+  }
+  const hfaYtCache={};
+  function hfaYtDuration(iso){const m=String(iso||'').match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);if(!m)return '';const h=+m[1]||0,mi=+m[2]||0,se=+m[3]||0,p=n=>String(n).padStart(2,'0');return h?h+':'+p(mi)+':'+p(se):mi+':'+p(se)}
+  function hfaYtViews(n){if(n==null||isNaN(n))return '';let t;if(n>=1e6){t=(n/1e6).toFixed(n>=1e7?0:1).replace('.',',').replace(/,0$/,'')+' M'}else if(n>=1e3){t=(n/1e3).toFixed(n>=1e4?0:1).replace('.',',').replace(/,0$/,'')+' K'}else t=String(n);return t+' vistas'}
+  function hfaYtAgo(iso){const t=Date.parse(iso);if(!t)return '';const s=Math.max(0,(Date.now()-t)/1000),u=[[31536000,'año','años'],[2592000,'mes','meses'],[604800,'semana','semanas'],[86400,'día','días'],[3600,'hora','horas'],[60,'minuto','minutos']];for(const x of u){if(s>=x[0]){const n=Math.floor(s/x[0]);return 'hace '+n+' '+(n===1?x[1]:x[2])}}return 'hace un momento'}
+  function hfaYtFill(id){
+    const info=hfaYtCache[id];if(!info||!info.ok)return;
+    document.querySelectorAll('.summary-video[data-yt-id="'+id+'"]').forEach(function(box){
+      const t=box.querySelector('.summary-video-title');if(t&&info.title)t.textContent=info.title;
+      const sub=box.querySelector('.summary-video-sub');
+      if(sub){const parts=[info.channel,hfaYtViews(info.views),hfaYtAgo(info.publishedAt)].filter(Boolean);if(parts.length){const a=box.getAttribute('data-yt-url');sub.innerHTML='<a href="'+profileText(a)+'" target="_blank" rel="noopener noreferrer">'+parts.map(profileText).join(' • ')+'</a>'}}
+      const dur=hfaYtDuration(info.duration),b=box.querySelector('.summary-video-dur');if(b&&dur)b.textContent=dur;
+    });
+  }
+  function hfaYtLoad(id){
+    if(hfaYtCache[id]){hfaYtFill(id);return}
+    hfaYtCache[id]={ok:false,loading:true};
+    fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ytInfo',id:id})}).then(r=>r.json()).then(function(j){hfaYtCache[id]=j&&j.ok?j:{ok:false};hfaYtFill(id)}).catch(function(){hfaYtCache[id]={ok:false}});
+  }
+  function hfaVideoCard(match,home,away,division,round){
+    const id=hfaYtId(match.youtube);if(!id)return '';
+    const title=profileText(home)+' vs '+profileText(away)+' | HFA '+profileText(divisionLabel(division))+' - J'+(Number(round)||1);
+    setTimeout(function(){hfaYtLoad(id)},0);
+    return '<div class="summary-video" data-yt-id="'+id+'" data-yt-url="'+profileText(match.youtube)+'"><div class="summary-video-thumb" data-yt-play="'+id+'" role="button" tabindex="0" aria-label="Reproducir resumen del partido"><img src="https://i.ytimg.com/vi/'+id+'/maxresdefault.jpg" onerror="if(!this.dataset.f){this.dataset.f=1;this.src=\'https://i.ytimg.com/vi/'+id+'/hqdefault.jpg\'}" alt="Resumen del partido" loading="lazy"><span class="summary-video-badge"><svg class="yt-ic" viewBox="0 0 68 48" width="34" height="24" aria-hidden="true"><path d="M66.5 7.7a8.5 8.5 0 0 0-6-6C55.2.2 34 .2 34 .2S12.8.2 7.5 1.7a8.5 8.5 0 0 0-6 6C0 13 0 24 0 24s0 11 1.5 16.3a8.5 8.5 0 0 0 6 6C12.8 47.8 34 47.8 34 47.8s21.2 0 26.5-1.5a8.5 8.5 0 0 0 6-6C68 35 68 24 68 24s0-11-1.5-16.3z" fill="#f00"/><path d="M45 24 27 14v20z" fill="#fff"/></svg><span class="summary-video-dur"></span></span></div><div class="summary-video-title">'+title+'</div><div class="summary-video-sub"><a href="'+profileText(match.youtube)+'" target="_blank" rel="noopener noreferrer">Ver en YouTube ↗</a></div></div>';
+  }
+  document.addEventListener('click',function(e){
+    const t=e.target.closest&&e.target.closest('[data-yt-play]');if(!t)return;
+    const id=t.getAttribute('data-yt-play');if(!/^[A-Za-z0-9_-]{11}$/.test(id))return;
+    t.innerHTML='<iframe src="https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0" title="Resumen del partido" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';
+    t.removeAttribute('data-yt-play');t.classList.add('playing');
+  });
+  document.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[data-yt-play]')){e.preventDefault();e.target.click()}});
   let publicMatchTournament=params.get('tournament')||'all',publicMatchDivision='all',publicMatchRound='all',publicSummaryMatchId=null;
   function matches(){
     if(normalizeMatches())setJSON('matches',state.matches);
@@ -1143,7 +1202,8 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       const prediction=matchPrediction(match,a,b);
       const scorerList=(goals)=>goals.length?goals.map(goal=>'<div class="fixture-scorer">⚽ '+goal.player+' <small>'+goal.minute+"'</small></div>").join(''):'<div class="fixture-scorer muted">Sin goles registrados</div>';
       const summaryOpen=publicSummaryMatchId===match.id;
-      const fieldHTML=match.finished&&summaryOpen?'<div class="closed-field"><div class="closed-field-title">Alineación inicial</div>'+actaField(match,true)+'</div>':'';
+      const videoHTML=match.finished&&summaryOpen?hfaVideoCard(match,home,away,match.division||a?.division||b?.division,match.round):'';
+      const fieldHTML=match.finished&&summaryOpen?'<div class="closed-field"><div class="closed-field-title">Alineación inicial</div><div class="summary-lineup-grid'+(videoHTML?'':' single')+'"><div class="summary-lineup-field">'+actaField(match,true)+'</div>'+videoHTML+'</div></div>':'';
       const goalsSummary=match.finished?'<div class="match-summary-goals"><b>⚽ Goles</b>'+(goalsA.length||goalsB.length?goalsA.map(goal=>'<span><strong>'+profileText(goal.minute||'')+"'</strong> "+profileText(goal.player)+(goal.assist?' · '+profileText(goal.assist):'')+'</span>').join('')+goalsB.map(goal=>'<span><strong>'+profileText(goal.minute||'')+"'</strong> "+profileText(goal.player)+(goal.assist?' · '+profileText(goal.assist):'')+'</span>').join(''):'<span class="muted">Sin goles registrados.</span>')+'</div>':'';
       const chronicleHTML=match.finished?'<div class="match-chronicle"><h3>Crónica del partido</h3>'+matchChronicle(match)+'</div>':'';
       const awardsHTML=match.finished?'<div class="match-awards"><h3>Premios</h3>'+matchAwards(match)+'</div>':'';
@@ -2273,7 +2333,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
         await setJSON('matches',state.matches);selectedActaMatchId=null;content();return;
       }
       match.mvp=document.getElementById('mvpInput')?.value.trim()||match.mvp||'';
-      match.acta=document.getElementById('actaText')?.value.trim()||match.acta||'';
+      match.acta=document.getElementById('actaText')?.value.trim()||match.acta||'';hfaApplyYoutube(match);
       if(finalize){match.scoreA=(match.goals||[]).filter(goal=>goal.side==='A').length;match.scoreB=(match.goals||[]).filter(goal=>goal.side==='B').length;match.finished=true;selectedActaMatchId=null}
       await setJSON('matches',state.matches);content();
     });
@@ -2325,7 +2385,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     if(selectedMatch&&selectedActaMatchId!==selectedMatch.id)selectedActaMatchId=selectedMatch.id;
     const matchOptions=actaMatches.length?actaMatches.map(match=>{const home=match.home||team(match.teamAId)?.name||'Equipo A',away=match.away||team(match.teamBId)?.name||'Equipo B';return '<option value="'+match.id+'" '+(match.id===selectedActaMatchId?'selected':'')+'>'+home+' vs '+away+' · '+divisionLabel(match.division||team(match.teamAId)?.division||team(match.teamBId)?.division)+' · J'+(Number(match.round)||1)+'</option>'}).join(''):'<option value="">No hay partidos en esta división</option>';
     const actaDivisionOptions='<option value="all" '+(actaDivisionFilter==='all'?'selected':'')+'>Todas las divisiones</option>'+['1','2','3','4'].map(value=>'<option value="'+value+'" '+(actaDivisionFilter===value?'selected':'')+'>'+value+'D</option>').join('');
-      return '<div class="notice">Sesión: '+session.username+' · '+(isAdmin?'Administrador':'Árbitro')+' · Torneo: <b>'+profileText(activeTournament()?.name||'Sin torneo seleccionado')+'</b>'+'</div><div class="admin-tools" style="margin-top:18px">'+(isAdmin?communityAdmin()+'<div class="content-card" id="adminActiveTournamentCard"><div class="admin-title">Seleccionar torneo para la gestión de partidos</div><div class="admin-section-note">El torneo seleccionado quedará activo para crear y administrar partidos.</div><select class="input" id="adminActiveTournamentSelect" '+(activeTournamentOptions?'':'disabled')+'>'+(activeTournamentOptions||'<option value="">No hay torneos creados</option>')+'</select><button class="btn btn-primary" id="adminSaveActiveTournament" '+(activeTournamentOptions?'':'disabled')+'>Usar torneo seleccionado</button></div><div class="content-card"><div class="admin-title">Agregar equipo y jugadores</div><input class="input" id="newTeamName" placeholder="Nombre del equipo"><select class="input" id="newTeamDivision"><option value="1">División 1</option><option value="2">División 2</option><option value="3">División 3</option><option value="4">División 4</option></select><button class="btn btn-primary" id="addTeam">Añadir equipo</button></div><div class="content-card"><div class="admin-title">Sponsors</div><div class="admin-list">Patrocinadores actuales: '+(state.sponsors.length?state.sponsors.join(', '):'ninguno')+'</div><input class="input" id="sponsorInput" placeholder="Nombre del sponsor"><button class="btn btn-primary" id="addSponsor">Agregar sponsor</button></div><div class="content-card"><div class="admin-title">Crear jornadas y partidos</div>'+dragMatchUI()+'<div class="admin-list">Partidos creados: '+state.matches.length+'</div></div>':'')+'<div class="content-card" id="actaManagement">      <div class="admin-title">Editar y finalizar acta</div><div class="admin-acta-filters"><label class="admin-acta-label" for="actaDivision">Buscar por división</label><select class="input admin-acta-select" id="actaDivision">'+actaDivisionOptions+'</select><label class="admin-acta-label" for="actaMatch">Selecciona el partido</label><select class="input admin-acta-select" id="actaMatch">'+matchOptions+'</select>'+actaMenu(selectedMatch)+'<div class="admin-acta-fields"><input class="input" id="mvpInput" placeholder="MVP del partido" value="'+(selectedMatch?.mvp||'')+'"><textarea class="input" id="actaText" placeholder="Observaciones del acta">'+(selectedMatch?.acta||'')+'</textarea></div><div class="form-hint" id="saveActaHint"></div><div class="fixture-actions admin-acta-actions"><button class="btn btn-ghost btn-sm" type="button" data-save-acta="'+(selectedMatch?.id||'')+'">GUARDAR CAMBIOS</button><button class="btn btn-primary btn-sm finalize-acta-btn" type="button" data-finalize-acta="'+(selectedMatch?.id||'')+'">FINALIZAR ACTA</button><button class="btn btn-ghost btn-sm delete-acta-btn" type="button" data-delete-acta="'+(selectedMatch?.id||'')+'">BORRAR ACTA</button></div><div class="admin-list">Pulsa sobre un jugador para agregar goles, tarjetas, asistencias, cambios, MVP o menciones. Usa <b>FINALIZAR ACTA</b> cuando el partido haya terminado.</div></div></div>';
+      return '<div class="notice">Sesión: '+session.username+' · '+(isAdmin?'Administrador':'Árbitro')+' · Torneo: <b>'+profileText(activeTournament()?.name||'Sin torneo seleccionado')+'</b>'+'</div><div class="admin-tools" style="margin-top:18px">'+(isAdmin?communityAdmin()+'<div class="content-card" id="adminActiveTournamentCard"><div class="admin-title">Seleccionar torneo para la gestión de partidos</div><div class="admin-section-note">El torneo seleccionado quedará activo para crear y administrar partidos.</div><select class="input" id="adminActiveTournamentSelect" '+(activeTournamentOptions?'':'disabled')+'>'+(activeTournamentOptions||'<option value="">No hay torneos creados</option>')+'</select><button class="btn btn-primary" id="adminSaveActiveTournament" '+(activeTournamentOptions?'':'disabled')+'>Usar torneo seleccionado</button></div><div class="content-card"><div class="admin-title">Agregar equipo y jugadores</div><input class="input" id="newTeamName" placeholder="Nombre del equipo"><select class="input" id="newTeamDivision"><option value="1">División 1</option><option value="2">División 2</option><option value="3">División 3</option><option value="4">División 4</option></select><button class="btn btn-primary" id="addTeam">Añadir equipo</button></div><div class="content-card"><div class="admin-title">Sponsors</div><div class="admin-list">Patrocinadores actuales: '+(state.sponsors.length?state.sponsors.join(', '):'ninguno')+'</div><input class="input" id="sponsorInput" placeholder="Nombre del sponsor"><button class="btn btn-primary" id="addSponsor">Agregar sponsor</button></div><div class="content-card"><div class="admin-title">Crear jornadas y partidos</div>'+dragMatchUI()+'<div class="admin-list">Partidos creados: '+state.matches.length+'</div></div>':'')+'<div class="content-card" id="actaManagement">      <div class="admin-title">Editar y finalizar acta</div><div class="admin-acta-filters"><label class="admin-acta-label" for="actaDivision">Buscar por división</label><select class="input admin-acta-select" id="actaDivision">'+actaDivisionOptions+'</select><label class="admin-acta-label" for="actaMatch">Selecciona el partido</label><select class="input admin-acta-select" id="actaMatch">'+matchOptions+'</select>'+actaMenu(selectedMatch)+'<div class="admin-acta-fields"><input class="input" id="mvpInput" placeholder="MVP del partido" value="'+(selectedMatch?.mvp||'')+'"><textarea class="input" id="actaText" placeholder="Observaciones del acta">'+(selectedMatch?.acta||'')+'</textarea><label class="admin-acta-label" for="actaYoutube" style="margin-top:8px">🎬 Enlace de YouTube del resumen del partido</label><input class="input" id="actaYoutube" type="url" placeholder="Enlace de YouTube del resumen (opcional)" value="'+profileText(selectedMatch?.youtube||'')+'" aria-label="Enlace de YouTube del resumen"></div><div class="form-hint" id="saveActaHint"></div><div class="fixture-actions admin-acta-actions"><button class="btn btn-ghost btn-sm" type="button" data-save-acta="'+(selectedMatch?.id||'')+'">GUARDAR CAMBIOS</button><button class="btn btn-primary btn-sm finalize-acta-btn" type="button" data-finalize-acta="'+(selectedMatch?.id||'')+'">FINALIZAR ACTA</button><button class="btn btn-ghost btn-sm delete-acta-btn" type="button" data-delete-acta="'+(selectedMatch?.id||'')+'">BORRAR ACTA</button></div><div class="admin-list">Pulsa sobre un jugador para agregar goles, tarjetas, asistencias, cambios, MVP o menciones. Usa <b>FINALIZAR ACTA</b> cuando el partido haya terminado.</div></div></div>';
   }
   document.addEventListener('keydown',function(event){
     if(event.key!=='Escape')return;
@@ -2754,7 +2814,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       const match=state.matches.find(item=>item.id===saveActaButton.dataset.saveActa);
       if(match){
         match.mvp=document.getElementById('mvpInput')?.value.trim()||'';
-        match.acta=document.getElementById('actaText')?.value.trim()||'';
+        match.acta=document.getElementById('actaText')?.value.trim()||'';hfaApplyYoutube(match);
         await setJSON('matches',state.matches);
         selectedActaMatchId=match.id;
         adminSection='acts';
@@ -2770,7 +2830,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       const match=state.matches.find(item=>item.id===finalizeActaButton.dataset.finalizeActa);
       if(match){
         match.mvp=document.getElementById('mvpInput')?.value.trim()||match.mvp||'';
-        match.acta=document.getElementById('actaText')?.value.trim()||match.acta||'';
+        match.acta=document.getElementById('actaText')?.value.trim()||match.acta||'';hfaApplyYoutube(match);
         match.scoreA=(match.goals||[]).filter(goal=>goal.side==='A').length;
         match.scoreB=(match.goals||[]).filter(goal=>goal.side==='B').length;
         match.finished=true;
