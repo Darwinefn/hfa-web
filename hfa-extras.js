@@ -115,6 +115,12 @@
       window.open('https://cards.hfasociacion.com/', '_blank', 'noopener');
     }
   }, true);
+
+  /* Selector de idioma (carga hfa-i18n.js desde la misma carpeta) */
+  (function () {
+    var cs = document.currentScript, base = cs && cs.src ? cs.src.replace(/[^\/]*(\?.*)?$/, '') : '';
+    var s = document.createElement('script'); s.src = base + 'hfa-i18n.js'; s.defer = true; document.head.appendChild(s);
+  })();
   function addCss() { var s = document.createElement('style'); s.textContent = BASE_CSS + MOBILE_CSS; document.head.appendChild(s); }
   document.addEventListener('click', function (e) { var t = e.target.closest && e.target.closest('[data-community-menu]'); if (t) { var r = t.closest('header') ? t.closest('header').getBoundingClientRect() : t.getBoundingClientRect(); document.documentElement.style.setProperty('--hfa-menu-top', Math.round(r.bottom + 6) + 'px'); } }, true);
 

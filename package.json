@@ -1,8 +1,9 @@
 {
-  "name": "hfa-web",
+  "name": "hfa-habbo-futbol-asociacion",
   "version": "1.0.0",
   "private": true,
+  "description": "HFA · Habbo Fútbol Asociación — web de la liga",
   "dependencies": {
-    "mongodb": "^6.10.0"
+    "mongodb": "^6.8.0"
   }
 }
