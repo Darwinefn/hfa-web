@@ -198,7 +198,6 @@
       { sel: '.hero-actions', title: 'Accesos rápidos', text: 'Botones directos a las secciones más usadas. El acceso al panel de administración solo aparece al personal con rol.' },
       { sel: function () { var t = document.getElementById('tickerTrack'); return t && t.parentElement; }, title: 'Cinta de novedades', text: 'Aquí pasan las jornadas de cada división a medida que se van creando, con su estado: finalizada, en curso o próxima.' },
       { sel: '#homeNews', title: 'Noticias', text: 'Las novedades más recientes publicadas por la administración. Usa las flechas para ver más.' },
-      { sel: '#retiroGiova', title: 'Retiro Giova', text: 'Cuenta atrás en días, horas, minutos y segundos hasta el 31 de diciembre de 2026, con el mensaje de agradecimiento a Giova.' },
       { sel: '#resumenNextMatch', title: 'Próximo partido', text: 'El siguiente encuentro programado, con fecha y hora.' },
       { sel: '#resumenTeams', title: 'Equipos', text: 'Los equipos de cada división de un vistazo.' },
       { sel: '#resumenFinished', title: 'Últimos resultados', text: 'Los partidos ya jugados. Pulsa uno para ver el acta completa.' }
