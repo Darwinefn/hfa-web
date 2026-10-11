@@ -9,7 +9,7 @@
   var DICT = [
   // ---- menú y secciones ----
   'Inicio|Home|Início','Comunidad|Community|Comunidade','Clasificación|Standings|Classificação','Torneos|Tournaments|Torneios',
-  'Estadísticas|Statistics|Estatísticas','Partidos|Matches|Partidas','Álbum|Album|Álbum','Cuenta|Account|Conta','Buzón|Inbox|Caixa de entrada',
+  'Estadísticas|Statistics|Estatísticas','Partidos|Matches|Partidas','Mis partidos|My matches|Meus jogos','📊 VER PREDICCIÓN|📊 VIEW PREDICTION|📊 VER PREVISÃO','📊 OCULTAR PREDICCIÓN|📊 HIDE PREDICTION|📊 OCULTAR PREVISÃO','Álbum|Album|Álbum','Cuenta|Account|Conta','Buzón|Inbox|Caixa de entrada',
   'Admin|Admin|Admin','Salir|Log out|Sair','Equipos|Teams|Times','Jugadores|Players|Jogadores','Noticias|News|Notícias','Palmarés|Honours|Palmarés',
   'Tema|Theme|Tema','Guía|Guide|Guia','Idioma|Language|Idioma','Menú|Menu|Menu','Menú principal|Main menu|Menu principal',
   'Menú Comunidad|Community menu|Menu da Comunidade','MENÚ DE COMUNIDAD|COMMUNITY MENU|MENU DA COMUNIDADE','Menú del panel|Panel menu|Menu do painel',
