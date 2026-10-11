@@ -1695,7 +1695,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     if(!session||!HFA_STAFF.includes(session.role))return;
     const seen=new Set(hfaSeenAlerts());
     const fresh=hfaRiskEntries().filter(item=>!seen.has(item.key));
-    const navButton=document.querySelector('[data-admin-section="attendance"]');
+    const navButton=document.querySelector('.admin-section-nav [data-admin-section="attendance"]');
     if(navButton){navButton.querySelector('.hfa-nav-badge')?.remove();if(fresh.length)navButton.insertAdjacentHTML('beforeend',' <span class="hfa-nav-badge">'+fresh.length+'</span>')}
     let box=document.getElementById('hfaAttAlert');
     const layout=document.querySelector('.admin-section-layout');
@@ -1713,14 +1713,14 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     if(card&&!card.querySelector('tr[data-att-detail]:not([hidden])'))card.innerHTML=hfaAttendanceTableInner();
   }
   document.addEventListener('click',event=>{
-    if(event.target.closest('[data-att-alert-open]')){document.querySelector('[data-admin-section="attendance"]')?.click();return}
+    if(event.target.closest('[data-att-alert-open]')){document.querySelector('.admin-section-nav [data-admin-section="attendance"]')?.click();return}
     if(event.target.closest('[data-att-alert-dismiss]')){hfaMarkAlertsSeen();return}
-    if(event.target.closest('[data-admin-section="attendance"]')){const card=document.getElementById('adminAttendanceList');if(card)card.innerHTML=hfaAttendanceTableInner();hfaRefreshAttendance();setTimeout(hfaMarkAlertsSeen,400)}
+    if(event.target.closest('.admin-section-nav [data-admin-section="attendance"]')){const card=document.getElementById('adminAttendanceList');if(card)card.innerHTML=hfaAttendanceTableInner();hfaRefreshAttendance();setTimeout(hfaMarkAlertsSeen,400)}
   });
   setInterval(()=>{if(session&&HFA_STAFF.includes(session.role)&&document.querySelector('.admin-section-layout')&&!document.hidden)hfaRefreshAttendance()},45000);
   setTimeout(hfaRefreshSiteThemeUi,300);
   setTimeout(hfaRefreshSiteThemeUi,1500);
-  setTimeout(()=>{if(session&&HFA_STAFF.includes(session.role)&&document.querySelector('.admin-section-layout')){hfaRefreshAttendance();if(location.hash==='#presentes')document.querySelector('[data-admin-section="attendance"]')?.click()}},1200);
+  setTimeout(()=>{if(session&&HFA_STAFF.includes(session.role)&&document.querySelector('.admin-section-layout')){hfaRefreshAttendance();if(location.hash==='#presentes')document.querySelector('.admin-section-nav [data-admin-section="attendance"]')?.click()}},1200);
   function hfaMatchRisk(match){return hfaAttendanceEntries(match).filter(entry=>entry.conn==='exitlag'||entry.conn==='vpn'||(entry.detected&&entry.detected.checked&&(entry.detected.vpn||entry.detected.proxy||entry.detected.datacenter))).length}
   function hfaAttendanceTableInner(){
     const tournamentOptions='<option value="">Todas las temporadas</option>'+state.tournaments.map(item=>'<option value="'+item.id+'">'+profileText(item.name)+'</option>').join('');
