@@ -9,7 +9,7 @@
   var DICT = [
   // ---- menú y secciones ----
   'Inicio|Home|Início','Comunidad|Community|Comunidade','Clasificación|Standings|Classificação','Torneos|Tournaments|Torneios',
-  'Estadísticas|Statistics|Estatísticas','Partidos|Matches|Partidas','Mis partidos|My matches|Meus jogos','📊 VER PREDICCIÓN|📊 VIEW PREDICTION|📊 VER PREVISÃO','📊 OCULTAR PREDICCIÓN|📊 HIDE PREDICTION|📊 OCULTAR PREVISÃO','Álbum|Album|Álbum','Cuenta|Account|Conta','Buzón|Inbox|Caixa de entrada',
+  'Estadísticas|Statistics|Estatísticas','Partidos|Matches|Partidas','Álbum|Album|Álbum','Cuenta|Account|Conta','Buzón|Inbox|Caixa de entrada',
   'Admin|Admin|Admin','Salir|Log out|Sair','Equipos|Teams|Times','Jugadores|Players|Jogadores','Noticias|News|Notícias','Palmarés|Honours|Palmarés',
   'Tema|Theme|Tema','Guía|Guide|Guia','Idioma|Language|Idioma','Menú|Menu|Menu','Menú principal|Main menu|Menu principal',
   'Menú Comunidad|Community menu|Menu da Comunidade','MENÚ DE COMUNIDAD|COMMUNITY MENU|MENU DA COMUNIDADE','Menú del panel|Panel menu|Menu do painel',
@@ -210,6 +210,8 @@
   
   '© 2026 HFA. Comunidad de rol futbolístico independiente para Habbo.es. No está afiliada, patrocinada ni respaldada por Sulake Corporation ni por Habbo.|© 2026 HFA. Independent football role-play community for Habbo.es. Not affiliated with, sponsored by or endorsed by Sulake Corporation or Habbo.|© 2026 HFA. Comunidade independente de roleplay de futebol para o Habbo.es. Não é afiliada, patrocinada nem endossada pela Sulake Corporation nem pelo Habbo.',
   'Plantillas|Squads|Elencos','Plantilla|Squad|Elenco','Programado|Scheduled|Agendada','En juego|In play|Em jogo','En directo|Live|Ao vivo','Pendiente|Pending|Pendente','Aceptada|Accepted|Aceita','Rechazada|Declined|Recusada','Titular|Starter|Titular','Suplente|Substitute|Reserva','Entrenador|Coach|Técnico','Capitán|Captain|Capitão',
+  'Todavía no hay reconocimientos publicados.|No honours have been published yet.|Ainda não há reconhecimentos publicados.','🕒 La hora se escribe en horario COL (Colombia, UTC−5).|🕒 Enter the time in COL time (Colombia, UTC−5).|🕒 A hora é escrita no horário COL (Colômbia, UTC−5).','Hora (horario COL)|Time (COL time)|Hora (horário COL)',
+  '⭐ Mis logros destacados|⭐ My featured achievements|⭐ Minhas conquistas em destaque','Elegir logros|Choose achievements|Escolher conquistas','Logros|Achievements|Conquistas','🏅 Logros|🏅 Achievements|🏅 Conquistas','GOLEADOR|TOP SCORER|ARTILHEIRO','PRIMER PRESENTE|FIRST ATTENDANCE|PRIMEIRA PRESENÇA','ASISTENCIAS|ASSISTS|ASSISTÊNCIAS','HAT TRICK|HAT-TRICK|HAT-TRICK','POKER|POKER|POKER','IMPARABLE|UNSTOPPABLE|IMPARÁVEL','RACHA DE GOLES|SCORING STREAK|SEQUÊNCIA DE GOLS','Desbloqueado|Unlocked|Desbloqueado','Bloqueado|Locked|Bloqueado','Bronce|Bronze|Bronze','Plata|Silver|Prata','Oro|Gold|Ouro','Diamante|Diamond|Diamante','Premios|Awards|Prêmios','Comentarios|Comments|Comentários','Análisis|Analysis|Análise','Historial|History|Histórico','Enviar|Send|Enviar','Editar|Edit|Editar','Mis partidos|My matches|Minhas partidas',
   'Ver presentes|View attendees|Ver presentes','HFA · Sección|HFA · Section|HFA · Seção','Noticias|News|Notícias','Notificaciones|Notifications|Notificações','Mensajes|Messages|Mensagens'
   ];
 
