@@ -77,9 +77,10 @@
   .icon-btn:hover{color:var(--text-hi); border-color:var(--green-dim);}
   .user-chip{display:flex; align-items:center; gap:8px;}
   .avatar{
-    width:30px; height:30px; border-radius:50%; background:var(--panel-2); border:1px solid var(--border);
+    width:34px; height:34px; border-radius:50%; background:var(--panel-2); border:1px solid var(--border);
     display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:var(--green);
   }
+  .avatar{overflow:hidden}.avatar-face{width:100%;height:100%;object-fit:cover;object-position:center top}
   .user-name{font-size:13px; font-weight:600;}
   .role-chip{background:var(--panel-2); border:1px solid var(--green-dim); color:var(--green); font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600;}
 
@@ -787,7 +788,7 @@
     if (session){
       el.innerHTML = notifications + `
         <div class="user-chip">
-          <div class="avatar">${esc(session.username).replace('.','').slice(0,2).toUpperCase()}</div>
+          <div class="avatar"><img class="avatar-face" src="https://www.habbo.es/habbo-imaging/avatarimage?user=${encodeURIComponent(session.username)}&size=l&headonly=1&direction=2&head_direction=2&gesture=sml&action=std" alt="" onerror="this.replaceWith(document.createTextNode(this.dataset.i))" data-i="${esc(session.username).replace('.','').slice(0,2).toUpperCase()}"></div>
           <span class="user-name">${esc(session.username)}</span>
           <span class="role-chip">${session.role === 'admin' ? 'ADMIN' : session.role === 'prueba_moderador' ? 'Prueba moderador' : session.role === 'moderador' ? 'Moderador' : session.role === 'arbitro' ? 'Árbitro' : session.role === 'dueno' ? 'Dueño' : 'Sin rol'}</span>
         </div>
