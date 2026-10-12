@@ -808,7 +808,7 @@
           <span class="next-match-vs">VS</span>
           <div class="next-match-team">${teamBadge(teamB,42)}<span class="next-match-team-name">${esc(teamB?.name||upcoming.away||'?')}</span></div>
         </div>
-        <div class="next-match-time">${esc(upcoming.date||'Sin fecha')} · ${esc(upcoming.time||'')} · División ${upcoming.division}</div>
+        <div class="next-match-time">${esc(upcoming.date||'Sin fecha')} · ${esc(upcoming.time?upcoming.time+' COL':'')} · División ${upcoming.division}</div>
         <div class="next-match-actions"><a class="match-detail-link" data-open="${upcoming.id}">Ver ficha →</a>${session ? `<a class="match-detail-link" data-goto-acta="${upcoming.id}" style="color:var(--amber);">Acta →</a>` : ''}</div>`;
     } else {
       el.innerHTML = `<div class="stat-empty"><div class="ic">📅</div>Sin partidos programados</div>`;
@@ -838,7 +838,7 @@
           ${m.finished ? `<div class="score-mark">${m.scoreA} - ${m.scoreB}</div>` : `<div class="vs-mark">VS</div>`}
           <div class="team">${teamBadge(teamB,46)}<div class="team-name">${esc(teamB?.name||'?')}</div></div>
         </div>
-        <div class="match-meta">${m.finished ? (m.mvp ? `⭐ MVP: ${esc(m.mvp)}` : 'Resultado registrado') : `${esc(m.date||'Sin fecha')} · ${esc(m.time||'')}`}</div>
+        <div class="match-meta">${m.finished ? (m.mvp ? `⭐ MVP: ${esc(m.mvp)}` : 'Resultado registrado') : `${esc(m.date||'Sin fecha')} · ${esc(m.time?m.time+' COL':'')}`}</div>
         <div style="display:flex; gap:14px; align-items:center;">
           <a class="match-detail-link" data-open="${m.id}">Ver ficha →</a>
           ${session ? `<a class="match-detail-link" data-goto-acta="${m.id}" style="color:var(--amber);">Anotar acta →</a>` : ''}
@@ -1103,7 +1103,7 @@
       <div class="match-management-table-wrap"><table class="match-management-table"><thead><tr><th>Local</th><th>Visitante</th><th>Resultado</th><th>Estado</th><th>Fecha</th><th>Jornada</th><th>MVP</th><th>Acciones</th></tr></thead><tbody id="matchesListAdmin">${state.matches.length ? state.matches.map(m => {
         const teamA = getTeam(m.teamAId), teamB = getTeam(m.teamBId);
         const round = Number(m.round)||1;
-        return `<tr data-admin-match-row="${esc(m.id)}" data-match-tournament="${esc(m.tournamentId||'')}" data-match-division="${esc(m.division||'')}" data-match-round="${round}"><td>${esc(teamA?.name||m.home||'?')}</td><td>${esc(teamB?.name||m.away||'?')}</td><td>${m.finished ? `${m.scoreA??0} - ${m.scoreB??0}` : '—'}</td><td><span class="match-status ${m.finished?'finished':''}">${m.finished?'Finalizado':'Programado'}</span></td><td>${esc(m.date||'—')}${m.time?' '+esc(m.time):''}</td><td>J${round} · Jornada ${round}</td><td>${esc(m.mvp||'—')}</td><td><div class="match-actions"><button class="match-action" data-goto-acta-admin="${esc(m.id)}" title="Registrar / editar resultado" aria-label="Registrar o editar resultado">⚽</button><button class="match-action" data-edit-match="${esc(m.id)}" title="Editar partido" aria-label="Editar partido">✎</button><button class="match-action delete" data-del-match="${esc(m.id)}" title="Eliminar partido" aria-label="Eliminar partido">🗑</button></div></td></tr>`;
+        return `<tr data-admin-match-row="${esc(m.id)}" data-match-tournament="${esc(m.tournamentId||'')}" data-match-division="${esc(m.division||'')}" data-match-round="${round}"><td>${esc(teamA?.name||m.home||'?')}</td><td>${esc(teamB?.name||m.away||'?')}</td><td>${m.finished ? `${m.scoreA??0} - ${m.scoreB??0}` : '—'}</td><td><span class="match-status ${m.finished?'finished':''}">${m.finished?'Finalizado':'Programado'}</span></td><td>${esc(m.date||'—')}${m.time?' '+esc(m.time)+' COL':''}</td><td>J${round} · Jornada ${round}</td><td>${esc(m.mvp||'—')}</td><td><div class="match-actions"><button class="match-action" data-goto-acta-admin="${esc(m.id)}" title="Registrar / editar resultado" aria-label="Registrar o editar resultado">⚽</button><button class="match-action" data-edit-match="${esc(m.id)}" title="Editar partido" aria-label="Editar partido">✎</button><button class="match-action delete" data-del-match="${esc(m.id)}" title="Eliminar partido" aria-label="Eliminar partido">🗑</button></div></td></tr>`;
       }).join('') : '<tr><td colspan="8"><div class="empty-note">Aún no hay partidos.</div></td></tr>'}</tbody></table></div>`;
   }
 
@@ -1272,7 +1272,7 @@
     document.getElementById('modalHeaderBar').innerHTML = `
       <div><span class="div-badge">D${m.division}</span><span class="modal-comp-name">${esc(div.name||'')} · ${matchRoundLabel(m.round)}</span>
       <span class="status-pill ${m.finished?'finished':'scheduled'}">${m.finished?'FINALIZADO':'PROGRAMADO'}</span></div>
-      <span class="modal-date">${esc(m.date||'')} ${esc(m.time||'')}</span>`;
+      <span class="modal-date">${esc(m.date||'')} ${esc(m.time?m.time+' COL':'')}</span>`;
 
     document.getElementById('modalScoreBlock').innerHTML = `
       <div class="crest-score">
