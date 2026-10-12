@@ -1903,7 +1903,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const goals=match?.goals||[],cards=match?.cards||[],mentions=match?.mentions||[],subs=match?.subs||[],players=actaPlayers(match);
     const playerManager=players.length?'':'<div class="admin-list">Este partido todavía no tiene jugadores registrados en las plantillas de sus equipos.</div>';
     const playerOptions=actaPlayerOptions(match);
-    const content=actaTab==='goals'?'<select class="input" id="goalSide"><option value="A">Local</option><option value="B">Visitante</option></select><select class="input" id="goalPlayer">'+actaSideOptions(match,'A')+'</select><select class="input" id="goalAssist">'+actaSideOptions(match,'A','Sin asistencia (mismo equipo)')+'</select><input class="input" id="goalMinute" type="number" min="0" placeholder="Minuto del gol"><button class="btn btn-primary" id="addGoal">Añadir gol</button><div class="admin-list">'+(goals.length?goals.map((goal,index)=>'<div class="acta-event-row"><span>'+goal.minute+"' · "+goal.player+(goal.assist?' · Asistencia: '+goal.assist:'')+' · '+(goal.side==='B'?'Visitante':'Local')+'</span><button class="btn btn-ghost btn-sm delete-goal-btn" type="button" data-delete-goal="'+match.id+'" data-goal-index="'+index+'">ELIMINAR</button></div>').join(''):'<div>Todavía no hay goles registrados.</div>')+'</div>':actaTab==='cards'?'<select class="input" id="cardPlayer">'+playerOptions+'</select><select class="input" id="cardType"><option value="amarilla">Amarilla</option><option value="roja">Roja</option></select><input class="input" id="cardMinute" type="number" min="0" placeholder="Minuto (opcional)"><select class="input" id="cardSide"><option value="A">Local</option><option value="B">Visitante</option></select><button class="btn btn-primary" id="addCard">Añadir tarjeta</button><div class="admin-list">'+(cards.length?cards.map((card,index)=>'<div class="acta-event-row"><span>'+(card.minute?card.minute+"' · ":'')+card.player+' · '+card.type+'</span><button class="btn btn-ghost btn-sm" type="button" data-delete-card="'+match.id+'" data-goal-index="'+index+'">ELIMINAR</button></div>').join(''):'Todavía no hay tarjetas registradas.')+'</div>':actaTab==='subs'?'<input class="input" id="subMinute" type="number" min="0" placeholder="Minuto"><select class="input" id="subSide"><option value="A">Local</option><option value="B">Visitante</option></select><select class="input" id="subOut">'+playerOptions+'</select><select class="input" id="subIn">'+playerOptions+'</select><button class="btn btn-primary" id="addSub">Añadir cambio</button><div class="admin-list">'+(subs.length?subs.map(sub=>sub.minute+"' · "+sub.out+' → '+sub.in).join('<br>'):'Todavía no hay cambios registrados.')+'</div>':actaTab==='lineup'?'<div class="hfa-lineup-form"><label><span>Jugador</span><select class="input" id="lineupPlayer">'+playerOptions+'</select></label><label><span>Equipo</span><select class="input" id="lineupSide"><option value="A">Local</option><option value="B">Visitante</option></select></label><label><span>Posición</span><select class="input" id="lineupPos"><option value="GK">Portero (POR)</option><option value="BANDA">Banda</option><option value="MED">Medio</option></select></label><button class="btn btn-primary" id="addLineup">Añadir al campo</button></div><div class="admin-list">La alineación se muestra en el campo y solo admite jugadores de las plantillas.</div>': '<select class="input" id="mentionPlayer">'+playerOptions+'</select><button class="btn btn-primary" id="addMention">Añadir mención especial</button><div class="admin-list">'+(mentions.length?mentions.join('<br>'):'Todavía no hay menciones especiales.')+'</div>';
+    const content=actaTab==='goals'?'<select class="input" id="goalSide"><option value="A">Local</option><option value="B">Visitante</option></select><select class="input" id="goalPlayer">'+actaSideOptions(match,'A')+'</select><select class="input" id="goalAssist">'+actaSideOptions(match,'A','Sin asistencia (mismo equipo)')+'</select><input class="input" id="goalMinute" type="number" min="0" placeholder="Minuto del gol"><button class="btn btn-primary" id="addGoal">Añadir gol</button><div class="admin-list">'+(goals.length?goals.map((goal,index)=>'<div class="acta-event-row"><span>'+goal.minute+"' · "+goal.player+(goal.assist?' · Asistencia: '+goal.assist:'')+' · '+(goal.side==='B'?'Visitante':'Local')+'</span><button class="btn btn-ghost btn-sm delete-goal-btn" type="button" data-delete-goal="'+match.id+'" data-goal-index="'+index+'">ELIMINAR</button></div>').join(''):'<div>Todavía no hay goles registrados.</div>')+'</div>':actaTab==='cards'?'<select class="input" id="cardPlayer">'+playerOptions+'</select><select class="input" id="cardType"><option value="amarilla">Amarilla</option><option value="roja">Roja</option></select><input class="input" id="cardMinute" type="number" min="0" placeholder="Minuto (opcional)"><select class="input" id="cardSide"><option value="A">Local</option><option value="B">Visitante</option></select><button class="btn btn-primary" id="addCard">Añadir tarjeta</button><div class="admin-list">'+(cards.length?cards.map((card,index)=>'<div class="acta-event-row"><span>'+(card.minute?card.minute+"' · ":'')+card.player+' · '+card.type+'</span><button class="btn btn-ghost btn-sm" type="button" data-delete-card="'+match.id+'" data-goal-index="'+index+'">ELIMINAR</button></div>').join(''):'Todavía no hay tarjetas registradas.')+'</div>':actaTab==='subs'?'<input class="input" id="subMinute" type="number" min="0" placeholder="Minuto"><select class="input" id="subSide"><option value="A">Local</option><option value="B">Visitante</option></select><select class="input" id="subOut">'+playerOptions+'</select><select class="input" id="subIn">'+playerOptions+'</select><button class="btn btn-primary" id="addSub">Añadir cambio</button><div class="admin-list">'+(subs.length?subs.map((sub,index)=>'<div class="acta-event-row"><span><b class="sub-arrow in">▲</b> '+hfaEsc(sub.in)+' <b class="sub-arrow out">▼</b> '+hfaEsc(sub.out)+' · '+(sub.minute!==''&&sub.minute!=null?hfaEsc(sub.minute)+"'":'—')+' · '+(sub.side==='B'?'Visitante':'Local')+'</span><button class="btn btn-ghost btn-sm" type="button" data-delete-sub="'+match.id+'" data-goal-index="'+index+'">ELIMINAR</button></div>').join(''):'Todavía no hay cambios registrados.')+'</div>':actaTab==='lineup'?'<div class="hfa-lineup-form"><label><span>Jugador</span><select class="input" id="lineupPlayer">'+playerOptions+'</select></label><label><span>Equipo</span><select class="input" id="lineupSide"><option value="A">Local</option><option value="B">Visitante</option></select></label><label><span>Posición</span><select class="input" id="lineupPos"><option value="GK">Portero (POR)</option><option value="BANDA">Banda</option><option value="MED">Medio</option></select></label><button class="btn btn-primary" id="addLineup">Añadir al campo</button></div><div class="admin-list">La alineación se muestra en el campo y solo admite jugadores de las plantillas.</div><div class="admin-list">'+['A','B'].map(sd=>{const lu=(sd==='A'?match.lineupA:match.lineupB)||[],tm=matchTeam(match,sd);return '<div class="acta-lineup-list"><b>'+hfaEsc((tm&&tm.name)||(sd==='A'?'Local':'Visitante'))+'</b>'+(lu.length?lu.map(pl=>'<div class="acta-event-row"><span>'+hfaEsc(playerName(pl))+' · '+hfaEsc(normalizeActaPosition(pl.pos))+'</span><button class="btn btn-ghost btn-sm" type="button" data-remove-lineup-player="'+encodeURIComponent(playerName(pl))+'" data-remove-lineup-side="'+sd+'" data-remove-lineup-match="'+match.id+'">ELIMINAR</button></div>').join(''):'<div class="muted">Sin jugadores en el campo.</div>')+'</div>'}).join('')+'</div>': '<select class="input" id="mentionPlayer">'+playerOptions+'</select><button class="btn btn-primary" id="addMention">Añadir mención especial</button><div class="admin-list">'+(match.mvp?'<div class="acta-event-row"><span><b>MVP</b> · '+hfaEsc(match.mvp)+'</span><button class="btn btn-ghost btn-sm" type="button" data-delete-mvp="'+match.id+'">ELIMINAR</button></div>':'')+(mentions.length?mentions.map((name,index)=>'<div class="acta-event-row"><span>★ '+hfaEsc(name)+'</span><button class="btn btn-ghost btn-sm" type="button" data-delete-mention="'+match.id+'" data-mention-index="'+index+'">ELIMINAR</button></div>').join(''):(match.mvp?'':'Todavía no hay menciones especiales.'))+'</div>';
     return hfaLiveBar(match)+(match&&!match.finished?hfaLiveGoals(match,true):'')+hfaAttendanceBox(match)+'<div class="tabs"><button class="tab-btn '+(actaTab==='goals'&&!actaCollapsed?'active':'')+'" data-acta-tab="goals">Goles</button><button class="tab-btn '+(actaTab==='cards'&&!actaCollapsed?'active':'')+'" data-acta-tab="cards">Tarjetas</button><button class="tab-btn '+(actaTab==='subs'&&!actaCollapsed?'active':'')+'" data-acta-tab="subs">Cambios</button><button class="tab-btn '+(actaTab==='lineup'&&!actaCollapsed?'active':'')+'" data-acta-tab="lineup">Alineación</button><button class="tab-btn '+(actaTab==='mentions'&&!actaCollapsed?'active':'')+'" data-acta-tab="mentions">Premios</button></div><div class="content-card">'+playerManager+(actaCollapsed?'<div class="admin-list muted">Panel oculto · pulsa de nuevo la pestaña para mostrarlo.</div>':content)+(actaTab==='lineup'&&!actaCollapsed?'<div class="admin-list">Máximo 4 jugadores por equipo: 1 GK, 2 BANDA y 1 MED.</div>':'')+actaField(match)+'</div>';
   }
   function dragMatchUI(){
@@ -1978,14 +1978,119 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   }
   function hfaConnFromDetection(d){if(!d||!d.checked)return '';if(d.vpn||d.proxy)return 'vpn';if(d.datacenter)return 'exitlag';return 'normal'}
   function hfaConnBadge(conn){const c=HFA_CONN[conn]||null;return c?'<span class="hfa-conn-badge '+c.cls+'">'+c.icon+' '+c.label+'</span>':'<span class="hfa-conn-badge">Sin datos</span>'}
+  /* ---- Detección de VPN / ExitLag / proxy (servidor + respaldo en el navegador) ---- */
+  const HFA_VPN_WORDS=['vpn','proxy','nordvpn','nordlayer','tefincom','expressvpn','surfshark','protonvpn','proton ag','mullvad','cyberghost','private internet access','privateinternetaccess','windscribe','tunnelbear','hide.me','ipvanish','purevpn','hotspot shield','anchorfree','pango','torguard','vyprvpn','perfect privacy','airvpn','ivpn','atlas vpn','hidemyass','zenmate','astrill','cloudflare warp','m247','datacamp','cdn77','packethub','privatevpn','trustzone','ovpn','tor exit','anonymizer','privax','packetstream','luminati','bright data','oxylabs','smartproxy'];
+  const HFA_GAMEVPN_WORDS=['exitlag','exit lag','wtfast','mudfish','noping','gearup','haste','gpn','kill ping','killping','anubis','pingzapper','pingpal','outfox','lagbuster','proxyrack'];
+  const HFA_DC_WORDS=['amazon','aws','ec2','google cloud','google llc','microsoft','azure','ovh','hetzner','digitalocean','digital ocean','linode','akamai','vultr','choopa','leaseweb','zenlayer','kamatera','contabo','oracle','alibaba','tencent','scaleway','hosting','datacenter','data center','data centre','colocation','colo ','cloud','server','servers','dedicated','vps','ltd hosting','psychz','quadranet','gsl networks','ipxo','frantech','buyvm','ramnode','path network','sharktech','interserver','godaddy','hostinger','netcup','strato','ionos','upcloud','rackspace','softlayer','ibm cloud','equinix','i3d','serverius','worldstream','nforce','tzulo','xtom','hostroyale','fastly','stackpath'];
+  function hfaHasWord(text,list){const t=' '+String(text||'').toLowerCase()+' ';return list.some(function(w){return t.indexOf(w)!==-1})}
+  async function hfaFetchJson(url,ms){try{const c=new AbortController(),t=setTimeout(function(){c.abort()},ms||5000);const r=await fetch(url,{cache:'no-store',signal:c.signal});clearTimeout(t);if(!r.ok)return null;return await r.json()}catch(e){return null}}
+  /* Consulta de reputación de la IP (3 proveedores gratuitos con HTTPS; usa el primero que responda) */
+  async function hfaIpIntel(ip){
+    const out={vpn:false,proxy:false,tor:false,datacenter:false,org:'',asn:'',tz:'',cc:''};
+    let ok=false;
+    const a=await hfaFetchJson('https://api.ipapi.is/?q='+encodeURIComponent(ip));
+    if(a&&(a.ip||a.is_vpn!==undefined)){
+      ok=true;out.vpn=!!a.is_vpn;out.proxy=!!a.is_proxy;out.tor=!!a.is_tor;out.datacenter=!!a.is_datacenter;
+      out.org=String((a.company&&a.company.name)||(a.asn&&a.asn.org)||'');out.asn=String((a.asn&&a.asn.asn)||'');out.tz=String((a.location&&a.location.timezone)||'');out.cc=String((a.location&&a.location.country_code)||'');
+      if(a.company&&String(a.company.type||'').toLowerCase()==='hosting')out.datacenter=true;
+      if(a.asn&&String(a.asn.type||'').toLowerCase()==='hosting')out.datacenter=true;
+    }
+    if(!ok){
+      const w=await hfaFetchJson('https://ipwho.is/'+encodeURIComponent(ip));
+      if(w&&w.success!==false&&(w.ip||w.connection)){
+        ok=true;const c=w.connection||{};out.org=String(c.org||c.isp||'');out.asn=String(c.asn||'');out.tz=String((w.timezone&&w.timezone.id)||'');out.cc=String(w.country_code||'');
+        if(w.security){out.vpn=!!w.security.vpn;out.proxy=!!w.security.proxy||!!w.security.tor;out.datacenter=!!w.security.hosting}
+      }
+    }
+    if(!ok){
+      const i=await hfaFetchJson('https://ipinfo.io/'+encodeURIComponent(ip)+'/json');
+      if(i&&i.ip){ok=true;out.org=String(i.org||'');out.tz=String(i.timezone||'');out.cc=String(i.country||'');if(i.privacy){out.vpn=!!i.privacy.vpn;out.proxy=!!i.privacy.proxy||!!i.privacy.tor;out.datacenter=!!i.privacy.hosting}}
+    }
+    if(!ok)return null;
+    /* Respaldo por nombre del proveedor (ASN/organización) */
+    if(hfaHasWord(out.org,HFA_VPN_WORDS))out.vpn=true;
+    if(hfaHasWord(out.org,HFA_GAMEVPN_WORDS)){out.datacenter=true;out.gameVpn=true}
+    if(hfaHasWord(out.org,HFA_DC_WORDS))out.datacenter=true;
+    return out;
+  }
+  function hfaIsV4(ip){return /^\d{1,3}(\.\d{1,3}){3}$/.test(String(ip||''))}
+  /* WebRTC: pide a un servidor STUN la IP pública real. Si difiere de la que ve la web, hay túnel dividido / VPN. */
+  function hfaWebRtcIps(){
+    return new Promise(function(resolve){
+      const found=new Set();let done=false,pc=null;
+      const finish=function(){if(done)return;done=true;try{pc&&pc.close()}catch(e){}resolve([...found])};
+      try{
+        const RTC=window.RTCPeerConnection||window.webkitRTCPeerConnection;if(!RTC)return resolve([]);
+        pc=new RTC({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});
+        pc.createDataChannel('x');
+        pc.onicecandidate=function(e){
+          if(!e.candidate){finish();return}
+          const m=/candidate:\S+ \d+ \S+ \d+ (\S+) \d+ typ (\S+)/.exec(e.candidate.candidate||'');
+          if(m&&m[2]==='srflx'&&hfaIsV4(m[1]))found.add(m[1]);
+        };
+        pc.createOffer().then(function(o){return pc.setLocalDescription(o)}).catch(finish);
+        setTimeout(finish,3500);
+      }catch(e){resolve([])}
+    });
+  }
+  function hfaTzOffsetMin(tz,at){
+    try{
+      const d=at||new Date(),f=new Intl.DateTimeFormat('en-US',{timeZone:tz,hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}).formatToParts(d),g={};
+      f.forEach(function(x){g[x.type]=x.value});
+      const asUtc=Date.UTC(+g.year,+g.month-1,+g.day,(+g.hour)%24,+g.minute,+g.second);
+      return Math.round((asUtc-Math.floor(d.getTime()/1000)*1000)/60000);
+    }catch(e){return null}
+  }
+  window.hfaDetectCache=window.hfaDetectCache||{};
+  async function hfaClientDetect(username){
+    const key=String(username||'').toLowerCase(),cached=window.hfaDetectCache[key];
+    if(cached&&Date.now()-cached.t<120000)return cached.v;
+    const ip=await hfaGetIp();
+    if(!ip)return null;
+    const [intel,rtcIps]=await Promise.all([hfaIpIntel(ip),hfaWebRtcIps()]);
+    if(!intel)return null;
+    const account=(typeof accounts!=='undefined'?accounts:[]).find(function(a){return String(a.username).toLowerCase()===key});
+    const knownIps=hfaAccountIps(account);
+    const ipChanged=!!(knownIps.length&&knownIps.indexOf(ip)===-1);
+    let shared=0;
+    (typeof accounts!=='undefined'?accounts:[]).forEach(function(a){if(String(a.username).toLowerCase()!==key&&hfaAccountIps(a).indexOf(ip)!==-1)shared++});
+    /* WebRTC: IPv4 pública distinta de la IP que ve la web => túnel/VPN dividido */
+    let webrtcMismatch=false;
+    if(hfaIsV4(ip)&&rtcIps.length&&rtcIps.indexOf(ip)===-1)webrtcMismatch=true;
+    /* Zona horaria del navegador vs. la de la IP */
+    let tzMismatch=false;
+    try{const browserTz=Intl.DateTimeFormat().resolvedOptions().timeZone;if(browserTz&&intel.tz&&browserTz!==intel.tz){const a=hfaTzOffsetMin(browserTz),b=hfaTzOffsetMin(intel.tz);tzMismatch=(a!==null&&b!==null)?a!==b:false}}catch(e){}
+    /* País de la IP vs. país de la cuenta */
+    let countryMismatch=false;
+    try{const accCc=String((account&&account.country)||'').toUpperCase();if(accCc.length===2&&intel.cc&&accCc!==String(intel.cc).toUpperCase())countryMismatch=true}catch(e){}
+    const vpn=!!(intel.vpn||intel.tor||webrtcMismatch);
+    const proxy=!!intel.proxy;
+    const datacenter=!!intel.datacenter;
+    const result={checked:true,vpn:vpn,proxy:proxy,datacenter:datacenter,ipChanged:ipChanged,shared:shared,isp:String(intel.org||'').slice(0,60),src:'client'};
+    if(intel.gameVpn)result.gameVpn=true;
+    if(webrtcMismatch)result.webrtc=true;
+    if(tzMismatch)result.tz=true;
+    if(countryMismatch)result.country=true;
+    window.hfaDetectCache[key]={t:Date.now(),v:result};
+    return result;
+  }
   async function hfaDetectConnection(username,matchId,conn){
+    let server=null;
     try{
       const response=await fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'checkConn',username:username,matchId:matchId,conn:conn})});
-      if(!response.ok)return null;
-      const data=await response.json();
-      if(!data||!data.ok)return null;
-      return {checked:!!data.checked,vpn:!!data.vpn,proxy:!!data.proxy,datacenter:!!data.datacenter,ipChanged:!!data.ipChanged,shared:Number(data.shared)||0,isp:String(data.isp||'').slice(0,60)};
-    }catch(error){return null}
+      if(response.ok){
+        const data=await response.json();
+        if(data&&data.ok)server={checked:!!data.checked,vpn:!!data.vpn,proxy:!!data.proxy,datacenter:!!data.datacenter,ipChanged:!!data.ipChanged,shared:Number(data.shared)||0,isp:String(data.isp||'').slice(0,60)};
+      }
+    }catch(error){server=null}
+    let local=null;
+    try{local=await hfaClientDetect(username)}catch(error){local=null}
+    if(server&&server.checked){
+      /* El servidor manda; el navegador solo añade señales que el servidor no ve */
+      if(local){server.vpn=server.vpn||!!local.webrtc;server.webrtc=!!local.webrtc;server.tz=!!local.tz;server.country=!!local.country;server.gameVpn=!!local.gameVpn;if(!server.datacenter&&local.datacenter)server.datacenter=true}
+      return server;
+    }
+    return local||server;
   }
   function hfaDetectedBadges(entry){
     const d=entry.detected,out=[];
@@ -1993,6 +2098,10 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       if(d.vpn||d.proxy)out.push('<span class="hfa-conn-badge vpn" title="'+hfaEsc(d.isp||'')+'">🛡 VPN/Proxy detectado</span>');
       else if(d.datacenter)out.push('<span class="hfa-conn-badge exitlag" title="'+hfaEsc(d.isp||'')+'">⚡ IP de centro de datos (ExitLag/VPN probable)</span>');
     }
+    if(d&&d.gameVpn)out.push('<span class="hfa-conn-badge exitlag" title="'+hfaEsc(d.isp||'')+'">⚡ Red de ExitLag / VPN para juegos</span>');
+    if(d&&d.webrtc)out.push('<span class="hfa-conn-badge vpn" title="La IP real (WebRTC) no coincide con la que ve la web">🛡 IP real distinta (túnel/VPN)</span>');
+    if(d&&d.tz)out.push('<span class="hfa-conn-badge exitlag" title="La hora del dispositivo no corresponde al país de la IP">🕒 Zona horaria no coincide con la IP</span>');
+    if(d&&d.country)out.push('<span class="hfa-conn-badge exitlag" title="El país de la IP no coincide con el de la cuenta">🌍 País distinto al de la cuenta</span>');
     if(d&&d.ipChanged)out.push('<span class="hfa-conn-badge exitlag" title="La IP no coincide con la de registro">IP distinta a la de registro</span>');
     if(d&&d.shared>0)out.push('<span class="hfa-conn-badge exitlag" title="Otras cuentas usan esta misma IP">IP compartida con '+d.shared+'</span>');
     if(entry.conn==='normal'&&d&&d.checked&&(d.vpn||d.proxy||d.datacenter))out.push('<span class="hfa-conn-badge vpn">⚠ Dijo conexión normal</span>');
@@ -2440,10 +2549,31 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
         divisionInfo.textContent='Divisiones asignadas: '+(assigned.length?assigned.map(divisionLabel).join(', '):'ninguna');
         copy.append(name,divisionInfo);
         selected.append(image,copy);
-        if(alreadyAssigned){const notice=document.createElement('small');notice.textContent='Ya pertenece a '+alreadyAssigned.name+'.';selected.append(notice)}
+        if(alreadyAssigned){const notice=document.createElement('small');notice.textContent='Ya pertenece a '+alreadyAssigned.name+'.';selected.append(notice);const removeBtn=document.createElement('button');removeBtn.type='button';removeBtn.className='btn delete-team-button';removeBtn.dataset.removeFromTeam=username;removeBtn.textContent='Sacar del equipo';selected.append(removeBtn)}
         else if(assigned.length){const addButton=document.createElement('button');addButton.type='button';addButton.className='btn btn-primary';addButton.dataset.openRosterTeamModal=username;addButton.textContent='Agregar equipo';selected.append(addButton)}
         else {const notice=document.createElement('small');notice.textContent='Asigna una división al jugador en Usuarios y divisiones antes de agregarlo a un equipo.';selected.append(notice)}
         results.append(selected);
+        return;
+      }
+      const removeFromTeam=event.target.closest('[data-remove-from-team]');
+      if(removeFromTeam){
+        event.preventDefault();event.stopPropagation();
+        if(!session||!['admin','prueba_moderador','moderador'].includes(session.role))return;
+        const username=removeFromTeam.dataset.removeFromTeam||'',teamRecord=assignedTeamFor(username);
+        if(!username||!teamRecord)return;
+        if(!confirm('¿Sacar a '+username+' del equipo '+teamRecord.name+'?\nTambién se quitará de las alineaciones de los partidos que aún no han terminado.'))return;
+        teamRecord.players=(teamRecord.players||[]).filter(item=>toPlayerKey(playerName(item))!==toPlayerKey(username));
+        let matchesChanged=false;
+        (state.matches||[]).forEach(m=>{
+          if(m.finished)return;
+          ['lineupA','lineupB'].forEach(k=>{const before=(m[k]||[]).length;if(before){m[k]=m[k].filter(item=>toPlayerKey(playerName(item))!==toPlayerKey(username));if(m[k].length!==before)matchesChanged=true}});
+          if(m.attendance&&m.attendance[username]!==undefined&&(String(m.teamAId)===String(teamRecord.id)||String(m.teamBId)===String(teamRecord.id))){delete m.attendance[username];if(m.attendanceInfo)delete m.attendanceInfo[username];matchesChanged=true}
+        });
+        await setJSON('teams',state.teams);
+        if(matchesChanged)await setJSON('matches',state.matches);
+        renderRosterSearch(document.getElementById('rosterPlayerSearch')?.value||'');
+        const choice=[...document.querySelectorAll('[data-roster-player-choice]')].find(item=>toPlayerKey(item.dataset.rosterPlayerChoice)===toPlayerKey(username));
+        choice?.click();
         return;
       }
       const openRosterTeam=event.target.closest('[data-open-roster-team-modal]');
@@ -2786,6 +2916,20 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       if(!confirm('¿Quitar esta tarjeta del acta?'))return;
       match.cards.splice(ci,1);
       await setJSON('matches',state.matches);
+      selectedActaMatchId=match.id;adminSection='acts';content();prepareAdminDivisions();
+      return;
+    }
+    const deleteMention=event.target.closest('[data-delete-mention],[data-delete-mvp]');
+    if(deleteMention){
+      event.preventDefault();event.stopPropagation();
+      if(!session||!['admin','prueba_moderador','moderador','arbitro'].includes(session.role))return;
+      const isMvp=deleteMention.hasAttribute('data-delete-mvp');
+      const match=state.matches.find(item=>String(item.id)===String(isMvp?deleteMention.dataset.deleteMvp:deleteMention.dataset.deleteMention));
+      if(!match)return;
+      if(isMvp){if(!confirm('¿Quitar el MVP del acta?'))return;match.mvp=''}
+      else{const mi=Number(deleteMention.dataset.mentionIndex);if(!Number.isInteger(mi)||mi<0||mi>=(match.mentions||[]).length)return;if(!confirm('¿Quitar esta mención del acta?'))return;match.mentions.splice(mi,1)}
+      await setJSON('matches',state.matches);
+      try{await hfaAchAfterChange()}catch(e){}
       selectedActaMatchId=match.id;adminSection='acts';content();prepareAdminDivisions();
       return;
     }
