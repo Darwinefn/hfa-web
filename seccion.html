@@ -2532,6 +2532,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
         event.stopPropagation();
         results.querySelectorAll('.roster-player-choice').forEach(choice=>choice.setAttribute('aria-expanded',String(choice===rosterChoice)));
         results.querySelector('.roster-selected-player')?.remove();
+        if(!assignedTeamFor(username)&&assignedDivisionsFor(account).length){openRosterTeamModal(account);return}
         const alreadyAssigned=assignedTeamFor(username);
         const selected=document.createElement('div');
         selected.className='roster-selected-player';
