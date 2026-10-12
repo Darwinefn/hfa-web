@@ -2396,26 +2396,23 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       modal.className='roster-modal-backdrop';
       modal.setAttribute('role','presentation');
       modal.dataset.username=username;
-      modal.innerHTML='<section class="roster-modal" role="dialog" aria-modal="true" aria-labelledby="rosterModalTitle"><div class="admin-title" id="rosterModalTitle">Agregar jugador a un equipo</div><div class="admin-section-note">Jugador: <strong data-roster-modal-player></strong></div><div data-roster-selection><label class="admin-team-filter-label" for="rosterModalDivisionSearch">Busca entre las divisiones asignadas</label><input class="input" id="rosterModalDivisionSearch" type="search" placeholder="Buscar división"><div class="roster-modal-divisions" data-roster-modal-divisions></div><div class="roster-modal-teams-wrap" data-roster-modal-teams-wrap hidden><div class="admin-team-filter-label">Equipos de la división</div><div class="roster-modal-teams" data-roster-modal-teams></div><button class="btn btn-primary" type="button" data-roster-modal-add disabled>Agregar</button></div></div><div data-roster-confirmation hidden><div class="admin-section-note">Confirma la incorporación de <strong data-roster-confirm-player></strong> a <strong data-roster-confirm-team></strong>.</div><button class="btn btn-primary" type="button" data-roster-modal-confirm>Confirmar</button></div><button class="btn btn-ghost" type="button" data-roster-modal-close>Cancelar</button></section>';
+      modal.innerHTML='<section class="roster-modal" role="dialog" aria-modal="true" aria-labelledby="rosterModalTitle"><div class="admin-title" id="rosterModalTitle">Agregar a un equipo</div><div class="admin-section-note">Jugador: <strong data-roster-modal-player></strong></div><input class="input" id="rosterModalTeamSearch" type="search" placeholder="Buscar equipo"><div class="roster-modal-teams" data-roster-modal-teams></div><button class="btn btn-primary" type="button" data-roster-modal-confirm disabled>Confirmar</button><button class="btn btn-ghost" type="button" data-roster-modal-close>Cancelar</button></section>';
       const modalStyle=document.createElement('style');
       modalStyle.textContent='.roster-modal-backdrop{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:20px;background:rgba(4,8,12,.78)}.roster-modal{width:min(100%,520px);max-height:min(90vh,760px);overflow:auto;padding:24px;border:1px solid var(--border);border-radius:14px;background:var(--panel);box-shadow:0 24px 90px rgba(0,0,0,.55)}.roster-modal-divisions,.roster-modal-teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin:12px 0}.roster-modal-divisions button.selected,.roster-modal-teams button.selected{border-color:var(--green);background:rgba(52,232,143,.12);color:var(--green)}.roster-modal-teams-wrap{margin-top:16px}.roster-modal [data-roster-modal-close]{margin-top:12px}.roster-selected-player{display:flex;align-items:center;gap:12px;margin-top:14px;padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--panel-2)}.roster-selected-player img,.roster-selected-avatar{width:58px;height:58px;border-radius:50%;object-fit:cover;border:2px solid var(--green-dim);background:var(--panel)}.roster-selected-avatar{display:grid;place-items:center;color:var(--green);font:700 19px Oswald}.roster-selected-copy{flex:1;min-width:0}.roster-selected-copy small{display:block;margin-top:4px;color:var(--text-mid);font:500 11px/1.5 Inter}';
       modal.append(modalStyle);
       layout.append(modal);
       modal.querySelector('[data-roster-modal-player]').textContent=username;
-      const divisions=modal.querySelector('[data-roster-modal-divisions]');
-      allowed.forEach(division=>{
-        const button=document.createElement('button');
-        button.type='button';button.className='btn btn-ghost';button.dataset.rosterModalDivision=division;button.textContent=divisionLabel(division);
-        divisions.append(button);
-      });
-      modal.querySelector('[data-roster-confirm-player]').textContent=username;
+      const teamList=modal.querySelector('[data-roster-modal-teams]');
+      const candidateTeams=state.teams.filter(item=>allowed.includes(normalizeDivision(item.division))).sort((x,y)=>String(x.division).localeCompare(String(y.division))||String(x.name).localeCompare(String(y.name),'es'));
+      if(!candidateTeams.length)teamList.textContent='No hay equipos creados en las divisiones de este jugador.';
+      candidateTeams.forEach(teamRecord=>{const button=document.createElement('button');button.type='button';button.className='btn btn-ghost';button.dataset.rosterModalTeam=teamRecord.id;button.textContent=teamRecord.name+' · '+divisionLabel(normalizeDivision(teamRecord.division));teamList.append(button)});
       modal.addEventListener('input',event=>{
-        if(event.target.id!=='rosterModalDivisionSearch')return;
+        if(event.target.id!=='rosterModalTeamSearch')return;
         const term=normalizeRosterSearch(event.target.value);
-        modal.querySelectorAll('[data-roster-modal-division]').forEach(button=>button.hidden=!normalizeRosterSearch(button.textContent).includes(term));
+        modal.querySelectorAll('[data-roster-modal-team]').forEach(button=>button.hidden=!normalizeRosterSearch(button.textContent).includes(term));
       });
       modal.addEventListener('keydown',event=>{if(event.key==='Escape')closeRosterTeamModal()});
-      modal.querySelector('[data-roster-modal-close]').focus();
+      modal.querySelector('#rosterModalTeamSearch').focus();
     };
     const renderRosterSearch=(query='')=>{
       const results=document.getElementById('rosterPlayerResults');
@@ -2600,7 +2597,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
         return;
       }
       const rosterModalTeam=event.target.closest('[data-roster-modal-team]');
-      if(rosterModalTeam){const modal=rosterModalTeam.closest('#rosterTeamModal');if(!modal)return;modal.dataset.teamId=rosterModalTeam.dataset.rosterModalTeam;modal.querySelectorAll('[data-roster-modal-team]').forEach(button=>button.classList.toggle('selected',button===rosterModalTeam));modal.querySelector('[data-roster-modal-add]').disabled=false;return}
+      if(rosterModalTeam){const modal=rosterModalTeam.closest('#rosterTeamModal');if(!modal)return;modal.dataset.teamId=rosterModalTeam.dataset.rosterModalTeam;const chosenTeam=state.teams.find(item=>String(item.id)===String(modal.dataset.teamId));modal.dataset.division=normalizeDivision(chosenTeam&&chosenTeam.division);modal.querySelectorAll('[data-roster-modal-team]').forEach(button=>button.classList.toggle('selected',button===rosterModalTeam));const confirmBtn=modal.querySelector('[data-roster-modal-confirm]');if(confirmBtn)confirmBtn.disabled=false;return}
       const rosterModalAdd=event.target.closest('[data-roster-modal-add]');
       if(rosterModalAdd){const modal=rosterModalAdd.closest('#rosterTeamModal');if(modal)showRosterTeamConfirmation(modal);return}
       const rosterModalConfirm=event.target.closest('[data-roster-modal-confirm]');
