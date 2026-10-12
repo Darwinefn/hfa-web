@@ -247,7 +247,7 @@
       { sel: '.public-match-toolbar', title: 'Filtros de partidos', text: 'Filtra por torneo y división para encontrar un partido.' },
       { sel: '.public-match-rounds', title: 'Jornadas', text: 'Salta a una jornada concreta o ve todas.' },
       { sel: '.fixtures-list', title: 'Lista de partidos', text: 'Cada tarjeta es un partido con fecha, hora y resultado.' },
-      { sel: '.attendance-rosters', title: 'Dar presente', text: 'Si juegas, pulsa «Presente» junto a tu nombre. Te preguntaremos si entras con conexión normal, ExitLag o VPN, y además la web comprueba si tu conexión parece una VPN. Los administradores lo verán.' },
+      { sel: '.attendance-rosters', title: 'Dar presente', text: 'Si juegas, pulsa «Presente» junto a tu nombre. La web comprueba automáticamente si tu conexión parece ExitLag o VPN y avisa a los administradores. Una vez dado, no vuelve a pedirse.' },
       { sel: '.fixture-prediction', title: 'Predicción', text: 'Vota quién crees que ganará el partido.' },
       { sel: '[data-view-summary]', title: 'Resumen del partido', text: 'En partidos terminados verás el acta: goles, tarjetas, alineaciones y premios.' }
     ],
@@ -269,7 +269,7 @@
       { click: '[data-admin-section="competition"]', sel: '#adminActiveTournamentCard', title: 'Torneo activo', text: 'Elige sobre qué torneo vas a crear y gestionar partidos.' },
       { after: true, sel: '#adminMatchBuilder', title: 'Jornadas y partidos', text: 'Crea jornadas y arrastra los equipos a Local y Visitante, o genera todas las jornadas de una división de una vez.' },
       { click: '[data-admin-section="matches"]', sel: '#adminMatchList', title: 'Gestión de partidos', text: 'Todos los partidos con su resultado y estado. El botón ⚽ abre el acta de cada partido.' },
-      { click: '[data-admin-section="attendance"]', sel: '#adminAttendanceList', title: 'Presentes por partido', text: 'Cada partido con cuántos jugadores dieron presente. Pulsa «Ver presentes» para ver quién fue, a qué hora y si usó ExitLag o VPN, y quién falta por confirmar.' },
+      { click: '[data-admin-section="attendance"]', sel: '#adminAttendanceList', title: 'Presentes por partido', text: 'Cada partido con cuántos jugadores dieron presente. Pulsa «Ver presentes» para ver quién fue, a qué hora y si se detectó ExitLag o VPN, y quién falta por confirmar.' },
       { click: '[data-admin-section="tournaments"]', sel: '#tournamentManagement', title: 'Temporadas y torneos', text: 'Crea torneos, elige el activo y elimina los que ya no uses.' },
       { click: '[data-admin-section="teams"]', sel: 'card:Agregar equipo', title: 'Equipos', text: 'Crea un equipo con su nombre, escudo y división.' },
       { after: true, sel: '#rosterManagement', title: 'Buscar y agregar jugadores', text: 'Busca una cuenta registrada, púlsala y elige el equipo. Solo se pueden agregar jugadores con división asignada.' },
@@ -425,7 +425,7 @@
   /* ---------- Aviso al personal: presentes con VPN / ExitLag (en cualquier página) ---------- */
   function staffToast() {
     var s = readSession();
-    if (!s || ['admin', 'moderador', 'prueba_moderador'].indexOf(s.role) === -1) return;
+    if (!s || ['admin', 'moderador'].indexOf(s.role) === -1) return;
     if (pageKey() === 'seccion:admin') return; /* en el panel ya hay un aviso propio */
     function seen() { try { return JSON.parse(localStorage.getItem('hfa:attSeen') || '[]') || []; } catch (e) { return []; } }
     function check() {
