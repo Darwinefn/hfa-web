@@ -77,6 +77,7 @@
 
 
   /* ---- Móvil: menú siempre accesible, botones flotantes compactos, cuerpo sin desbordes ---- */
+  var CRISP_CSS = 'img[src*="habbo-imaging"]{image-rendering:auto;-webkit-font-smoothing:antialiased}img.team-crest-image,img[class*="crest"]{image-rendering:-webkit-optimize-contrast;object-fit:contain}';
   var MOBILE_CSS = '@media(max-width:900px){' +
     'html,body{max-width:100%;overflow-x:hidden}' +
     'header .nav-left{display:contents!important}header .brand{order:1;margin-right:auto}header .nav-right{order:2}' +
@@ -121,7 +122,7 @@
     var cs = document.currentScript, base = cs && cs.src ? cs.src.replace(/[^\/]*(\?.*)?$/, '') : '';
     var s = document.createElement('script'); s.src = base + 'hfa-i18n.js'; s.defer = true; document.head.appendChild(s);
   })();
-  function addCss() { var s = document.createElement('style'); s.textContent = BASE_CSS + MOBILE_CSS; document.head.appendChild(s); }
+  function addCss() { var s = document.createElement('style'); s.textContent = BASE_CSS + CRISP_CSS + MOBILE_CSS; document.head.appendChild(s); }
   document.addEventListener('click', function (e) { var t = e.target.closest && e.target.closest('[data-community-menu]'); if (t) { var r = t.closest('header') ? t.closest('header').getBoundingClientRect() : t.getBoundingClientRect(); document.documentElement.style.setProperty('--hfa-menu-top', Math.round(r.bottom + 6) + 'px'); } }, true);
 
   function buildFab() {
@@ -622,16 +623,23 @@
     if (s && !btn) { btn = document.createElement('button'); btn.type = 'button'; btn.setAttribute('data-hfa-logout', ''); btn.title = 'Cerrar sesión'; btn.textContent = '⏻ Salir'; wrap.appendChild(btn); }
     else if (!s && btn) btn.remove();
   }
-  /* los avatares redondos pasan a mostrar solo la cara, más grande */
+  /* avatares y escudos nítidos: siempre el tamaño más grande de Habbo y escudos en su resolución original */
   function fixFaces() {
     var imgs = document.querySelectorAll('img[src*="habbo-imaging/avatarimage"]');
     for (var i = 0; i < imgs.length; i++) {
       var im = imgs[i], src = im.getAttribute('src');
-      if (src.indexOf('headonly=1') !== -1) continue;
-      var r = ''; try { r = getComputedStyle(im).borderRadius; } catch (e) {}
-      if (r.indexOf('50%') === -1 && !/avatar|mini|comment/i.test(im.className)) continue;
-      im.setAttribute('src', src.replace(/([?&])size=[a-z]/, '$1size=l') + '&headonly=1');
-      im.style.objectFit = 'cover'; im.style.objectPosition = 'center';
+      if (im.getAttribute('data-fb')) continue;            // ya tuvo que bajar de tamaño por un error de carga
+      var out = src.replace(/([?&])size=[sm](&|$)/, '$1size=l$2');
+      if (out.indexOf('headonly=1') === -1) {
+        var r = ''; try { r = getComputedStyle(im).borderRadius; } catch (e) {}
+        if (r.indexOf('50%') !== -1 || /avatar|mini|comment/i.test(im.className)) { out += '&headonly=1'; im.style.objectFit = 'cover'; im.style.objectPosition = 'center'; }
+      }
+      if (out !== src) im.setAttribute('src', out);
+    }
+    var cr = document.querySelectorAll('img[src*="thesportsdb.com"]');
+    for (var j = 0; j < cr.length; j++) {
+      var c = cr[j], u = c.getAttribute('src'), v = u.replace(/\/(tiny|small|preview|medium)$/i, '');
+      if (v !== u) c.setAttribute('src', v);
     }
   }
   /* si un avatar no carga, reintenta con tamaños más pequeños (l -> m -> s) */
