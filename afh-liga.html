@@ -429,6 +429,12 @@ section.block{padding-top:44px;padding-bottom:64px}
 .team-crest{object-fit:contain;image-rendering:auto;padding:2px;box-sizing:border-box;background-color:transparent;border-radius:6px}
 .avatar-face{image-rendering:auto}
 </style>
+<style id="hfa-live-home">
+.home-live-card{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:0 0 14px;padding:14px 18px;border:1px solid #ff5c5c;border-radius:14px;background:linear-gradient(90deg,rgba(255,92,92,.14),rgba(255,92,92,.03));text-decoration:none;color:inherit}
+.home-live-pill{display:inline-flex;align-items:center;gap:7px;font:700 12px Oswald,sans-serif;letter-spacing:.1em;color:#ff7a7a}.home-live-pill i{width:9px;height:9px;border-radius:50%;background:#ff5c5c;animation:hfaLivePulse 1.2s infinite}
+.home-live-teams{display:flex;align-items:center;gap:12px;font:600 16px Oswald,sans-serif}.home-live-teams em{font-style:normal;padding:3px 12px;border-radius:8px;background:rgba(0,0,0,.35);color:#fff;font-size:20px}.home-live-go{font-size:12px;color:var(--green,#34e88f)}
+@keyframes hfaLivePulse{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
 </head>
 <body>
 <script src="loading.js"></script>
@@ -853,8 +859,21 @@ section.block{padding-top:44px;padding-bottom:64px}
       el.innerHTML = notifications + `<a href="seccion.html?view=cuenta" class="btn btn-ghost btn-sm">Iniciar sesión</a>`;
     }
   }
+  function renderLiveNow(){
+    const host = document.getElementById('resumen'); if (!host) return;
+    let box = document.getElementById('homeLive');
+    if (!box){ box = document.createElement('div'); box.id = 'homeLive'; host.insertBefore(box, host.children[1] || null); }
+    const live = state.matches.filter(m => m.live && !m.finished);
+    box.innerHTML = live.map(m => {
+      const a = getMatchTeam(m,'A'), b = getMatchTeam(m,'B'), goals = m.goals || [];
+      const ga = goals.filter(g => g.side === 'A').length, gb = goals.filter(g => g.side === 'B').length;
+      const t = Date.parse(m.liveSince || ''), min = t ? Math.max(0, Math.floor((Date.now() - t) / 60000)) + "'" : '';
+      return `<a class="home-live-card" href="seccion.html?view=partidos"><span class="home-live-pill"><i></i>EN VIVO ${esc(min)}</span><span class="home-live-teams"><b>${esc(a?.name||m.home||'?')}</b><em>${ga} - ${gb}</em><b>${esc(b?.name||m.away||'?')}</b></span><span class="home-live-go">Ver alineación y goles →</span></a>`;
+    }).join('');
+  }
   function renderResumen(){
-    const upcoming = state.matches.find(m => !m.finished);
+    renderLiveNow();
+    const upcoming = state.matches.find(m => !m.finished && !m.live);
     const el = document.getElementById('resumenNextMatch');
     if (upcoming){
       const teamA = getMatchTeam(upcoming, 'A'), teamB = getMatchTeam(upcoming, 'B');
@@ -1638,6 +1657,7 @@ section.block{padding-top:44px;padding-bottom:64px}
   (async function init(){
     await loadState();
     renderAll();
+    setInterval(async () => { try { if (document.hidden) return; const fresh = await storageGetJSON('matches', [], true); if (!Array.isArray(fresh) || JSON.stringify(fresh) === JSON.stringify(state.matches)) return; state.matches = fresh; renderResumen(); } catch (e) {} }, 15000);
     const welcomeName=localStorage.getItem('hfa:loginWelcome');
     if(welcomeName){localStorage.removeItem('hfa:loginWelcome');showLoginWelcome(welcomeName)}
     window.hfaLoadingReady?.();
