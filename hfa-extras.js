@@ -77,7 +77,11 @@
 
 
   /* ---- Móvil: menú siempre accesible, botones flotantes compactos, cuerpo sin desbordes ---- */
-  var CRISP_CSS = 'img{image-rendering:auto!important}img.team-crest-image,img[class*="crest"],img[class*="badge"],img[class*="escudo"],td img[src*="thesportsdb"],td img[src^="data:image"]{image-rendering:-webkit-optimize-contrast!important;object-fit:contain}.crest-thumb{width:28px!important;height:28px!important;object-fit:contain!important;border-radius:0!important}';
+  var CRISP_CSS = 'img{image-rendering:auto!important}' +
+    'img.team-crest-image,img.team-crest,img[class*="crest"],img[class*="badge"],img[class*="escudo"],td img[src*="thesportsdb"],td img[src^="data:image"]{image-rendering:auto!important;object-fit:contain;transform:translateZ(0);backface-visibility:hidden}' +
+    '.team-crest{background-size:contain!important;background-repeat:no-repeat!important;background-position:center!important}' +
+    'img.mini-avatar,img.avatar-face,img[class*="avatar"]{image-rendering:auto!important;transform:translateZ(0)}' +
+    '.crest-thumb{width:28px!important;height:28px!important;object-fit:contain!important;border-radius:0!important}';
   var MOBILE_CSS = '@media(max-width:900px){' +
     'html,body{max-width:100%;overflow-x:hidden}' +
     'header .nav-left{display:contents!important}header .brand{order:1;margin-right:auto}header .nav-right{order:2}' +
@@ -652,6 +656,12 @@
         pic.src = 'https://www.habbo.es/habbo-imaging/avatarimage?user=' + encodeURIComponent(s0.username) + '&size=l&headonly=1&direction=2&head_direction=2&gesture=sml&action=std';
         box.textContent = ''; box.style.overflow = 'hidden'; box.appendChild(pic);
       }
+    }
+    /* escudos como fondo (div con style=background-image): quitar variantes diminutas /tiny /small /preview /medium */
+    var bgs = document.querySelectorAll('[style*="thesportsdb.com"]');
+    for (var q = 0; q < bgs.length; q++) {
+      var st = bgs[q].getAttribute('style') || '', st2 = st.replace(/(thesportsdb\.com[^'")\s]*?)\/(tiny|small|preview|medium)(?=['")\s])/gi, '$1');
+      if (st2 !== st) bgs[q].setAttribute('style', st2);
     }
     var cr = document.querySelectorAll('img[src*="thesportsdb.com"]');
     for (var j = 0; j < cr.length; j++) {

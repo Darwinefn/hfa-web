@@ -377,6 +377,58 @@
 </style>
 <script src="hfa-extras.js"></script>
 <script src="flags.js"></script>
+<style id="hfa-home-fix">
+/* ===== HFA · arreglos de inicio: cabecera, secciones y escudos ===== */
+header{gap:16px}
+.nav-left{gap:22px;min-width:0;flex:1 1 auto}
+.brand{flex:0 0 auto;white-space:nowrap}
+.brand-name{white-space:nowrap;font-size:15px}
+nav.links{gap:16px;flex-wrap:nowrap;white-space:nowrap;min-width:0}
+nav.links a{white-space:nowrap}
+.nav-right{flex:0 0 auto}
+@media(max-width:1280px){.role-chip{display:none}}
+@media(max-width:1180px){
+  header{flex-wrap:wrap;row-gap:8px;padding:10px 18px}
+  .nav-left{display:contents}
+  .brand{order:1;margin-right:auto}
+  .nav-right{order:2}
+  nav.links{order:3;flex:0 0 100%;width:100%;overflow-x:auto;gap:14px;padding:2px 0 4px;scrollbar-width:none}
+  nav.links::-webkit-scrollbar{display:none}
+  .role-chip{display:inline-flex}
+}
+.home-news,section.block{max-width:1180px;width:100%;margin-left:auto;margin-right:auto;box-sizing:border-box;padding-left:28px;padding-right:28px}
+.home-news{margin-top:40px}
+section.block{padding-top:44px;padding-bottom:64px}
+.home-news-copy .badge{margin-bottom:12px}
+.home-news-card{min-height:200px}
+.block-head{margin-bottom:18px}
+.panel-grid{grid-template-columns:1.5fr 1fr 1fr;align-items:stretch}
+.panel-card{display:flex;flex-direction:column;justify-content:flex-start;min-width:0}
+.team-highlight{margin-top:auto;margin-bottom:auto}
+.next-match-teams{grid-template-columns:1fr auto 1fr}
+.next-match-time{margin-top:14px;text-align:center}
+.next-match-actions{display:flex;gap:14px;justify-content:center;margin-top:10px}
+@media(max-width:820px){
+  .panel-grid{grid-template-columns:1fr}
+  .home-news,section.block{padding-left:16px;padding-right:16px}
+  .hero{padding:56px 16px 40px}
+}
+.nav-right{margin-left:12px}
+.home-news-dot,.home-news-dot.active{width:7px!important;height:7px!important;min-width:0!important;min-height:0!important;flex:none}
+@media(max-width:560px){
+  .user-name,.role-chip{display:none}
+  .brand-name{font-size:14px}
+  .nav-right{gap:8px;margin-left:0}
+  .brand{min-width:0}
+  .brand-name{display:none}
+  .home-news-card{flex-direction:column;align-items:stretch;justify-content:flex-end}
+  .home-news-controls{position:static;justify-content:center;margin:0 0 16px}
+  .home-news-copy{padding:20px 18px 12px}
+  .home-news-copy h2{font-size:24px}
+}
+.team-crest{object-fit:contain;image-rendering:auto;padding:2px;box-sizing:border-box;background-color:transparent;border-radius:6px}
+.avatar-face{image-rendering:auto}
+</style>
 </head>
 <body>
 <script src="loading.js"></script>
@@ -613,13 +665,15 @@
     porterias: {label:'Vallas invictas', unit:'partidos'},
   };
 
+  function crestSrc(u){ return String(u||'').replace(/\/(tiny|small|preview|medium)$/i,''); }
   function teamBadge(team, size){
     size = size || 26;
-    if (team && team.crest){
-      return `<div class="team-crest" style="width:${size}px;height:${size}px;background-image:url('${esc(team.crest)}')"></div>`;
-    }
     const initials = team ? esc(team.name).slice(0,2).toUpperCase() : '?';
-    return `<div class="team-crest-fallback" style="width:${size}px;height:${size}px; font-size:${Math.round(size*0.4)}px;">${initials}</div>`;
+    const fb = `<div class="team-crest-fallback" style="width:${size}px;height:${size}px; font-size:${Math.round(size*0.4)}px;">${initials}</div>`;
+    if (team && team.crest){
+      return `<img class="team-crest" src="${esc(crestSrc(team.crest))}" alt="" width="${size}" height="${size}" style="width:${size}px;height:${size}px" decoding="async" referrerpolicy="no-referrer" onerror="this.outerHTML=this.dataset.fb" data-fb="${esc(fb)}">`;
+    }
+    return fb;
   }
   function habboAvatar(name){
     return `https://www.habbo.es/habbo-imaging/avatarimage?user=${encodeURIComponent(name)}&size=l&direction=2&head_direction=2&gesture=sml&action=std`;
