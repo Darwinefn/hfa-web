@@ -886,6 +886,14 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
 .live-event-copy small{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-mid)}
 .live-event-copy small .live-face{width:16px;height:16px;border-width:1px}
 .live-event-min{font:700 15px Oswald,sans-serif;color:#ff7a7a}
+.live-event.sub{border-left-color:#a78bfa}.live-event.sub .live-event-copy b{display:flex;align-items:center;gap:6px}
+.sub-arrow{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font:900 13px/1 Inter,sans-serif;flex:none}
+.sub-arrow.in{background:#16a34a;color:#fff}.sub-arrow.out{background:#e11d2e;color:#fff}
+.live-sub-row{display:flex;align-items:center;gap:8px;min-width:0}.live-sub-row+.live-sub-row{margin-top:3px}
+.live-sub-row .live-face{height:34px!important;min-width:0;width:auto!important}
+.live-sub-row span.nm{font:700 14px Oswald,sans-serif;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live-sub-row.out span.nm{color:#ff9a9a}.live-sub-row.in span.nm{color:#7dffb0}
+.pitch-badges em.sub-in{background:#16a34a;color:#fff;font-weight:900}
 .pitch-badges{position:absolute;top:-4px;left:50%;transform:translateX(8px);display:flex;gap:1px;font-style:normal;z-index:6;pointer-events:none}
 .pitch-badges em{font-style:normal;font-size:11px;line-height:1;background:rgba(0,0,0,.7);border-radius:6px;padding:1px 3px;color:#fff}
 .acta-field-player{position:relative}
@@ -1855,11 +1863,12 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   }
   function actaField(match,readOnly=false){
     const teamA=matchTeam(match,'A'),teamB=matchTeam(match,'B');
-    const lineupA=(match?.lineupA||[]).slice(0,4),lineupB=(match?.lineupB||[]).slice(0,4);
+    const applySubs=(lineup,side)=>{if(!(readOnly&&match&&!match.finished&&Array.isArray(match.subs)&&match.subs.length))return lineup;let list=lineup.slice();match.subs.filter(sb=>sb&&sb.side===side&&sb.out&&sb.in).forEach(sb=>{const idx=list.findIndex(pl=>toPlayerKey(playerName(pl))===toPlayerKey(sb.out));if(idx<0)return;const old=list[idx];list[idx]=Object.assign({},old,{name:sb.in,username:undefined,captain:false,_subIn:true,_forcePos:normalizeActaPosition(old.pos)})});return list};
+    const lineupA=applySubs((match?.lineupA||[]).slice(0,4),'A'),lineupB=applySubs((match?.lineupB||[]).slice(0,4),'B');
     const normalizePosition=normalizeActaPosition;
     const registeredPositions=name=>{const account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(name));return (Array.isArray(account?.position)?account.position:[account?.position].filter(Boolean)).map(normalizePosition)};
-    const playerPosition=item=>{const saved=normalizePosition(item.pos),registered=registeredPositions(playerName(item));return registered.includes(saved)?saved:(registered[0]||saved)};
-    const badges=name=>{const k=toPlayerKey(name),g=(match?.goals||[]).filter(x=>toPlayerKey(x.player)===k&&!x.ownGoal).length,y=(match?.cards||[]).filter(x=>toPlayerKey(x.player)===k&&x.type!=='roja').length,r=(match?.cards||[]).filter(x=>toPlayerKey(x.player)===k&&x.type==='roja').length,as=(match?.goals||[]).filter(x=>x.assist&&toPlayerKey(x.assist)===k).length;return (g||y||r||as)?'<i class="pitch-badges">'+(g?'<em>⚽'+(g>1?'×'+g:'')+'</em>':'')+(as?'<em class="shoe">👟'+(as>1?'×'+as:'')+'</em>':'')+(y?'<em>🟨'+(y>1?'×'+y:'')+'</em>':'')+(r?'<em>🟥</em>':'')+'</i>':''};
+    const playerPosition=item=>{if(item._forcePos)return item._forcePos;const saved=normalizePosition(item.pos),registered=registeredPositions(playerName(item));return registered.includes(saved)?saved:(registered[0]||saved)};
+    const badges=name=>{const k=toPlayerKey(name),g=(match?.goals||[]).filter(x=>toPlayerKey(x.player)===k&&!x.ownGoal).length,y=(match?.cards||[]).filter(x=>toPlayerKey(x.player)===k&&x.type!=='roja').length,r=(match?.cards||[]).filter(x=>toPlayerKey(x.player)===k&&x.type==='roja').length,as=(match?.goals||[]).filter(x=>x.assist&&toPlayerKey(x.assist)===k).length;const si=(match?.subs||[]).some(x=>x&&x.in&&toPlayerKey(x.in)===k)&&readOnly&&!match.finished;return (g||y||r||as||si)?'<i class="pitch-badges">'+(si?'<em class="sub-in">▲</em>':'')+(g?'<em>⚽'+(g>1?'×'+g:'')+'</em>':'')+(as?'<em class="shoe">👟'+(as>1?'×'+as:'')+'</em>':'')+(y?'<em>🟨'+(y>1?'×'+y:'')+'</em>':'')+(r?'<em>🟥</em>':'')+'</i>':''};
     const playerMarkup=(player,side)=>{const name=playerName(player),position=playerPosition(player),tone=position==='BANDA'?'position-band':position==='MED'?'position-med':position==='GK'?'position-gk':'position-del',tag=readOnly?'div':'button';return '<'+tag+' class="acta-field-player '+(side==='A'?'field-home':'field-away')+' '+tone+'"'+(readOnly?'':' type="button" draggable="'+(canDrag?'true':'false')+'" data-drag-player="'+encodeURIComponent(name)+'" data-drag-side="'+side+'" data-acta-player="'+encodeURIComponent(name)+'" data-acta-side="'+side+'" data-acta-match="'+(match?.id||'')+'" title="Arrastra para cambiar a otra posición registrada"')+'><img src="https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(name)+'&size=l&headonly=1&direction=2&head_direction=2&gesture=sml&action=std&img_format=png" alt="Cara de '+name+'"><span>'+name+'</span><small>'+position+'</small>'+badges(name)+'</'+tag+'>'};
     const playersAt=(lineup,position)=>lineup.filter(item=>playerPosition(item)===position).sort((a,b)=>(Number(a.slot)||0)-(Number(b.slot)||0));
     const canDrag=session&&['admin','prueba_moderador','moderador','arbitro'].includes(session.role);
@@ -1958,7 +1967,9 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const del=(attr,i)=>admin?'<button type="button" class="live-event-del" '+attr+'="'+match.id+'" data-goal-index="'+i+'" title="Quitar" aria-label="Quitar">✕</button>':'';
     const goalRows=goals.map(g=>'<div class="live-event goal side-'+(g.side==='B'?'b':'a')+'">'+hfaFace(g.player)+'<div class="live-event-copy"><b>⚽ '+profileText(g.player)+'</b><small>'+(g.assist?hfaFace(g.assist)+'<span class="shoe-ico">👟</span> Asist. '+profileText(g.assist)+' · ':'')+teamName(g.side)+'</small></div><strong class="live-event-min">'+profileText(g.minute||'0')+"'</strong>"+del('data-delete-goal',g._i)+'</div>').join('');
     const cardRows=cards.map(c=>'<div class="live-event card '+(c.type==='roja'?'red':'yellow')+' side-'+(c.side==='B'?'b':'a')+'">'+hfaFace(c.player)+'<div class="live-event-copy"><b>'+(c.type==='roja'?'🟥':'🟨')+' '+profileText(c.player)+'</b><small>'+(c.type==='roja'?'Tarjeta roja':'Tarjeta amarilla')+' · '+teamName(c.side)+'</small></div><strong class="live-event-min">'+(c.minute!==''&&c.minute!=null?profileText(c.minute)+"'":'—')+'</strong>'+del('data-delete-card',c._i)+'</div>').join('');
-    return '<div class="live-goals live-events"><b>⚽ Goles en directo</b>'+(goalRows||'<span class="muted">Todavía no hay goles.</span>')+'<b class="live-cards-title">🟨 Tarjetas</b>'+(cardRows||'<span class="muted">Sin tarjetas.</span>')+'</div>';
+    const subs=(match.subs||[]).map((x,i)=>Object.assign({},x,{_i:i})).sort((l,r)=>(Number(l.minute)||0)-(Number(r.minute)||0));
+    const subRows=subs.map(x=>'<div class="live-event sub side-'+(x.side==='B'?'b':'a')+'"><div class="live-event-copy"><div class="live-sub-row in">'+hfaFace(x.in)+'<span class="sub-arrow in" title="Entra">▲</span><span class="nm">'+profileText(x.in)+'</span></div><div class="live-sub-row out">'+hfaFace(x.out)+'<span class="sub-arrow out" title="Sale">▼</span><span class="nm">'+profileText(x.out)+'</span></div><small>'+teamName(x.side)+'</small></div><strong class="live-event-min">'+(x.minute!==''&&x.minute!=null?profileText(x.minute)+"'":'—')+'</strong>'+(admin?'<button type="button" class="live-event-del" data-delete-sub="'+match.id+'" data-goal-index="'+x._i+'" title="Quitar" aria-label="Quitar">✕</button>':'')+'</div>').join('');
+    return '<div class="live-goals live-events"><b>⚽ Goles en directo</b>'+(goalRows||'<span class="muted">Todavía no hay goles.</span>')+'<b class="live-cards-title">🟨 Tarjetas</b>'+(cardRows||'<span class="muted">Sin tarjetas.</span>')+'<b class="live-cards-title">🔁 Cambios</b>'+(subRows||'<span class="muted">Sin cambios.</span>')+'</div>';
   }
   function hfaLiveBar(match){
     if(!match||match.finished)return '';
@@ -2778,6 +2789,19 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       selectedActaMatchId=match.id;adminSection='acts';content();prepareAdminDivisions();
       return;
     }
+    const deleteSub=event.target.closest('[data-delete-sub]');
+    if(deleteSub){
+      event.preventDefault();event.stopPropagation();
+      if(!session||!['admin','prueba_moderador','moderador','arbitro'].includes(session.role))return;
+      const match=state.matches.find(item=>String(item.id)===String(deleteSub.dataset.deleteSub));
+      const si=Number(deleteSub.dataset.goalIndex);
+      if(!match||!Number.isInteger(si)||si<0||si>=(match.subs||[]).length)return;
+      if(!confirm('¿Quitar este cambio del acta?'))return;
+      match.subs.splice(si,1);
+      await setJSON('matches',state.matches);
+      selectedActaMatchId=match.id;adminSection='acts';content();prepareAdminDivisions();
+      return;
+    }
     const deleteGoal=event.target.closest('[data-delete-goal]');
     if(deleteGoal){
       event.preventDefault();
@@ -2914,7 +2938,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       if(action==='goal'){const minute=menu.querySelector('#playerActionMinute')?.value.trim(),assist=menu.querySelector('#playerActionAssist')?.value||'';if(minute==='')return;match.goals=match.goals||[];match.goals.push({player,assist,minute,side})}
       if(action==='card'){const type=menu.querySelector('#playerActionCardType')?.value||'amarilla',minute=menu.querySelector('#playerActionMinute')?.value.trim()||'';match.cards=match.cards||[];match.cards.push({player,type,minute,side})}
       if(action==='assist'){const scorer=menu.querySelector('#playerActionScorer')?.value,minute=menu.querySelector('#playerActionMinute')?.value.trim();if(!scorer||minute==='')return;match.goals=match.goals||[];match.goals.push({player:scorer,assist:player,minute,side})}
-      if(action==='sub'){const entering=menu.querySelector('[data-sub-entering].selected')?.dataset.subEntering;if(!entering)return;match.subs=match.subs||[];match.subs.push({minute:'',side,out:player,in:entering})}
+      if(action==='sub'){const entering=menu.querySelector('[data-sub-entering].selected')?.dataset.subEntering;if(!entering)return;match.subs=match.subs||[];match.subs.push({minute:(match.live?(parseInt(hfaLiveMinute(match))||''):''),side,out:player,in:entering})}
       if(action==='mvp')match.mvp=player;
       if(action==='mention'){match.mentions=match.mentions||[];if(!match.mentions.includes(player))match.mentions.push(player)}
       await setJSON('matches',state.matches);await hfaAchAfterChange();closeActaPlayerMenu();content();return;
