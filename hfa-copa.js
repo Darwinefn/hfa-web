@@ -14,9 +14,9 @@
   'use strict';
   var KEY = 'cups';
   var cups = [], selectedId = null;
-  var pubMode = null, pubTab = null, pubTabFor = null, pubGroup = 'all';
+  var pubMode = null, pubTab = null, pubTabFor = null, pubGroup = 'all', pubDiv = 'all';
   var admTab = null, admTabFor = null;
-  var DRAFT0 = { name: '', ids: [], order: 'random', format: 'grupos', groups: 2, q: 2, dbl: false };
+  var DRAFT0 = { name: '', ids: [], order: 'random', format: 'grupos', groups: 2, q: 2, dbl: false, div: '1' };
   var draft = JSON.parse(JSON.stringify(DRAFT0));
   var showForm = false, adminHost = null;
 
@@ -41,6 +41,8 @@
     if (t && t.crest) return '<img class="cup-crest" src="' + esc(crestSrc(t.crest)) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.outerHTML=\'<span class=&quot;cup-crest cup-crest-ini&quot;>' + ini + '</span>\'">';
     return '<span class="cup-crest cup-crest-ini">' + ini + '</span>';
   }
+  function cupDiv(c) { return c && c.division ? String(c.division) : ''; }
+  function divTag(c) { var d = cupDiv(c); return '<b class="cup-div">' + (d ? d + 'D' : 'Mixta') + '</b>'; }
   function roundName(n) {
     return ({ 1: 'Final', 2: 'Semifinales', 4: 'Cuartos de final', 8: 'Octavos de final', 16: 'Dieciseisavos' })[n] || ('Ronda de ' + (n * 2));
   }
@@ -376,6 +378,15 @@
     '.cup-group{margin:12px 0}.cup-group-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;font:700 11px Oswald,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--text-low)}' +
     '.cup-group-head button{padding:4px 10px;border:1px solid var(--border);border-radius:999px;background:var(--panel);color:var(--text-mid);font:600 10px Inter,sans-serif;cursor:pointer}' +
     '.cup-picks{display:flex;gap:6px;flex-wrap:wrap}.cup-pick{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:var(--panel);color:var(--text-mid);font:600 12px Inter,sans-serif;cursor:pointer}' +
+    '.cup-dtabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.cup-dtab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 6px;border:1px solid var(--border);border-radius:12px;background:var(--panel);color:var(--text-mid);cursor:pointer}.cup-dtab b{font:700 20px Oswald,sans-serif;color:var(--text-hi)}.cup-dtab small{font:500 10.5px Inter,sans-serif;color:var(--text-low)}.cup-dtab.on{border-color:var(--green);background:rgba(52,232,143,.12)}.cup-dtab.on b{color:var(--green)}' +
+    '.cup-tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}.cup-tcard{position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px;min-width:0;border:1px solid var(--border);border-radius:12px;background:var(--panel);color:var(--text-hi);text-align:left;cursor:pointer}.cup-tcard:hover{border-color:var(--green-dim)}.cup-tcard .cup-crest{width:34px;height:34px;flex-basis:34px}.cup-tn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 13px Inter,sans-serif}' +
+    '.cup-tcard.on{border-color:var(--green);background:rgba(52,232,143,.12)}.cup-tcard.on .cup-div{background:var(--green);color:#05130c;border-color:var(--green)}.cup-chk{position:absolute;top:-7px;right:-7px;display:grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--green);color:#05130c;font:700 11px Oswald,sans-serif;font-style:normal}' +
+    '.cup-divbar{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.cup-divbar button{padding:7px 16px;border-radius:999px;border:1px solid var(--border);background:var(--panel);color:var(--text-mid);font:700 12px Oswald,sans-serif;letter-spacing:.06em;cursor:pointer}.cup-divbar button.on{background:var(--green);border-color:var(--green);color:#05130c}' +
+    '.cup-hero h3 .cup-div{vertical-align:middle;margin-left:6px;font-size:12px}.cup-chip .cup-div{margin-right:4px;font-size:9px}' +
+    '.cup-pick{padding:6px 12px 6px 6px;gap:8px}.cup-pick .cup-crest{width:26px;height:26px;flex-basis:26px}.cup-pn{min-width:0;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+    '.cup-div{display:inline-flex;align-items:center;justify-content:center;min-width:26px;padding:2px 6px;border-radius:6px;background:rgba(52,232,143,.14);border:1px solid rgba(52,232,143,.35);color:var(--green);font:700 10px Oswald,sans-serif;letter-spacing:.06em}' +
+    '.cup-divlab{display:inline-flex;align-items:center;gap:8px}.cup-divlab .cup-div{font-size:12px;padding:3px 8px}.cup-divlab em{font-style:normal;font-weight:600;color:var(--text-low);letter-spacing:0;text-transform:none}' +
+    '.cup-pick.on .cup-div{background:var(--green);color:#05130c;border-color:var(--green)}.cup-pick.on .cup-crest{border-color:var(--green)}' +
     '.cup-pick.on{border-color:var(--green);background:rgba(52,232,143,.13);color:var(--green)}.cup-pick i{font-style:normal;display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:9px;background:var(--green);color:#05130c;font:700 10px Oswald,sans-serif}' +
     '.cup-seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:10px;overflow:hidden}.cup-seg button{padding:8px 13px;border:0;background:var(--panel);color:var(--text-mid);font:600 12px Inter,sans-serif;cursor:pointer}.cup-seg button.on{background:var(--green);color:#05130c}' +
     '.cup-note{font-size:12px;color:var(--text-low);line-height:1.5}.cup-sum{margin:14px 0 0;padding:12px 14px;border-radius:12px;border:1px dashed rgba(52,232,143,.45);background:rgba(52,232,143,.06);font-size:12.5px;color:var(--text-mid);line-height:1.6}.cup-sum b{color:var(--green)}.cup-sum.bad{border-color:#ff6b6b;background:rgba(255,107,107,.07)}.cup-sum.bad b{color:#ff8a8a}' +
@@ -392,7 +403,7 @@
     '.cup-fx-res{font:700 15px Oswald,sans-serif;color:var(--green)}.cup-fxc{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}.cup-fxc .input{width:auto;min-width:0}.cup-fxc .sc{width:64px}.cup-fxc .btn{width:auto}' +
     '@media(max-width:700px){.cup-hero{padding:16px}.cup-hero h3{font-size:20px}.cup-hero-side{flex:1 1 100%}.cup-card{padding:12px}.cup-groups{grid-template-columns:1fr}' +
     '.cup-bracket{grid-template-columns:repeat(var(--cols),78vw);min-width:0}.cup-scroll{scroll-snap-type:x proximity}.cup-cell{scroll-snap-align:start}.cup-ties,.cup-list-grid{grid-template-columns:1fr}.cup-public h2.cup-h{font-size:22px}' +
-    '.cup-mini{grid-template-columns:1fr 1fr}.cup-mini .btn{grid-column:1/-1;width:100%}.cup-formats{grid-template-columns:1fr}.cup-tab{padding:10px 12px}' +
+    '.cup-mini{grid-template-columns:1fr 1fr}.cup-mini .btn{grid-column:1/-1;width:100%}.cup-formats{grid-template-columns:1fr}.cup-dtabs{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.cup-dtab{padding:10px 2px}.cup-dtab b{font-size:16px}.cup-dtab small{display:none}.cup-tgrid{grid-template-columns:1fr 1fr}.cup-tcard{padding:9px 8px;gap:7px}.cup-tcard .cup-crest{width:28px;height:28px;flex-basis:28px}.cup-tcard .cup-div{display:none}.cup-tcard.on:after{content:none}.cup-tab{padding:10px 12px}' +
     '.cup-mr{grid-template-columns:minmax(0,1fr) 54px minmax(0,1fr);row-gap:4px}.cup-mr-d{grid-column:1/-1;text-align:center}.cup-mr-t{font-size:12px}.cup-mr-t .cup-crest{display:none}' +
     '.cup-fxc .input:not(.sc){flex:1 1 120px}.cup-jor-ctl{width:100%}.cup-jor-ctl .btn{flex:1 1 100%;width:100%}}';
   function addCss() {
@@ -414,7 +425,7 @@
   function heroHTML(cup, res) {
     var champId = champion(res), p = progress(cup, res), n = cup.teamIds.length;
     var meta = n + ' equipos · ' + (cup.format === 'grupos' ? cup.groups.length + ' grupos · clasifican ' + cup.q + ' por grupo' + (cup.dbl ? ' · ida y vuelta' : '') : 'eliminatoria directa');
-    var html = '<div class="cup-hero"><div class="cup-hero-main"><span class="cup-hero-ic">🏆</span><div><h3>' + esc(cup.name) + '</h3><div class="cup-hero-meta">' + esc(meta) + '</div></div></div>' +
+    var html = '<div class="cup-hero"><div class="cup-hero-main"><span class="cup-hero-ic">🏆</span><div><h3>' + esc(cup.name) + ' ' + divTag(cup) + '</h3><div class="cup-hero-meta">' + esc(meta) + '</div></div></div>' +
       '<div class="cup-hero-side"><span class="cup-pill' + (champId != null ? ' gold' : '') + '">' + esc(cupStatus(cup, res)) + '</span><div class="cup-prog"><i style="width:' + p.pct + '%"></i></div><small>' + p.played + ' de ' + p.total + ' partidos jugados · ' + p.pct + '%</small></div></div>';
     if (champId != null) { var ct = team(champId); html += '<div class="cup-champ"><span class="cup-trophy">🏆</span><span class="cup-champ-label">Campeón</span>' + badge(ct) + '<b>' + esc(ct ? ct.name : 'Equipo') + '</b></div>'; }
     return html;
@@ -457,8 +468,12 @@
     if (!pubMode) pubMode = window.innerWidth <= 700 ? 'list' : 'bracket';
     var html = '<h2 class="cup-h">Copas</h2><div class="cup-sub">Fase de grupos y eliminatorias. Se actualizan solas con los resultados de las actas.</div>';
     if (!cups.length) { host.innerHTML = html + '<div class="cup-empty">Todavía no hay copas creadas.</div>'; return; }
-    var cup = current() || cups[cups.length - 1], res = resolve(cup);
-    if (cups.length > 1) html += '<div class="cup-chips">' + cups.map(function (c) { return '<button type="button" class="cup-chip' + (same(c.id, cup.id) ? ' active' : '') + '" data-cup-pick="' + esc(c.id) + '">' + esc(c.name) + '<small>' + esc(cupStatus(c)) + '</small></button>'; }).join('') + '</div>';
+    var present = ['1', '2', '3', '4', ''].filter(function (d) { return cups.some(function (c) { return cupDiv(c) === d; }); });
+    if (pubDiv !== 'all' && present.indexOf(pubDiv) === -1) pubDiv = 'all';
+    var list = cups.filter(function (c) { return pubDiv === 'all' || cupDiv(c) === pubDiv; });
+    var cup = list.find(function (c) { return same(c.id, selectedId); }) || list[list.length - 1], res = resolve(cup);
+    if (present.length > 1) html += '<div class="cup-divbar"><button type="button" class="' + (pubDiv === 'all' ? 'on' : '') + '" data-cup-div="all">Todas</button>' + present.map(function (d) { return '<button type="button" class="' + (pubDiv === d ? 'on' : '') + '" data-cup-div="' + d + '">' + (d ? d + 'D' : 'Mixta') + '</button>'; }).join('') + '</div>';
+    if (list.length > 1) html += '<div class="cup-chips">' + list.map(function (c) { return '<button type="button" class="cup-chip' + (same(c.id, cup.id) ? ' active' : '') + '" data-cup-pick="' + esc(c.id) + '">' + divTag(c) + ' ' + esc(c.name) + '<small>' + esc(cupStatus(c)) + '</small></button>'; }).join('') + '</div>';
     html += heroHTML(cup, res);
     var tabs = tabsFor(cup, res);
     if (pubTabFor !== cup.id || !tabs.some(function (t) { return t[0] === pubTab; })) {
@@ -481,8 +496,9 @@
     host.innerHTML = '<h2 class="cup-h">Copas</h2><div class="cup-sub">Cargando…</div>';
     el.appendChild(host);
     host.addEventListener('click', function (e) {
-      var p = e.target.closest('[data-cup-pick]'), m = e.target.closest('[data-cup-mode]'), t = e.target.closest('[data-cup-tab]'), g = e.target.closest('[data-cup-grp]');
-      if (p) { selectedId = p.getAttribute('data-cup-pick'); pubGroup = 'all'; renderPublic(host); }
+      var p = e.target.closest('[data-cup-pick]'), m = e.target.closest('[data-cup-mode]'), t = e.target.closest('[data-cup-tab]'), g = e.target.closest('[data-cup-grp]'), dv = e.target.closest('[data-cup-div]');
+      if (dv) { pubDiv = dv.getAttribute('data-cup-div'); pubGroup = 'all'; renderPublic(host); }
+      else if (p) { selectedId = p.getAttribute('data-cup-pick'); pubGroup = 'all'; renderPublic(host); }
       else if (m) { pubMode = m.getAttribute('data-cup-mode'); renderPublic(host); }
       else if (t) { pubTab = t.getAttribute('data-cup-tab'); renderPublic(host); }
       else if (g) { pubGroup = g.getAttribute('data-cup-grp'); renderPublic(host); }
@@ -517,33 +533,40 @@
     }
     return { ok: ok, msg: msg, html: ok ? html : msg };
   }
+  function shownTeams() {
+    return teams().filter(function (t) { return draft.div === 'all' || divCode(t) === draft.div; });
+  }
   function formHTML() {
-    var groups = {};
-    teams().forEach(function (t) { var d = divCode(t) || '—'; (groups[d] = groups[d] || []).push(t); });
-    var keys = Object.keys(groups).sort();
-    var gh = keys.map(function (d) {
-      return '<div class="cup-group"><div class="cup-group-head"><span>' + (d === '—' ? 'Sin división' : 'División ' + d + 'D') + '</span><span><button type="button" data-cup-act="grp-on" data-d="' + esc(d) + '">Elegir todos</button> <button type="button" data-cup-act="grp-off" data-d="' + esc(d) + '">Quitar</button></span></div><div class="cup-picks">' +
-        groups[d].map(function (t) {
-          var i = draft.ids.findIndex(function (x) { return same(x, t.id); });
-          return '<button type="button" class="cup-pick' + (i > -1 ? ' on' : '') + '" data-cup-act="toggle" data-id="' + esc(t.id) + '">' + (i > -1 && draft.order === 'order' ? '<i>' + (i + 1) + '</i>' : '') + esc(t.name) + '</button>';
-        }).join('') + '</div></div>';
+    var all = teams(), shown = shownTeams();
+    var divs = ['1', '2', '3', '4'];
+    var tabs = divs.map(function (d) {
+      var n = all.filter(function (t) { return divCode(t) === d; }).length;
+      return '<button type="button" class="cup-dtab' + (draft.div === d ? ' on' : '') + '" data-cup-act="div" data-v="' + d + '"><b>' + d + 'D</b><small>' + n + ' equipos</small></button>';
+    }).join('') + '<button type="button" class="cup-dtab' + (draft.div === 'all' ? ' on' : '') + '" data-cup-act="div" data-v="all"><b>Mixta</b><small>' + all.length + ' equipos</small></button>';
+    var cards = shown.map(function (t) {
+      var i = draft.ids.findIndex(function (x) { return same(x, t.id); });
+      return '<button type="button" class="cup-tcard' + (i > -1 ? ' on' : '') + '" data-cup-act="toggle" data-id="' + esc(t.id) + '">' + badge(t) + '<span class="cup-tn">' + esc(t.name) + '</span><small class="cup-div">' + (divCode(t) ? divCode(t) + 'D' : '—') + '</small>' + (i > -1 ? '<i class="cup-chk">' + (draft.order === 'order' ? (i + 1) : '✓') + '</i>' : '') + '</button>';
     }).join('');
+    var sel = shown.filter(function (t) { return draft.ids.some(function (x) { return same(x, t.id); }); }).length;
     var seg = function (act, cur, opts) { return '<span class="cup-seg">' + opts.map(function (o) { return '<button type="button" class="' + (String(cur) === String(o[0]) ? 'on' : '') + '" data-cup-act="' + act + '" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</span>'; };
     var info = draftInfo(), g = draft.format === 'grupos';
     var gopts = []; for (var i = 2; i <= 8; i++) gopts.push([i, i]);
-    return '<div class="cup-form"><h4>Nueva copa</h4><div class="cup-note">Crea la copa en tres pasos. El bracket se rellena solo con los clasificados de cada grupo.</div>' +
-      '<div class="cup-step"><b>1</b>Nombre y formato</div><div class="cup-row"><input class="input" id="cupNewName" placeholder="Nombre de la copa (ej. Copa HFA 2026)" maxlength="60" value="' + esc(draft.name) + '"></div>' +
+    var dlabel = draft.div === 'all' ? 'Mixta' : draft.div + 'D';
+    return '<div class="cup-form"><h4>Nueva copa</h4><div class="cup-note">Crea la copa de una división en tres pasos. El bracket se rellena solo con los clasificados de cada grupo.</div>' +
+      '<div class="cup-step"><b>1</b>División</div><div class="cup-dtabs">' + tabs + '</div>' +
+      '<div class="cup-step"><b>2</b>Nombre y formato</div><div class="cup-row"><input class="input" id="cupNewName" placeholder="Nombre de la copa (ej. Copa HFA ' + esc(dlabel) + ')" maxlength="60" value="' + esc(draft.name) + '"></div>' +
       '<div class="cup-formats"><button type="button" class="cup-fmt' + (g ? ' on' : '') + '" data-cup-act="format" data-v="grupos"><b>🏟️ Fase de grupos + eliminatorias</b>Los equipos juegan en grupos y los mejores pasan al bracket.</button><button type="button" class="cup-fmt' + (!g ? ' on' : '') + '" data-cup-act="format" data-v="directo"><b>⚔️ Solo eliminatorias</b>Bracket de eliminación directa desde el primer partido.</button></div>' +
-      '<div class="cup-step"><b>2</b>Equipos participantes</div>' + (gh || '<div class="cup-empty">Primero crea equipos en “Equipos y jugadores”.</div>') +
-      '<div class="cup-step"><b>3</b>Configuración</div>' +
+      '<div class="cup-step"><b>3</b>Equipos de ' + esc(dlabel) + '</div>' +
+      '<div class="cup-bar" style="margin:0 0 10px"><span class="cup-note"><b>' + sel + '</b> de ' + shown.length + ' elegidos</span><span class="cup-actions"><button type="button" class="btn" data-cup-act="sel-all">Elegir todos</button><button type="button" class="btn" data-cup-act="sel-none">Quitar todos</button></span></div>' +
+      (cards ? '<div class="cup-tgrid">' + cards + '</div>' : '<div class="cup-empty">No hay equipos en ' + esc(dlabel) + '. Crea o asigna equipos a esta división en “Equipos y jugadores”.</div>') +
+      '<div class="cup-step"><b>4</b>Configuración</div>' +
       (g ? '<div class="cup-row"><span class="cup-lab">Número de grupos</span>' + seg('groups', draft.groups, gopts) + '</div>' +
         '<div class="cup-row"><span class="cup-lab">Clasifican por grupo</span>' + seg('q', draft.q, [[1, '1 (solo el primero)'], [2, '2 (primero y segundo)']]) + '</div>' +
         '<div class="cup-row"><span class="cup-lab">Partidos del grupo</span>' + seg('dbl', draft.dbl ? 1 : 0, [[0, 'Solo ida'], [1, 'Ida y vuelta']]) + '</div>' : '') +
       '<div class="cup-row"><span class="cup-lab">Sorteo</span>' + seg('order', draft.order, [['random', '🎲 Aleatorio'], ['order', g ? '① Cabezas de serie (orden elegido)' : '① Orden en que los elegí']]) + '</div>' +
       '<div class="cup-sum' + (info.ok ? '' : ' bad') + '">' + info.html + '</div>' +
-      '<div class="cup-bar"><span></span><div class="cup-actions">' + (cups.length ? '<button type="button" class="btn" data-cup-act="cancel-new">Cancelar</button>' : '') + '<button type="button" class="btn btn-primary" data-cup-act="create"' + (info.ok ? '' : ' disabled') + '>Crear copa</button></div></div></div>';
+      '<div class="cup-bar"><span></span><div class="cup-actions">' + (cups.length ? '<button type="button" class="btn" data-cup-act="cancel-new">Cancelar</button>' : '') + '<button type="button" class="btn btn-primary" data-cup-act="create"' + (info.ok ? '' : ' disabled') + '>Crear copa de ' + esc(dlabel) + '</button></div></div></div>';
   }
-
   function adminTieHTML(t, cup) {
     var r = t.r, k = t.k, tie = cup.rounds[r][k], ta = team(t.a), tb = team(t.b);
     var nm = function (tm, no, lab) { return tm ? tm.name : (no ? 'BYE' : (lab || 'Por definir')); };
@@ -596,7 +619,7 @@
   function renderAdmin() {
     var el = adminHost; if (!el || !el.isConnected) return;
     var cup = current(), html = '<div class="cup-adm">';
-    html += '<div class="cup-adm-top">' + (cups.length ? '<select class="input" data-cup-act="pick">' + cups.map(function (c) { return '<option value="' + esc(c.id) + '"' + (cup && same(c.id, cup.id) ? ' selected' : '') + '>' + esc(c.name) + ' — ' + esc(cupStatus(c)) + '</option>'; }).join('') + '</select>' : '') +
+    html += '<div class="cup-adm-top">' + (cups.length ? '<select class="input" data-cup-act="pick">' + cups.map(function (c) { return '<option value="' + esc(c.id) + '"' + (cup && same(c.id, cup.id) ? ' selected' : '') + '>[' + (cupDiv(c) ? cupDiv(c) + 'D' : 'Mixta') + '] ' + esc(c.name) + ' — ' + esc(cupStatus(c)) + '</option>'; }).join('') + '</select>' : '') +
       '<button type="button" class="btn ' + (cups.length ? '' : 'btn-primary') + '" data-cup-act="new">＋ Nueva copa</button></div>';
     if (showForm || !cups.length) html += formHTML();
     if (cup && !(showForm && !cups.length)) {
@@ -644,12 +667,16 @@
       if (i > -1) draft.ids.splice(i, 1); else draft.ids.push(team(id) ? team(id).id : id);
       renderAdmin(); return;
     }
-    if (act === 'grp-on' || act === 'grp-off') {
-      var d = btn.getAttribute('data-d');
-      teams().filter(function (t) { return (divCode(t) || '—') === d; }).forEach(function (t) {
+    if (act === 'div') {
+      draft.div = v;
+      draft.ids = draft.ids.filter(function (id) { var t = team(id); return t && (v === 'all' || divCode(t) === v); });
+      renderAdmin(); return;
+    }
+    if (act === 'sel-all' || act === 'sel-none') {
+      shownTeams().forEach(function (t) {
         var j = draft.ids.findIndex(function (x) { return same(x, t.id); });
-        if (act === 'grp-on' && j === -1) draft.ids.push(t.id);
-        if (act === 'grp-off' && j > -1) draft.ids.splice(j, 1);
+        if (act === 'sel-all' && j === -1) draft.ids.push(t.id);
+        if (act === 'sel-none' && j > -1) draft.ids.splice(j, 1);
       });
       renderAdmin(); return;
     }
@@ -663,12 +690,12 @@
       if (!name) { alert('Escribe un nombre para la copa.'); return; }
       if (cups.some(function (c) { return String(c.name).toLowerCase() === name.toLowerCase(); })) { alert('Ya existe una copa con ese nombre.'); return; }
       var info = draftInfo(); if (!info.ok) { alert(info.msg); return; }
-      var c = { id: uid('c'), name: name, format: draft.format, createdAt: Date.now() };
+      var c = { id: uid('c'), name: name, format: draft.format, division: draft.div === 'all' ? '' : draft.div, createdAt: Date.now() };
       c.tournamentId = 'copa-' + c.id;
       if (c.format === 'grupos') { c.G = draft.groups; c.q = draft.q; c.dbl = draft.dbl; }
       structure(c, draft.ids.slice(), draft.order);
       cups.push(c); selectedId = c.id; showForm = false; draft = JSON.parse(JSON.stringify(DRAFT0));
-      st.tournaments.push({ id: c.tournamentId, name: c.name, type: 'copa', cupId: c.id });
+      st.tournaments.push({ id: c.tournamentId, name: c.name, type: 'copa', cupId: c.id, division: c.division });
       Promise.all([app().setJSON('tournaments', st.tournaments), save()]).then(renderAdmin);
       return;
     }
