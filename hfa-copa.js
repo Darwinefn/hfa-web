@@ -419,7 +419,6 @@
     var t = [];
     if (cup.format === 'grupos') t.push(['grupos', '📊 Grupos', cup.groups.length]);
     t.push(['elim', '🏆 Eliminatorias', '']);
-    t.push(['partidos', '📅 Partidos', '']);
     return t;
   }
   function heroHTML(cup, res) {
@@ -485,8 +484,7 @@
       html += (res.gd && !res.gd.complete ? '<div class="cup-banner">Los cruces se rellenan automáticamente cuando termine la fase de grupos: <b>1º Grupo A</b>, <b>2º Grupo B</b>…</div>' : '') +
         '<div class="cup-toolbar"><span class="cup-note">Eliminatoria directa</span><div class="cup-modes"><button type="button" class="' + (pubMode === 'bracket' ? 'active' : '') + '" data-cup-mode="bracket">🏆 Bracket</button><button type="button" class="' + (pubMode === 'list' ? 'active' : '') + '" data-cup-mode="list">☰ Lista</button></div></div>' +
         '<div class="cup-card">' + bracketHTML(res, pubMode) + '</div>';
-    } else html += '<div class="cup-card">' + matchesTabHTML(cup, res) + '</div>';
-    html += '<a class="cup-link" href="seccion.html?view=partidos&tournament=' + encodeURIComponent(cup.tournamentId || '') + '">Ver los partidos de esta copa en Partidos →</a>';
+    }
     host.innerHTML = html;
   }
   function mountPublic(el) {
@@ -583,7 +581,7 @@
     } else if (t.a != null && t.b != null) {
       if (t.match) {
         var m = t.match;
-        body += '<div class="cup-state"><b>Partido creado</b> · ' + esc(m.date ? fmtDate(m.date) : 'sin fecha') + (m.time ? ' ' + esc(m.time) + ' COL' : '') + ' · ' + (m.finished ? 'finalizado <b>' + esc(t.sa) + ' - ' + esc(t.sb) + '</b>' : 'aún sin finalizar') + '.<br>Se cierra desde “Editar y finalizar actas”; la copa se actualiza sola.</div><div><button type="button" class="btn" data-cup-act="unlink">Desvincular partido</button></div>';
+        body += '<div class="cup-state"><b>Partido creado</b> · ' + esc(m.date ? fmtDate(m.date) : 'sin fecha') + (m.time ? ' ' + esc(m.time) + ' COL' : '') + ' · ' + (m.finished ? 'finalizado <b>' + esc(t.sa) + ' - ' + esc(t.sb) + '</b>' : 'aún sin finalizar') + '.<br>Se cierra desde “Editar y finalizar actas”; la copa se actualiza sola.</div>' + (m.finished ? '' : '<div class="cup-mini"><label>Fecha<input class="input" type="date" data-f="date" value="' + esc(m.date || '') + '"></label><label>Hora (COL)<input class="input" type="time" data-f="time" value="' + esc(m.time || '') + '"></label><button type="button" class="btn btn-primary" data-cup-act="tie-date">Guardar fecha</button></div>') + '<div><button type="button" class="btn" data-cup-act="unlink">Desvincular partido</button></div>';
       } else {
         body += '<div class="cup-mini"><label>Fecha<input class="input" type="date" data-f="date" value="' + esc(tie.date || '') + '"></label><label>Hora (COL)<input class="input" type="time" data-f="time" value="' + esc(tie.time || '') + '"></label><button type="button" class="btn btn-primary" data-cup-act="mk-match">Crear partido</button></div>' +
           '<div class="cup-mini"><label>Goles ' + esc(ta ? ta.name : 'A') + '<input class="input" type="number" min="0" data-f="sa" value="' + esc(tie.sa == null ? '' : tie.sa) + '"></label><label>Goles ' + esc(tb ? tb.name : 'B') + '<input class="input" type="number" min="0" data-f="sb" value="' + esc(tie.sb == null ? '' : tie.sb) + '"></label><button type="button" class="btn" data-cup-act="save-manual">Guardar resultado</button></div><div class="cup-note">Crea el partido para jugarlo con acta, o escribe el resultado a mano.</div>';
@@ -602,7 +600,7 @@
     var body;
     if (o.match) {
       var m = o.match;
-      body = '<div class="cup-state"><b>Partido creado</b> · ' + esc(m.date ? fmtDate(m.date) : 'sin fecha') + (m.time ? ' ' + esc(m.time) + ' COL' : '') + ' · ' + (m.finished ? 'finalizado' : 'aún sin finalizar (se cierra desde “Editar y finalizar actas”)') + '</div><div><button type="button" class="btn" data-cup-act="fx-unlink">Desvincular partido</button></div>';
+      body = '<div class="cup-state"><b>Partido creado</b> · ' + esc(m.date ? fmtDate(m.date) : 'sin fecha') + (m.time ? ' ' + esc(m.time) + ' COL' : '') + ' · ' + (m.finished ? 'finalizado' : 'aún sin finalizar (se cierra desde “Editar y finalizar actas”)') + '</div>' + (m.finished ? '' : '<div class="cup-fxc"><label>Fecha<input class="input" type="date" data-f="date" value="' + esc(m.date || '') + '"></label><label>Hora (COL)<input class="input" type="time" data-f="time" value="' + esc(m.time || '') + '"></label><button type="button" class="btn btn-primary" data-cup-act="fx-date">Guardar fecha</button></div>') + '<div><button type="button" class="btn" data-cup-act="fx-unlink">Desvincular partido</button></div>';
     } else {
       body = '<div class="cup-fxc"><label>Fecha<input class="input" type="date" data-f="date" value="' + esc(fx.date || '') + '"></label><label>Hora (COL)<input class="input" type="time" data-f="time" value="' + esc(fx.time || '') + '"></label><button type="button" class="btn btn-primary" data-cup-act="fx-mk">Crear partido</button></div>' +
         '<div class="cup-fxc"><label>Goles<input class="input sc" type="number" min="0" data-f="sa" value="' + esc(fx.sa == null ? '' : fx.sa) + '"></label><label>Goles<input class="input sc" type="number" min="0" data-f="sb" value="' + esc(fx.sb == null ? '' : fx.sb) + '"></label><button type="button" class="btn" data-cup-act="fx-save">Guardar resultado</button></div>';
@@ -613,7 +611,7 @@
     var gd = res.gd, jors = {};
     gd.outs.forEach(function (o) { (jors[o.fx.r] = jors[o.fx.r] || []).push(o); });
     return Object.keys(jors).map(Number).sort(function (a, b) { return a - b; }).map(function (r) {
-      return '<div class="cup-jor" data-jor="' + r + '"><div class="cup-jor-head"><b>Jornada ' + r + '</b><div class="cup-jor-ctl"><label>Fecha<input class="input" type="date" data-f="jdate"></label><label>Hora (COL)<input class="input" type="time" data-f="jtime"></label><button type="button" class="btn btn-primary" data-cup-act="jor-mk">Crear partidos de la jornada</button></div></div>' + jors[r].map(function (o) { return adminFxHTML(o, cup); }).join('') + '</div>';
+      return '<div class="cup-jor" data-jor="' + r + '"><div class="cup-jor-head"><b>Jornada ' + r + '</b><div class="cup-jor-ctl"><label>Fecha<input class="input" type="date" data-f="jdate"></label><label>Hora (COL)<input class="input" type="time" data-f="jtime"></label><button type="button" class="btn btn-primary" data-cup-act="jor-mk">Aplicar fecha a la jornada</button></div></div>' + jors[r].map(function (o) { return adminFxHTML(o, cup); }).join('') + '</div>';
     }).join('');
   }
   function renderAdmin() {
@@ -628,7 +626,7 @@
       html += '<div class="cup-bar" style="margin-top:0"><span class="cup-note">Gestiona grupos, calendario y eliminatorias de esta copa.</span><div class="cup-actions">' +
         (gd && !gd.complete ? '<button type="button" class="btn" data-cup-act="close-groups">Cerrar fase de grupos</button>' : (gd && cup.closed ? '<button type="button" class="btn" data-cup-act="open-groups">Reabrir fase de grupos</button>' : '')) +
         '<button type="button" class="btn" data-cup-act="reshuffle">🎲 Resortear</button><button type="button" class="btn cup-danger" data-cup-act="delete">Eliminar copa</button></div></div>';
-      var tabs = tabsFor(cup, res).filter(function (t) { return t[0] !== 'partidos'; });
+      var tabs = tabsFor(cup, res);
       if (gd) tabs.splice(1, 0, ['cal', '🗓️ Calendario de grupos', '']);
       if (admTabFor !== cup.id || !tabs.some(function (t) { return t[0] === admTab; })) { admTabFor = cup.id; admTab = gd && !gd.complete ? 'grupos' : 'elim'; }
       if (tabs.length > 1) html += '<div class="cup-tabs">' + tabs.map(function (t) { return '<button type="button" class="cup-tab' + (admTab === t[0] ? ' active' : '') + '" data-cup-tab="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div>';
@@ -653,12 +651,43 @@
   function newMatch(cup, a, b, date, time, round, label) {
     return { id: uid('m'), teamAId: a.id, teamBId: b.id, home: a.name, away: b.name, date: date || '', time: time || '', round: round, division: 'copa', tz: 'COL', tournamentId: cup.tournamentId, finished: false, acta: '', attendance: {}, cupId: cup.id, cupRound: label };
   }
+  /* Genera sola las jornadas y partidos de una copa (idempotente). Devuelve true si creó algo. */
+  function syncCupMatches(cup) {
+    var st = app().state, changed = false;
+    if (!Array.isArray(st.matches)) st.matches = [];
+    function mk(a, b, date, time, round, label, holder) {
+      var ta = team(a), tb = team(b); if (!ta || !tb) return;
+      var m = newMatch(cup, ta, tb, date, time, round, label);
+      st.matches.push(m); holder.matchId = m.id; delete holder.sa; delete holder.sb; changed = true;
+    }
+    (cup.fixtures || []).forEach(function (f) {
+      if (f.matchId && matchById(f.matchId)) return;
+      if (f.noAuto || (isNum(f.sa) && isNum(f.sb))) return;
+      mk(f.a, f.b, f.date, f.time, f.r, cup.groups[f.g].name + ' · Jornada ' + f.r, f);
+    });
+    var res = resolve(cup), base = groupRoundMax(cup);
+    res.forEach(function (round, rr) {
+      round.forEach(function (o, kk) {
+        var tie = cup.rounds[rr][kk];
+        if (o.bye || o.a == null || o.b == null) return;
+        if (tie.matchId && matchById(tie.matchId)) return;
+        if (tie.noAuto || (isNum(tie.sa) && isNum(tie.sb))) return;
+        mk(o.a, o.b, tie.date, tie.time, base + rr + 1, roundName(round.length), tie);
+      });
+    });
+    return changed;
+  }
+  function syncAll() {
+    var any = false;
+    cups.forEach(function (c) { if (syncCupMatches(c)) any = true; });
+    return any ? app().setJSON('matches', app().state.matches).then(function () { return true; }) : Promise.resolve(false);
+  }
   function onAdminClick(e) {
     var tab = e.target.closest('[data-cup-tab]');
     if (tab) { admTab = tab.getAttribute('data-cup-tab'); renderAdmin(); return; }
     var btn = e.target.closest('[data-cup-act]'); if (!btn || btn.tagName === 'SELECT') return;
     var act = btn.getAttribute('data-cup-act'), cup = current(), st = app().state;
-    var done = function () { return save().then(renderAdmin); };
+    var done = function () { return syncAll().then(save).then(renderAdmin); };
     var v = btn.getAttribute('data-v');
     if (act === 'new') { draft = JSON.parse(JSON.stringify(DRAFT0)); showForm = true; renderAdmin(); return; }
     if (act === 'cancel-new') { showForm = false; renderAdmin(); return; }
@@ -696,7 +725,7 @@
       structure(c, draft.ids.slice(), draft.order);
       cups.push(c); selectedId = c.id; showForm = false; draft = JSON.parse(JSON.stringify(DRAFT0));
       st.tournaments.push({ id: c.tournamentId, name: c.name, type: 'copa', cupId: c.id, division: c.division });
-      Promise.all([app().setJSON('tournaments', st.tournaments), save()]).then(renderAdmin);
+      app().setJSON('tournaments', st.tournaments).then(done);
       return;
     }
     if (!cup) return;
@@ -721,13 +750,13 @@
     var fxEl = btn.closest('.cup-fx'), jorEl = btn.closest('.cup-jor');
     var val = function (root, f) { var i = root && root.querySelector('[data-f="' + f + '"]'); return i ? i.value : ''; };
     if (act === 'jor-mk' && jorEl) {
-      var jr = +jorEl.dataset.jor, date = val(jorEl, 'jdate'), time = val(jorEl, 'jtime'), made = [];
-      cup.fixtures.filter(function (f) { return f.r === jr && !f.matchId && !(isNum(f.sa) && isNum(f.sb)); }).forEach(function (f) {
-        var a = team(f.a), b = team(f.b); if (!a || !b) return;
-        var m = newMatch(cup, a, b, date, time, jr, cup.groups[f.g].name + ' · Jornada ' + jr);
-        st.matches.push(m); f.matchId = m.id; f.date = date; f.time = time; made.push(m);
+      var jr = +jorEl.dataset.jor, date = val(jorEl, 'jdate'), time = val(jorEl, 'jtime'), n = 0;
+      if (!date && !time) { alert('Elige una fecha u hora para aplicar a la jornada.'); return; }
+      cup.fixtures.filter(function (f) { return f.r === jr; }).forEach(function (f) {
+        var m = matchById(f.matchId); if (!m || m.finished) return;
+        if (date) { m.date = date; f.date = date; } if (time) { m.time = time; f.time = time; } n++;
       });
-      if (!made.length) { alert('No hay partidos pendientes de crear en esta jornada.'); return; }
+      if (!n) { alert('No hay partidos pendientes en esta jornada.'); return; }
       app().setJSON('matches', st.matches).then(done); return;
     }
     if (fxEl) {
@@ -739,7 +768,12 @@
         st.matches.push(m2); fx.matchId = m2.id; delete fx.sa; delete fx.sb;
         app().setJSON('matches', st.matches).then(done); return;
       }
-      if (act === 'fx-unlink') { if (!confirm('Se desvinculará el partido (seguirá existiendo en Partidos). ¿Continuar?')) return; delete fx.matchId; done(); return; }
+      if (act === 'fx-unlink') { if (!confirm('Se desvinculará el partido (seguirá existiendo en Partidos). ¿Continuar?')) return; delete fx.matchId; fx.noAuto = true; done(); return; }
+      if (act === 'fx-date') {
+        var mf = matchById(fx.matchId); if (!mf) return;
+        mf.date = val(fxEl, 'date'); mf.time = val(fxEl, 'time'); fx.date = mf.date; fx.time = mf.time;
+        app().setJSON('matches', st.matches).then(done); return;
+      }
       if (act === 'fx-save') {
         var a1 = val(fxEl, 'sa'), b1 = val(fxEl, 'sb');
         if (a1 === '' || b1 === '') { delete fx.sa; delete fx.sb; } else { fx.sa = Math.max(0, parseInt(a1, 10) || 0); fx.sb = Math.max(0, parseInt(b1, 10) || 0); }
@@ -760,7 +794,12 @@
       st.matches.push(m3); tie.matchId = m3.id; delete tie.sa; delete tie.sb;
       app().setJSON('matches', st.matches).then(done); return;
     }
-    if (act === 'unlink') { if (!confirm('Se desvinculará el partido de este cruce (el partido seguirá existiendo en Partidos). ¿Continuar?')) return; delete tie.matchId; delete tie.pa; delete tie.pb; done(); return; }
+    if (act === 'tie-date') {
+      var mt = matchById(tie.matchId); if (!mt) return;
+      mt.date = tv('date'); mt.time = tv('time'); tie.date = mt.date; tie.time = mt.time;
+      app().setJSON('matches', st.matches).then(done); return;
+    }
+    if (act === 'unlink') { if (!confirm('Se desvinculará el partido de este cruce (el partido seguirá existiendo en Partidos). ¿Continuar?')) return; delete tie.matchId; tie.noAuto = true; delete tie.pa; delete tie.pb; done(); return; }
     if (act === 'save-manual') {
       var sa = tv('sa'), sb = tv('sb');
       if (sa === '' || sb === '') { delete tie.sa; delete tie.sb; delete tie.pa; delete tie.pb; done(); return; }
@@ -793,7 +832,7 @@
       el.addEventListener('input', function (e) { if (e.target.id === 'cupNewName') draft.name = e.target.value; });
     }
     el.innerHTML = '<div class="cup-note">Cargando copas…</div>';
-    load().then(function () { showForm = !cups.length; renderAdmin(); });
+    load().then(function () { showForm = !cups.length; return syncAll().then(function (ch) { return ch ? save() : null; }); }).then(renderAdmin, renderAdmin);
   }
 
   window.hfaCopa = { mountPublic: mountPublic, mountAdmin: mountAdmin };
