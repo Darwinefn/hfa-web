@@ -607,13 +607,6 @@
     }
     return '<div class="cup-fx" data-fx="' + esc(fx.id) + '">' + top + body + '</div>';
   }
-  function calendarHTML(cup, res) {
-    var gd = res.gd, jors = {};
-    gd.outs.forEach(function (o) { (jors[o.fx.r] = jors[o.fx.r] || []).push(o); });
-    return Object.keys(jors).map(Number).sort(function (a, b) { return a - b; }).map(function (r) {
-      return '<div class="cup-jor" data-jor="' + r + '"><div class="cup-jor-head"><b>Jornada ' + r + '</b><div class="cup-jor-ctl"><label>Fecha<input class="input" type="date" data-f="jdate"></label><label>Hora (COL)<input class="input" type="time" data-f="jtime"></label><button type="button" class="btn btn-primary" data-cup-act="jor-mk">Aplicar fecha a la jornada</button></div></div>' + jors[r].map(function (o) { return adminFxHTML(o, cup); }).join('') + '</div>';
-    }).join('');
-  }
   function renderAdmin() {
     var el = adminHost; if (!el || !el.isConnected) return;
     var cup = current(), html = '<div class="cup-adm">';
@@ -625,13 +618,11 @@
       html += heroHTML(cup, res);
       html += '<div class="cup-bar" style="margin-top:0"><span class="cup-note">Gestiona grupos, calendario y eliminatorias de esta copa.</span><div class="cup-actions">' +
         (gd && !gd.complete ? '<button type="button" class="btn" data-cup-act="close-groups">Cerrar fase de grupos</button>' : (gd && cup.closed ? '<button type="button" class="btn" data-cup-act="open-groups">Reabrir fase de grupos</button>' : '')) +
-        '<button type="button" class="btn" data-cup-act="reshuffle">🎲 Resortear</button><button type="button" class="btn cup-danger" data-cup-act="delete">Eliminar copa</button></div></div>';
+        '<button type="button" class="btn btn-primary" data-cup-act="go-matches">📅 Crear partidos en Jornadas y partidos</button><button type="button" class="btn" data-cup-act="reshuffle">🎲 Resortear</button><button type="button" class="btn cup-danger" data-cup-act="delete">Eliminar copa</button></div></div>';
       var tabs = tabsFor(cup, res);
-      if (gd) tabs.splice(1, 0, ['cal', '🗓️ Calendario de grupos', '']);
       if (admTabFor !== cup.id || !tabs.some(function (t) { return t[0] === admTab; })) { admTabFor = cup.id; admTab = gd && !gd.complete ? 'grupos' : 'elim'; }
       if (tabs.length > 1) html += '<div class="cup-tabs">' + tabs.map(function (t) { return '<button type="button" class="cup-tab' + (admTab === t[0] ? ' active' : '') + '" data-cup-tab="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div>';
       if (admTab === 'grupos') html += groupsTabHTML(cup, res);
-      else if (admTab === 'cal') html += calendarHTML(cup, res);
       else {
         html += (gd && !gd.complete ? '<div class="cup-banner">Los cruces se rellenan solos al terminar la fase de grupos (o al pulsar “Cerrar fase de grupos”).</div>' : '') + '<div class="cup-card">' + bracketHTML(res, 'bracket') + '</div>';
         res.forEach(function (round) { html += '<h4 class="cup-round-title">' + roundName(round.length) + '</h4><div class="cup-ties">' + round.map(function (t) { return adminTieHTML(t, cup); }).join('') + '</div>'; });
@@ -651,43 +642,58 @@
   function newMatch(cup, a, b, date, time, round, label) {
     return { id: uid('m'), teamAId: a.id, teamBId: b.id, home: a.name, away: b.name, date: date || '', time: time || '', round: round, division: 'copa', tz: 'COL', tournamentId: cup.tournamentId, finished: false, acta: '', attendance: {}, cupId: cup.id, cupRound: label };
   }
-  /* Genera sola las jornadas y partidos de una copa (idempotente). Devuelve true si creó algo. */
-  function syncCupMatches(cup) {
-    var st = app().state, changed = false;
+  /* Vincula a la copa los partidos creados en “Jornadas y partidos” (y, si create=true, crea los que falten). */
+  function samePair(m, a, b) { return (same(m.teamAId, a) && same(m.teamBId, b)) || (same(m.teamAId, b) && same(m.teamBId, a)); }
+  function syncCupMatches(cup, create) {
+    var st = app().state, changed = 0;
     if (!Array.isArray(st.matches)) st.matches = [];
-    function mk(a, b, date, time, round, label, holder) {
-      var ta = team(a), tb = team(b); if (!ta || !tb) return;
-      var m = newMatch(cup, ta, tb, date, time, round, label);
-      st.matches.push(m); holder.matchId = m.id; delete holder.sa; delete holder.sb; changed = true;
+    function used(id) { return (cup.fixtures || []).some(function (f) { return same(f.matchId, id); }) || cup.rounds.some(function (r) { return r.some(function (t) { return same(t.matchId, id); }); }); }
+    function find(a, b, round) {
+      return st.matches.find(function (m) { return same(m.cupId, cup.id) && Number(m.round) === round && samePair(m, a, b) && !used(m.id); });
     }
-    (cup.fixtures || []).forEach(function (f) {
-      if (f.matchId && matchById(f.matchId)) return;
-      if (f.noAuto || (isNum(f.sa) && isNum(f.sb))) return;
-      mk(f.a, f.b, f.date, f.time, f.r, cup.groups[f.g].name + ' · Jornada ' + f.r, f);
-    });
+    function mk(a, b, date, time, round, label, holder) {
+      if (holder.matchId && matchById(holder.matchId)) return;
+      if (holder.noAuto || (isNum(holder.sa) && isNum(holder.sb))) return;
+      var m = find(a, b, round);
+      if (!m && create) {
+        var ta = team(a), tb = team(b); if (!ta || !tb) return;
+        m = newMatch(cup, ta, tb, date, time, round, label); st.matches.push(m);
+      }
+      if (!m) return;
+      holder.matchId = m.id; delete holder.sa; delete holder.sb; changed++;
+    }
+    (cup.fixtures || []).forEach(function (f) { mk(f.a, f.b, f.date, f.time, f.r, cup.groups[f.g].name + ' · Jornada ' + f.r, f); });
     var res = resolve(cup), base = groupRoundMax(cup);
     res.forEach(function (round, rr) {
       round.forEach(function (o, kk) {
-        var tie = cup.rounds[rr][kk];
         if (o.bye || o.a == null || o.b == null) return;
-        if (tie.matchId && matchById(tie.matchId)) return;
-        if (tie.noAuto || (isNum(tie.sa) && isNum(tie.sb))) return;
-        mk(o.a, o.b, tie.date, tie.time, base + rr + 1, roundName(round.length), tie);
+        mk(o.a, o.b, cup.rounds[rr][kk].date, cup.rounds[rr][kk].time, base + rr + 1, roundName(round.length), cup.rounds[rr][kk]);
       });
     });
     return changed;
   }
   function syncAll() {
-    var any = false;
-    cups.forEach(function (c) { if (syncCupMatches(c)) any = true; });
+    var any = 0;
+    cups.forEach(function (c) { any += syncCupMatches(c, false); });
     return any ? app().setJSON('matches', app().state.matches).then(function () { return true; }) : Promise.resolve(false);
   }
+  /* API para seccion.html */
+  function apiLink() { return load().then(function () { var ch = 0; cups.forEach(function (c) { ch += syncCupMatches(c, false); }); return ch ? save() : null; }); }
+  function apiGenerate(cupId) {
+    return load().then(function () {
+      var c = cups.find(function (x) { return same(x.id, cupId); }); if (!c) return 0;
+      var n = syncCupMatches(c, true);
+      return n ? Promise.all([app().setJSON('matches', app().state.matches), save()]).then(function () { return n; }) : 0;
+    });
+  }
+  function apiCups() { return cups.slice(); }
   function onAdminClick(e) {
     var tab = e.target.closest('[data-cup-tab]');
     if (tab) { admTab = tab.getAttribute('data-cup-tab'); renderAdmin(); return; }
     var btn = e.target.closest('[data-cup-act]'); if (!btn || btn.tagName === 'SELECT') return;
     var act = btn.getAttribute('data-cup-act'), cup = current(), st = app().state;
     var done = function () { return syncAll().then(save).then(renderAdmin); };
+    var goMatches = function (id) { if (window.hfaCopa && typeof window.hfaCopa.goMatches === 'function') window.hfaCopa.goMatches(id); };
     var v = btn.getAttribute('data-v');
     if (act === 'new') { draft = JSON.parse(JSON.stringify(DRAFT0)); showForm = true; renderAdmin(); return; }
     if (act === 'cancel-new') { showForm = false; renderAdmin(); return; }
@@ -725,7 +731,7 @@
       structure(c, draft.ids.slice(), draft.order);
       cups.push(c); selectedId = c.id; showForm = false; draft = JSON.parse(JSON.stringify(DRAFT0));
       st.tournaments.push({ id: c.tournamentId, name: c.name, type: 'copa', cupId: c.id, division: c.division });
-      app().setJSON('tournaments', st.tournaments).then(done);
+      app().setJSON('tournaments', st.tournaments).then(done).then(function () { goMatches(c.id); });
       return;
     }
     if (!cup) return;
@@ -733,6 +739,7 @@
       if (!confirm('Se cerrará la fase de grupos con la clasificación actual y los cruces se rellenarán con los clasificados. ¿Continuar?')) return;
       cup.closed = true; done(); return;
     }
+    if (act === 'go-matches') { goMatches(cup.id); return; }
     if (act === 'open-groups') { cup.closed = false; done(); return; }
     if (act === 'reshuffle') {
       if (!confirm('Se volverá a sortear la copa. Se borrarán los resultados y los partidos creados. ¿Continuar?')) return;
@@ -835,5 +842,5 @@
     load().then(function () { showForm = !cups.length; return syncAll().then(function (ch) { return ch ? save() : null; }); }).then(renderAdmin, renderAdmin);
   }
 
-  window.hfaCopa = { mountPublic: mountPublic, mountAdmin: mountAdmin };
+  window.hfaCopa = { mountPublic: mountPublic, mountAdmin: mountAdmin, link: apiLink, generate: apiGenerate, cups: apiCups, load: load };
 })();
