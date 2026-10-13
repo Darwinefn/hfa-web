@@ -129,13 +129,19 @@
     if(team&&team.crest)return '<img class="team-crest" src="'+String(crestSrc(team.crest)).replace(/"/g,'%22')+'" alt="" width="32" height="32" decoding="async" referrerpolicy="no-referrer" onerror="this.outerHTML=this.dataset.fb" data-fb="'+fb.replace(/"/g,'&quot;')+'">';
     return fb;
   }
+  const dcode=v=>{const m=String(v==null?'':v).match(/[1-4]/);return m?m[0]:''};
+  const teamDiv=t=>dcode(t.division!=null?t.division:(t.divisionId!=null?t.divisionId:(t.div!=null?t.div:t.category)));
   function standings(division){
-    const rows=state.teams.filter(team=>team.division===division).map(team=>({team,pj:0,gf:0,ga:0,pts:0,wins:0,draws:0,losses:0}));
+    /* Liga: los equipos "solo copa" y los partidos de copa no cuentan aquí */
+    const rows=state.teams.filter(team=>!team.cupOnly&&teamDiv(team)===division).map(team=>({team,pj:0,gf:0,ga:0,pts:0,wins:0,draws:0,losses:0}));
     const byId={};rows.forEach(row=>byId[row.team.id]=row);
-    state.matches.filter(match=>(!match.tournamentId||String(match.tournamentId)===String(activeTournamentId))&&match.division===division&&match.finished).forEach(match=>{
-      const homeTeam=matchTeam(match,'A'),awayTeam=matchTeam(match,'B');const home=homeTeam&&byId[homeTeam.id],away=awayTeam&&byId[awayTeam.id];if(!home||!away)return;
-      home.pj++;away.pj++;home.gf+=Number(match.scoreA)||0;home.ga+=Number(match.scoreB)||0;away.gf+=Number(match.scoreB)||0;away.ga+=Number(match.scoreA)||0;
-      if(match.scoreA>match.scoreB){home.pts+=3;home.wins++;away.losses++}else if(match.scoreB>match.scoreA){away.pts+=3;away.wins++;home.losses++}else{home.pts++;away.pts++;home.draws++;away.draws++}
+    state.matches.filter(match=>(!match.tournamentId||String(match.tournamentId)===String(activeTournamentId))&&!match.cupId&&String(match.division||'').toLowerCase()!=='copa'&&match.finished).forEach(match=>{
+      const homeTeam=matchTeam(match,'A'),awayTeam=matchTeam(match,'B');
+      const mDiv=dcode(match.division)||(homeTeam?teamDiv(homeTeam):'');if(mDiv!==division)return;
+      const home=homeTeam&&byId[homeTeam.id],away=awayTeam&&byId[awayTeam.id];if(!home||!away)return;
+      const sa=Number(match.scoreA)||0,sb=Number(match.scoreB)||0;
+      home.pj++;away.pj++;home.gf+=sa;home.ga+=sb;away.gf+=sb;away.ga+=sa;
+      if(sa>sb){home.pts+=3;home.wins++;away.losses++}else if(sb>sa){away.pts+=3;away.wins++;home.losses++}else{home.pts++;away.pts++;home.draws++;away.draws++}
     });
     return rows.map(row=>({...row,dg:row.gf-row.ga})).sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.team.name.localeCompare(b.team.name));
   }
@@ -205,7 +211,7 @@
         mountedCup=key;cupBox.innerHTML='';
         if(cup&&window.hfaCopa)window.hfaCopa.mountPublic(cupBox,{cupId:cup.id});
         else cupBox.innerHTML='<div class="empty">Esta copa todavía no tiene equipos ni partidos configurados.</div>';
-      }
+      }else if(window.hfaCopa&&window.hfaCopa.refreshPublic){window.hfaCopa.refreshPublic()}
     }else{
       mountedCup=null;
       intro.textContent='Consulta la posición de cada equipo, sus partidos jugados, la diferencia de goles y los puntos acumulados en cada división.';
@@ -227,7 +233,11 @@
     setActive(button.dataset.tournament);renderAll();
   });
   /* Si el admin cambia el torneo activo en otra pestaña, esta página lo sigue */
-  window.addEventListener('storage',function(event){if(event.key==='hfa:activeTournament'){readActive();renderAll()}});
+  window.addEventListener('storage',function(event){
+    if(event.key==='hfa:activeTournament'){readActive();renderAll()}
+    /* El admin finalizó un acta de copa: se recarga y se redibuja al instante */
+    if(event.key==='hfa:cupsync'){loadAll().then(function(){readActive();renderAll()}).catch(function(){})}
+  });
   /* Solo lectura: la vista de copa usa este objeto para leer; esta página nunca escribe datos */
   window.hfaApp={state:state,getJSON:getJSON,setJSON:function(){return Promise.resolve(null)},session:function(){return null},activeTournamentId:function(){return activeTournamentId},refresh:renderAll};
   (async function init(){

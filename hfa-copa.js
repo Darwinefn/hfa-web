@@ -14,7 +14,7 @@
   'use strict';
   var KEY = 'cups';
   var cups = [], selectedId = null;
-  var pubMode = null, pubTab = null, pubTabFor = null, pubGroup = 'all', pubDiv = 'all', pubOnly = null;
+  var pubMode = null, pubTab = null, pubTabFor = null, pubGroup = 'all', pubDiv = 'all', pubOnly = null, pubHost = null;
   var admTab = null, admTabFor = null;
   var DRAFT0 = { name: '', ids: [], order: 'random', format: 'grupos', groups: 2, q: 2, dbl: false, div: '1' };
   var draft = JSON.parse(JSON.stringify(DRAFT0));
@@ -495,7 +495,7 @@
     var old = el.querySelector('#cupPublic'); if (old) old.remove();
     var host = document.createElement('section'); host.id = 'cupPublic'; host.className = 'cup-public';
     host.innerHTML = '<h2 class="cup-h">Copas</h2><div class="cup-sub">Cargando…</div>';
-    el.appendChild(host);
+    el.appendChild(host); pubHost = host;
     host.addEventListener('click', function (e) {
       var p = e.target.closest('[data-cup-pick]'), m = e.target.closest('[data-cup-mode]'), t = e.target.closest('[data-cup-tab]'), g = e.target.closest('[data-cup-grp]'), dv = e.target.closest('[data-cup-div]');
       if (dv) { pubDiv = dv.getAttribute('data-cup-div'); pubGroup = 'all'; renderPublic(host); }
@@ -546,7 +546,7 @@
     }).join('') + '<button type="button" class="cup-dtab' + (draft.div === 'all' ? ' on' : '') + '" data-cup-act="div" data-v="all"><b>Mixta</b><small>' + all.length + ' equipos</small></button>';
     var cards = shown.map(function (t) {
       var i = draft.ids.findIndex(function (x) { return same(x, t.id); });
-      return '<button type="button" class="cup-tcard' + (i > -1 ? ' on' : '') + '" data-cup-act="toggle" data-id="' + esc(t.id) + '">' + badge(t) + '<span class="cup-tn">' + esc(t.name) + '</span><small class="cup-div">' + (divCode(t) ? divCode(t) + 'D' : '—') + '</small>' + (i > -1 ? '<i class="cup-chk">' + (draft.order === 'order' ? (i + 1) : '✓') + '</i>' : '') + '</button>';
+      return '<button type="button" class="cup-tcard' + (i > -1 ? ' on' : '') + '" data-cup-act="toggle" data-id="' + esc(t.id) + '">' + badge(t) + '<span class="cup-tn">' + esc(t.name) + (t.cupOnly ? ' 🏆' : '') + '</span><small class="cup-div">' + (divCode(t) ? divCode(t) + 'D' : '—') + '</small>' + (i > -1 ? '<i class="cup-chk">' + (draft.order === 'order' ? (i + 1) : '✓') + '</i>' : '') + '</button>';
     }).join('');
     var sel = shown.filter(function (t) { return draft.ids.some(function (x) { return same(x, t.id); }); }).length;
     var seg = function (act, cur, opts) { return '<span class="cup-seg">' + opts.map(function (o) { return '<button type="button" class="' + (String(cur) === String(o[0]) ? 'on' : '') + '" data-cup-act="' + act + '" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</span>'; };
@@ -559,6 +559,7 @@
       '<div class="cup-formats"><button type="button" class="cup-fmt' + (g ? ' on' : '') + '" data-cup-act="format" data-v="grupos"><b>🏟️ Fase de grupos + eliminatorias</b>Los equipos juegan en grupos y los mejores pasan al bracket.</button><button type="button" class="cup-fmt' + (!g ? ' on' : '') + '" data-cup-act="format" data-v="directo"><b>⚔️ Solo eliminatorias</b>Bracket de eliminación directa desde el primer partido.</button></div>' +
       '<div class="cup-step"><b>3</b>Equipos de ' + esc(dlabel) + '</div>' +
       '<div class="cup-bar" style="margin:0 0 10px"><span class="cup-note"><b>' + sel + '</b> de ' + shown.length + ' elegidos</span><span class="cup-actions"><button type="button" class="btn" data-cup-act="sel-all">Elegir todos</button><button type="button" class="btn" data-cup-act="sel-none">Quitar todos</button></span></div>' +
+      '<div class="cup-row" style="flex-wrap:wrap;gap:8px;margin:0 0 8px"><input class="input" id="cupNewTeamName" placeholder="➕ Nuevo equipo solo de copa" maxlength="40" style="flex:1 1 190px"><input class="input" id="cupNewTeamCrest" placeholder="Escudo (URL, opcional)" style="flex:1 1 170px"><button type="button" class="btn" data-cup-act="new-team">Crear equipo de copa</button></div><div class="cup-note" style="margin:0 0 10px">Los equipos de copa solo existen en copas: no aparecen en la liga, en las divisiones ni en la lista de Equipos.</div>' +
       (cards ? '<div class="cup-tgrid">' + cards + '</div>' : '<div class="cup-empty">No hay equipos en ' + esc(dlabel) + '. Crea o asigna equipos a esta división en “Equipos y jugadores”.</div>') +
       '<div class="cup-step"><b>4</b>Configuración</div>' +
       (g ? '<div class="cup-row"><span class="cup-lab">Número de grupos</span>' + seg('groups', draft.groups, gopts) + '</div>' +
@@ -647,18 +648,23 @@
   }
   /* Vincula a la copa los partidos creados en “Jornadas y partidos” (y, si create=true, crea los que falten). */
   function samePair(m, a, b) { return (same(m.teamAId, a) && same(m.teamBId, b)) || (same(m.teamAId, b) && same(m.teamBId, a)); }
-  function syncCupMatches(cup, create, grp) {
+  function syncCupMatches(cup, create, grp, auto) {
     var st = app().state, changed = 0;
     if (!Array.isArray(st.matches)) st.matches = [];
     function used(id) { return (cup.fixtures || []).some(function (f) { return same(f.matchId, id); }) || cup.rounds.some(function (r) { return r.some(function (t) { return same(t.matchId, id); }); }); }
-    function find(a, b, round) {
-      return st.matches.find(function (m) { return same(m.cupId, cup.id) && Number(m.round) === round && samePair(m, a, b) && !used(m.id); });
+    function find(a, b, round, any) {
+      var c = st.matches.filter(function (m) { return same(m.cupId, cup.id) && samePair(m, a, b) && !used(m.id); });
+      var exact = c.find(function (m) { return Number(m.round) === round; });
+      if (exact || !any) return exact;
+      var gmax = groupRoundMax(cup);
+      c = c.filter(function (m) { return !(Number(m.round) > gmax) || /grupo/i.test(m.cupRound || ''); }).sort(function (x, y) { return (Number(x.round) || 0) - (Number(y.round) || 0); });
+      return c[0];
     }
     var doCreate = create;
-    function mk(a, b, date, time, round, label, holder) {
+    function mk(a, b, date, time, round, label, holder, any) {
       if (holder.matchId && matchById(holder.matchId)) return;
       if (holder.noAuto || (isNum(holder.sa) && isNum(holder.sb))) return;
-      var m = find(a, b, round);
+      var m = find(a, b, round, any);
       if (!m && doCreate) {
         var ta = team(a), tb = team(b); if (!ta || !tb) return;
         m = newMatch(cup, ta, tb, date, time, round, label); st.matches.push(m);
@@ -666,12 +672,13 @@
       if (!m) return;
       holder.matchId = m.id; delete holder.sa; delete holder.sb; changed++;
     }
-    (cup.fixtures || []).forEach(function (f) { doCreate = create && (grp == null || f.g === grp); mk(f.a, f.b, f.date, f.time, f.r, cup.groups[f.g].name + ' · Jornada ' + f.r, f); });
+    (cup.fixtures || []).forEach(function (f) { doCreate = create && !auto && (grp == null || f.g === grp); mk(f.a, f.b, f.date, f.time, f.r, cup.groups[f.g].name + ' · Jornada ' + f.r, f, true); });
     doCreate = create && grp == null;
     var res = resolve(cup), base = groupRoundMax(cup);
     res.forEach(function (round, rr) {
       round.forEach(function (o, kk) {
         if (o.bye || o.a == null || o.b == null) return;
+        if (auto && rr === 0 && cup.format !== 'grupos') return;
         mk(o.a, o.b, cup.rounds[rr][kk].date, cup.rounds[rr][kk].time, base + rr + 1, roundName(round.length), cup.rounds[rr][kk]);
       });
     });
@@ -703,6 +710,52 @@
       return Promise.all([app().setJSON('matches', app().state.matches), save()]).then(function () { return m; });
     });
   }
+  /* Al finalizar un acta: vincula el partido a su cruce, calcula grupos/bracket y crea el siguiente cruce ya decidido */
+  function apiAfterActa(matchId) {
+    return load().then(function () {
+      var st = app().state, m = (st.matches || []).find(function (x) { return same(x.id, matchId); }), ch = 0;
+      cups.forEach(function (c) {
+        if (m && m.cupId && !same(m.cupId, c.id)) return;
+        ch += syncCupMatches(c, false);
+        ch += syncCupMatches(c, true, null, true);
+      });
+      return ch ? Promise.all([save(), app().setJSON('matches', st.matches)]) : null;
+    });
+  }
+  /* Vuelve a leer y a dibujar la copa que está montada en la vista pública (Clasificación) */
+  function apiRefreshPublic() {
+    var host = pubHost; if (!host || !host.isConnected) return Promise.resolve();
+    return Promise.all([load(), app().getJSON('matches', null)]).then(function (r) {
+      if (Array.isArray(r[1])) app().state.matches = r[1];
+      renderPublic(host);
+    });
+  }
+  function tieOfMatch(matchId) {
+    for (var ci = 0; ci < cups.length; ci++) {
+      var c = cups[ci], res = resolve(c);
+      for (var r = 0; r < c.rounds.length; r++) for (var k = 0; k < c.rounds[r].length; k++) {
+        var t = c.rounds[r][k];
+        if (t.matchId != null && same(t.matchId, matchId)) return { cup: c, tie: t, o: res[r][k] };
+      }
+    }
+    return null;
+  }
+  /* ¿El acta terminó en empate en una eliminatoria sin penales cargados? */
+  function apiNeedsPens(matchId) {
+    return load().then(function () {
+      var t = tieOfMatch(matchId);
+      if (!t || !t.o.pens || t.o.done) return null;
+      return { a: teamName(t.o.a), b: teamName(t.o.b) };
+    });
+  }
+  function apiSetPens(matchId, pa, pb) {
+    return load().then(function () {
+      var t = tieOfMatch(matchId); if (!t) return null;
+      var m = matchById(matchId), straight = m && same(m.teamAId, t.o.a);
+      t.tie.pa = straight ? pa : pb; t.tie.pb = straight ? pb : pa;
+      return save();
+    });
+  }
   function apiCups() { return cups.slice(); }
   function onAdminClick(e) {
     var tab = e.target.closest('[data-cup-tab]');
@@ -718,6 +771,16 @@
       var id = btn.getAttribute('data-id'), i = draft.ids.findIndex(function (x) { return same(x, id); });
       if (i > -1) draft.ids.splice(i, 1); else draft.ids.push(team(id) ? team(id).id : id);
       renderAdmin(); return;
+    }
+    if (act === 'new-team') {
+      var form = btn.closest('.cup-form'), nameEl = form && form.querySelector('#cupNewTeamName'), crestEl = form && form.querySelector('#cupNewTeamCrest');
+      var tname = nameEl ? nameEl.value.trim() : '', tcrest = crestEl ? crestEl.value.trim() : '';
+      if (!tname) { alert('Escribe el nombre del equipo de copa.'); return; }
+      if (teams().some(function (x) { return String(x.name).toLowerCase() === tname.toLowerCase(); })) { alert('Ya existe un equipo con ese nombre.'); return; }
+      var nt = { id: uid('e'), name: tname, division: draft.div === 'all' ? '' : draft.div, players: [], crest: tcrest, cupOnly: true };
+      app().state.teams.push(nt); draft.ids.push(nt.id);
+      app().setJSON('teams', app().state.teams).then(function () { renderAdmin(); });
+      return;
     }
     if (act === 'div') {
       draft.div = v;
@@ -859,5 +922,5 @@
     load().then(function () { showForm = !cups.length; return syncAll().then(function (ch) { return ch ? save() : null; }); }).then(renderAdmin, renderAdmin);
   }
 
-  window.hfaCopa = { mountPublic: mountPublic, mountAdmin: mountAdmin, link: apiLink, generate: apiGenerate, makeFixture: apiMakeFixture, cups: apiCups, load: load };
+  window.hfaCopa = { mountPublic: mountPublic, mountAdmin: mountAdmin, link: apiLink, generate: apiGenerate, makeFixture: apiMakeFixture, afterActa: apiAfterActa, needsPens: apiNeedsPens, setPens: apiSetPens, refreshPublic: apiRefreshPublic, cups: apiCups, load: load };
 })();

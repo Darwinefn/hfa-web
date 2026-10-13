@@ -687,7 +687,7 @@ section.block{padding-top:44px;padding-bottom:64px}
   }
 
   // ---------- Cálculos derivados de partidos ----------
-  function teamsInDivision(div){ return state.teams.filter(t => t.division === div); }
+  function teamsInDivision(div){ return state.teams.filter(t => !t.cupOnly && t.division === div); }
   function finishedMatchesInDivision(div){ return state.matches.filter(m => m.division === div && m.finished); }
 
   function computeStandings(div){
@@ -1185,7 +1185,7 @@ section.block{padding-top:44px;padding-bottom:64px}
   function updateMatchTeamOptions(){
     const divSel = document.getElementById('newMatchDivision');
     if (!divSel) return;
-    const teams = state.teams.filter(t => t.division === divSel.value);
+    const teams = state.teams.filter(t => !t.cupOnly && t.division === divSel.value);
     const opts = teams.length ? teams.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('') : '<option value="">(sin equipos en esta división)</option>';
     document.getElementById('newMatchTeamA').innerHTML = opts;
     document.getElementById('newMatchTeamB').innerHTML = opts;
