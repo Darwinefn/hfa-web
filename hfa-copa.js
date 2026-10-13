@@ -647,25 +647,27 @@
   }
   /* Vincula a la copa los partidos creados en “Jornadas y partidos” (y, si create=true, crea los que falten). */
   function samePair(m, a, b) { return (same(m.teamAId, a) && same(m.teamBId, b)) || (same(m.teamAId, b) && same(m.teamBId, a)); }
-  function syncCupMatches(cup, create) {
+  function syncCupMatches(cup, create, grp) {
     var st = app().state, changed = 0;
     if (!Array.isArray(st.matches)) st.matches = [];
     function used(id) { return (cup.fixtures || []).some(function (f) { return same(f.matchId, id); }) || cup.rounds.some(function (r) { return r.some(function (t) { return same(t.matchId, id); }); }); }
     function find(a, b, round) {
       return st.matches.find(function (m) { return same(m.cupId, cup.id) && Number(m.round) === round && samePair(m, a, b) && !used(m.id); });
     }
+    var doCreate = create;
     function mk(a, b, date, time, round, label, holder) {
       if (holder.matchId && matchById(holder.matchId)) return;
       if (holder.noAuto || (isNum(holder.sa) && isNum(holder.sb))) return;
       var m = find(a, b, round);
-      if (!m && create) {
+      if (!m && doCreate) {
         var ta = team(a), tb = team(b); if (!ta || !tb) return;
         m = newMatch(cup, ta, tb, date, time, round, label); st.matches.push(m);
       }
       if (!m) return;
       holder.matchId = m.id; delete holder.sa; delete holder.sb; changed++;
     }
-    (cup.fixtures || []).forEach(function (f) { mk(f.a, f.b, f.date, f.time, f.r, cup.groups[f.g].name + ' · Jornada ' + f.r, f); });
+    (cup.fixtures || []).forEach(function (f) { doCreate = create && (grp == null || f.g === grp); mk(f.a, f.b, f.date, f.time, f.r, cup.groups[f.g].name + ' · Jornada ' + f.r, f); });
+    doCreate = create && grp == null;
     var res = resolve(cup), base = groupRoundMax(cup);
     res.forEach(function (round, rr) {
       round.forEach(function (o, kk) {
@@ -682,11 +684,23 @@
   }
   /* API para seccion.html */
   function apiLink() { return load().then(function () { var ch = 0; cups.forEach(function (c) { ch += syncCupMatches(c, false); }); return ch ? save() : null; }); }
-  function apiGenerate(cupId) {
+  function apiGenerate(cupId, grp) {
     return load().then(function () {
       var c = cups.find(function (x) { return same(x.id, cupId); }); if (!c) return 0;
-      var n = syncCupMatches(c, true);
+      var n = syncCupMatches(c, true, grp);
       return n ? Promise.all([app().setJSON('matches', app().state.matches), save()]).then(function () { return n; }) : 0;
+    });
+  }
+  /* Crea el partido de un cruce concreto de la fase de grupos (desde Jornadas y partidos) */
+  function apiMakeFixture(cupId, fxId, date, time) {
+    return load().then(function () {
+      var c = cups.find(function (x) { return same(x.id, cupId); }); if (!c) return null;
+      var fx = (c.fixtures || []).find(function (f) { return same(f.id, fxId); }); if (!fx) return null;
+      if (fx.matchId && matchById(fx.matchId)) return null;
+      var ta = team(fx.a), tb = team(fx.b); if (!ta || !tb) return null;
+      var m = newMatch(c, ta, tb, date || '', time || '', fx.r, c.groups[fx.g].name + ' · Jornada ' + fx.r);
+      app().state.matches.push(m); fx.matchId = m.id; fx.date = date || ''; fx.time = time || ''; delete fx.sa; delete fx.sb; delete fx.noAuto;
+      return Promise.all([app().setJSON('matches', app().state.matches), save()]).then(function () { return m; });
     });
   }
   function apiCups() { return cups.slice(); }
@@ -845,5 +859,5 @@
     load().then(function () { showForm = !cups.length; return syncAll().then(function (ch) { return ch ? save() : null; }); }).then(renderAdmin, renderAdmin);
   }
 
-  window.hfaCopa = { mountPublic: mountPublic, mountAdmin: mountAdmin, link: apiLink, generate: apiGenerate, cups: apiCups, load: load };
+  window.hfaCopa = { mountPublic: mountPublic, mountAdmin: mountAdmin, link: apiLink, generate: apiGenerate, makeFixture: apiMakeFixture, cups: apiCups, load: load };
 })();

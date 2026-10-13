@@ -64,8 +64,9 @@
   }
   /* ===== Selector de torneo (liga / copa) ===== */
   [hidden]{display:none!important}
-  #tournamentTabs{display:flex!important;flex-wrap:wrap;gap:8px;margin-bottom:14px}
-  #tournamentTabs .tab-btn{padding:9px 17px;text-align:left}
+  #modeTabs,#tournamentTabs{display:flex!important;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  #modeTabs .tab-btn{padding:10px 22px;font-size:13px}
+  #tournamentTabs .tab-btn{padding:8px 15px;text-align:left;font-size:12px}
   #cupView{min-width:0}
   @media(max-width:700px){#tournamentTabs .tab-btn{padding:9px 14px}}
 </style>
@@ -84,6 +85,7 @@
   <div class="eyebrow">Competición oficial</div>
   <div class="title-row"><h1 class="title">Clasificación</h1><a class="back" href="afh-liga.html">← Volver al inicio</a></div>
   <p class="intro" id="introText">Consulta la posición de cada equipo, sus partidos jugados, la diferencia de goles y los puntos acumulados en cada división.</p>
+  <div class="tabs" id="modeTabs" hidden></div>
   <div class="tabs" id="tournamentTabs" hidden></div>
   <div id="leagueView">
   <div class="tabs" id="divisionTabs"><button class="tab-btn active" data-division="1">1D</button><button class="tab-btn" data-division="2">2D</button><button class="tab-btn" data-division="3">3D</button><button class="tab-btn" data-division="4">4D</button></div>
@@ -172,17 +174,25 @@
   function cupFor(t){return t?(state.cups.find(c=>String(c.tournamentId)===String(t.id)||String(c.id)===String(t.cupId))||null):null}
   function isCupTournament(t){return !!t&&(t.type==='copa'||!!cupFor(t))}
   function currentTournament(){return state.tournaments.find(t=>String(t.id)===String(activeTournamentId))||null}
+  function cupTournaments(){return state.tournaments.filter(isCupTournament)}
+  function leagueTournaments(){return state.tournaments.filter(t=>!isCupTournament(t))}
   function readActive(){
     let id='';try{id=localStorage.getItem('hfa:activeTournament')||''}catch(error){}
+    if(id==='default'&&!leagueTournaments().length){activeTournamentId='default';return}
     if(!state.tournaments.some(t=>String(t.id)===String(id)))id=String(state.tournaments[0]?.id||'default');
     activeTournamentId=id;
   }
+  function setActive(id){activeTournamentId=String(id);try{localStorage.setItem('hfa:activeTournament',activeTournamentId)}catch(error){}}
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
   function renderTournamentTabs(){
-    const box=document.getElementById('tournamentTabs');
-    if(state.tournaments.length<2){box.hidden=true;box.innerHTML='';return}
+    const modes=document.getElementById('modeTabs'),box=document.getElementById('tournamentTabs');
+    const cups=cupTournaments(),leagues=leagueTournaments(),cupMode=isCupTournament(currentTournament());
+    if(!cups.length){modes.hidden=true;modes.innerHTML=''}
+    else{modes.hidden=false;modes.innerHTML='<button class="tab-btn '+(cupMode?'':'active')+'" type="button" data-mode="liga">Liga</button><button class="tab-btn '+(cupMode?'active':'')+'" type="button" data-mode="copa">🏆 Copa</button>'}
+    const list=cupMode?cups:leagues;
+    if(list.length<2){box.hidden=true;box.innerHTML='';return}
     box.hidden=false;
-    box.innerHTML=state.tournaments.map(t=>'<button class="tab-btn '+(String(t.id)===String(activeTournamentId)?'active':'')+'" type="button" data-tournament="'+esc(t.id)+'">'+(isCupTournament(t)?'🏆 ':'')+esc(t.name||'Torneo')+'</button>').join('');
+    box.innerHTML=list.map(t=>'<button class="tab-btn '+(String(t.id)===String(activeTournamentId)?'active':'')+'" type="button" data-tournament="'+esc(t.id)+'">'+esc(t.name||'Torneo')+'</button>').join('');
   }
   function renderAll(){
     renderTournamentTabs();
@@ -206,11 +216,15 @@
     const [teams,matches,tournaments,cups]=await Promise.all([getJSON('teams',[]),getJSON('matches',[]),getJSON('tournaments',[]),getJSON('cups',[])]);
     state.teams=Array.isArray(teams)?teams:[];state.matches=Array.isArray(matches)?matches:[];state.tournaments=Array.isArray(tournaments)?tournaments:[];state.cups=Array.isArray(cups)?cups:[];
   }
+  document.getElementById('modeTabs').addEventListener('click',function(event){
+    const button=event.target.closest('[data-mode]');if(!button)return;
+    if(button.dataset.mode==='copa'){if(isCupTournament(currentTournament()))return;const first=cupTournaments()[0];if(first)setActive(first.id)}
+    else{if(!isCupTournament(currentTournament()))return;const lg=leagueTournaments()[0];setActive(lg?lg.id:'default')}
+    renderAll();
+  });
   document.getElementById('tournamentTabs').addEventListener('click',function(event){
     const button=event.target.closest('[data-tournament]');if(!button)return;
-    activeTournamentId=button.dataset.tournament;
-    try{localStorage.setItem('hfa:activeTournament',activeTournamentId)}catch(error){}
-    renderAll();
+    setActive(button.dataset.tournament);renderAll();
   });
   /* Si el admin cambia el torneo activo en otra pestaña, esta página lo sigue */
   window.addEventListener('storage',function(event){if(event.key==='hfa:activeTournament'){readActive();renderAll()}});
