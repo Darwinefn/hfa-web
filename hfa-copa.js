@@ -14,7 +14,7 @@
   'use strict';
   var KEY = 'cups';
   var cups = [], selectedId = null;
-  var pubMode = null, pubTab = null, pubTabFor = null, pubGroup = 'all', pubDiv = 'all';
+  var pubMode = null, pubTab = null, pubTabFor = null, pubGroup = 'all', pubDiv = 'all', pubOnly = null;
   var admTab = null, admTabFor = null;
   var DRAFT0 = { name: '', ids: [], order: 'random', format: 'grupos', groups: 2, q: 2, dbl: false, div: '1' };
   var draft = JSON.parse(JSON.stringify(DRAFT0));
@@ -465,13 +465,15 @@
   function renderPublic(host) {
     if (!host.isConnected) return;
     if (!pubMode) pubMode = window.innerWidth <= 700 ? 'list' : 'bracket';
-    var html = '<h2 class="cup-h">Copas</h2><div class="cup-sub">Fase de grupos y eliminatorias. Se actualizan solas con los resultados de las actas.</div>';
+    var only = pubOnly ? (cups.find(function (c) { return same(c.id, pubOnly); }) || null) : null;
+    var html = pubOnly ? '' : '<h2 class="cup-h">Copas</h2><div class="cup-sub">Fase de grupos y eliminatorias. Se actualizan solas con los resultados de las actas.</div>';
+    if (pubOnly && !only) { host.innerHTML = '<div class="cup-empty">Esta copa todavía no está disponible.</div>'; return; }
     if (!cups.length) { host.innerHTML = html + '<div class="cup-empty">Todavía no hay copas creadas.</div>'; return; }
     var present = ['1', '2', '3', '4', ''].filter(function (d) { return cups.some(function (c) { return cupDiv(c) === d; }); });
     if (pubDiv !== 'all' && present.indexOf(pubDiv) === -1) pubDiv = 'all';
-    var list = cups.filter(function (c) { return pubDiv === 'all' || cupDiv(c) === pubDiv; });
-    var cup = list.find(function (c) { return same(c.id, selectedId); }) || list[list.length - 1], res = resolve(cup);
-    if (present.length > 1) html += '<div class="cup-divbar"><button type="button" class="' + (pubDiv === 'all' ? 'on' : '') + '" data-cup-div="all">Todas</button>' + present.map(function (d) { return '<button type="button" class="' + (pubDiv === d ? 'on' : '') + '" data-cup-div="' + d + '">' + (d ? d + 'D' : 'Mixta') + '</button>'; }).join('') + '</div>';
+    var list = only ? [only] : cups.filter(function (c) { return pubDiv === 'all' || cupDiv(c) === pubDiv; });
+    var cup = only || list.find(function (c) { return same(c.id, selectedId); }) || list[list.length - 1], res = resolve(cup);
+    if (!only && present.length > 1) html += '<div class="cup-divbar"><button type="button" class="' + (pubDiv === 'all' ? 'on' : '') + '" data-cup-div="all">Todas</button>' + present.map(function (d) { return '<button type="button" class="' + (pubDiv === d ? 'on' : '') + '" data-cup-div="' + d + '">' + (d ? d + 'D' : 'Mixta') + '</button>'; }).join('') + '</div>';
     if (list.length > 1) html += '<div class="cup-chips">' + list.map(function (c) { return '<button type="button" class="cup-chip' + (same(c.id, cup.id) ? ' active' : '') + '" data-cup-pick="' + esc(c.id) + '">' + divTag(c) + ' ' + esc(c.name) + '<small>' + esc(cupStatus(c)) + '</small></button>'; }).join('') + '</div>';
     html += heroHTML(cup, res);
     var tabs = tabsFor(cup, res);
@@ -487,8 +489,9 @@
     }
     host.innerHTML = html;
   }
-  function mountPublic(el) {
+  function mountPublic(el, opts) {
     addCss();
+    pubOnly = opts && opts.cupId != null ? String(opts.cupId) : null;
     var old = el.querySelector('#cupPublic'); if (old) old.remove();
     var host = document.createElement('section'); host.id = 'cupPublic'; host.className = 'cup-public';
     host.innerHTML = '<h2 class="cup-h">Copas</h2><div class="cup-sub">Cargando…</div>';

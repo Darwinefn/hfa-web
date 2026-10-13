@@ -62,8 +62,15 @@
     .table-wrap th:nth-child(8),.table-wrap td:nth-child(8){width:30px}
     .team-crest{display:none}
   }
+  /* ===== Selector de torneo (liga / copa) ===== */
+  [hidden]{display:none!important}
+  #tournamentTabs{display:flex!important;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  #tournamentTabs .tab-btn{padding:9px 17px;text-align:left}
+  #cupView{min-width:0}
+  @media(max-width:700px){#tournamentTabs .tab-btn{padding:9px 14px}}
 </style>
 <script src="hfa-extras.js"></script>
+<script src="hfa-copa.js"></script>
 <script src="flags.js"></script>
 <link rel="stylesheet" href="hfa-responsive.css">
 </head>
@@ -76,15 +83,20 @@
 <main>
   <div class="eyebrow">Competición oficial</div>
   <div class="title-row"><h1 class="title">Clasificación</h1><a class="back" href="afh-liga.html">← Volver al inicio</a></div>
-  <p class="intro">Consulta la posición de cada equipo, sus partidos jugados, la diferencia de goles y los puntos acumulados en cada división.</p>
+  <p class="intro" id="introText">Consulta la posición de cada equipo, sus partidos jugados, la diferencia de goles y los puntos acumulados en cada división.</p>
+  <div class="tabs" id="tournamentTabs" hidden></div>
+  <div id="leagueView">
   <div class="tabs" id="divisionTabs"><button class="tab-btn active" data-division="1">1D</button><button class="tab-btn" data-division="2">2D</button><button class="tab-btn" data-division="3">3D</button><button class="tab-btn" data-division="4">4D</button></div>
   <div class="table-wrap"><table><thead><tr><th>#</th><th>Equipo</th><th class="center">PJ</th><th class="center">G</th><th class="center">E</th><th class="center">P</th><th class="center">DG</th><th class="center">Pts</th></tr></thead><tbody id="standingsBody"></tbody></table></div>
   <div class="legend"><span><i></i> Puestos de clasificación</span><span>PJ: partidos jugados</span><span>DG: diferencia de goles</span><span>Pts: puntos</span></div>
+</div>
+  <div id="cupView" hidden></div>
 </main>
 <footer>HFA · Asociación de Fútbol Habbo.es</footer>
 <script>
 (function(){
-  const state={teams:[],matches:[],tournaments:[]};
+  const state={teams:[],matches:[],tournaments:[],cups:[]};
+  let currentDivision='1',mountedCup=null;
   let activeTournamentId='default';
   function renderNav(){
     let session=null;try{session=JSON.parse(localStorage.getItem('hfa:session')||'null')}catch(error){}
@@ -118,7 +130,7 @@
   function standings(division){
     const rows=state.teams.filter(team=>team.division===division).map(team=>({team,pj:0,gf:0,ga:0,pts:0,wins:0,draws:0,losses:0}));
     const byId={};rows.forEach(row=>byId[row.team.id]=row);
-    state.matches.filter(match=>(!match.tournamentId||match.tournamentId===activeTournamentId)&&match.division===division&&match.finished).forEach(match=>{
+    state.matches.filter(match=>(!match.tournamentId||String(match.tournamentId)===String(activeTournamentId))&&match.division===division&&match.finished).forEach(match=>{
       const homeTeam=matchTeam(match,'A'),awayTeam=matchTeam(match,'B');const home=homeTeam&&byId[homeTeam.id],away=awayTeam&&byId[awayTeam.id];if(!home||!away)return;
       home.pj++;away.pj++;home.gf+=Number(match.scoreA)||0;home.ga+=Number(match.scoreB)||0;away.gf+=Number(match.scoreB)||0;away.ga+=Number(match.scoreA)||0;
       if(match.scoreA>match.scoreB){home.pts+=3;home.wins++;away.losses++}else if(match.scoreB>match.scoreA){away.pts+=3;away.wins++;home.losses++}else{home.pts++;away.pts++;home.draws++;away.draws++}
@@ -154,9 +166,61 @@
     }
   });
 
-  document.getElementById('divisionTabs').addEventListener('click',function(event){const button=event.target.closest('[data-division]');if(!button)return;document.querySelectorAll('.tab-btn').forEach(item=>item.classList.remove('active'));button.classList.add('active');render(button.dataset.division)});
+  document.getElementById('divisionTabs').addEventListener('click',function(event){const button=event.target.closest('[data-division]');if(!button)return;document.querySelectorAll('#divisionTabs .tab-btn').forEach(item=>item.classList.remove('active'));button.classList.add('active');currentDivision=button.dataset.division;render(currentDivision)});
   renderNav();
-  (async function init(){[state.teams,state.matches,state.tournaments]=await Promise.all([getJSON('teams',[]),getJSON('matches',[]),getJSON('tournaments',[])]);try{activeTournamentId=localStorage.getItem('hfa:activeTournament')||state.tournaments[0]?.id||'default'}catch(error){}render('1');window.hfaLoadingReady?.()})();
+  /* ---------- Torneos: liga (tabla por divisiones) o copa (grupos + bracket) ---------- */
+  function cupFor(t){return t?(state.cups.find(c=>String(c.tournamentId)===String(t.id)||String(c.id)===String(t.cupId))||null):null}
+  function isCupTournament(t){return !!t&&(t.type==='copa'||!!cupFor(t))}
+  function currentTournament(){return state.tournaments.find(t=>String(t.id)===String(activeTournamentId))||null}
+  function readActive(){
+    let id='';try{id=localStorage.getItem('hfa:activeTournament')||''}catch(error){}
+    if(!state.tournaments.some(t=>String(t.id)===String(id)))id=String(state.tournaments[0]?.id||'default');
+    activeTournamentId=id;
+  }
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
+  function renderTournamentTabs(){
+    const box=document.getElementById('tournamentTabs');
+    if(state.tournaments.length<2){box.hidden=true;box.innerHTML='';return}
+    box.hidden=false;
+    box.innerHTML=state.tournaments.map(t=>'<button class="tab-btn '+(String(t.id)===String(activeTournamentId)?'active':'')+'" type="button" data-tournament="'+esc(t.id)+'">'+(isCupTournament(t)?'🏆 ':'')+esc(t.name||'Torneo')+'</button>').join('');
+  }
+  function renderAll(){
+    renderTournamentTabs();
+    const t=currentTournament(),cupMode=isCupTournament(t),league=document.getElementById('leagueView'),cupBox=document.getElementById('cupView'),intro=document.getElementById('introText');
+    league.hidden=cupMode;cupBox.hidden=!cupMode;
+    if(cupMode){
+      intro.textContent='Fase de grupos y eliminatorias de la copa. Se actualiza sola con los resultados de las actas.';
+      const cup=cupFor(t),key=String(cup?cup.id:'none:'+t.id);
+      if(mountedCup!==key){
+        mountedCup=key;cupBox.innerHTML='';
+        if(cup&&window.hfaCopa)window.hfaCopa.mountPublic(cupBox,{cupId:cup.id});
+        else cupBox.innerHTML='<div class="empty">Esta copa todavía no tiene equipos ni partidos configurados.</div>';
+      }
+    }else{
+      mountedCup=null;
+      intro.textContent='Consulta la posición de cada equipo, sus partidos jugados, la diferencia de goles y los puntos acumulados en cada división.';
+      render(currentDivision);
+    }
+  }
+  async function loadAll(){
+    const [teams,matches,tournaments,cups]=await Promise.all([getJSON('teams',[]),getJSON('matches',[]),getJSON('tournaments',[]),getJSON('cups',[])]);
+    state.teams=Array.isArray(teams)?teams:[];state.matches=Array.isArray(matches)?matches:[];state.tournaments=Array.isArray(tournaments)?tournaments:[];state.cups=Array.isArray(cups)?cups:[];
+  }
+  document.getElementById('tournamentTabs').addEventListener('click',function(event){
+    const button=event.target.closest('[data-tournament]');if(!button)return;
+    activeTournamentId=button.dataset.tournament;
+    try{localStorage.setItem('hfa:activeTournament',activeTournamentId)}catch(error){}
+    renderAll();
+  });
+  /* Si el admin cambia el torneo activo en otra pestaña, esta página lo sigue */
+  window.addEventListener('storage',function(event){if(event.key==='hfa:activeTournament'){readActive();renderAll()}});
+  /* Solo lectura: la vista de copa usa este objeto para leer; esta página nunca escribe datos */
+  window.hfaApp={state:state,getJSON:getJSON,setJSON:function(){return Promise.resolve(null)},session:function(){return null},activeTournamentId:function(){return activeTournamentId},refresh:renderAll};
+  (async function init(){
+    await loadAll();readActive();renderAll();window.hfaLoadingReady?.();
+    /* Se mantiene sincronizada con actas y gestión de partidos del panel admin */
+    setInterval(async function(){if(document.hidden)return;try{await loadAll();readActive();renderAll()}catch(error){}},15000);
+  })();
 })();
 </script>
 <script src="chat.js" defer></script>
