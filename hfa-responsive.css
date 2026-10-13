@@ -1,0 +1,210 @@
+/* =====================================================================
+   HFA · Responsive global + interfaz del panel admin
+   Se carga al final del <head> en afh-liga.html, seccion.html y
+   clasificacion.html. Usa las variables de tema (--bg, --panel, --green…)
+   para respetar el selector de apariencia.
+   ===================================================================== */
+
+/* ---------- Base segura para cualquier pantalla ---------- */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{overflow-x:hidden}
+img,svg,video,canvas,iframe{max-width:100%}
+.table-wrap,.admin-match-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+:where(h1,h2,h3,h4,p,.match-name,.admin-title){overflow-wrap:anywhere}
+
+/* Zonas seguras (iPhone con notch) */
+@supports(padding:max(0px)){
+  header{padding-left:max(var(--hfa-hpad,16px),env(safe-area-inset-left));padding-right:max(var(--hfa-hpad,16px),env(safe-area-inset-right))}
+  footer{padding-bottom:max(30px,env(safe-area-inset-bottom))}
+}
+
+/* ---------- Tablet (≤ 1024) ---------- */
+@media(max-width:1024px){
+  main{padding-left:20px;padding-right:20px}
+  .panel-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* ---------- Móvil grande / tablet vertical (≤ 760) ---------- */
+@media(max-width:760px){
+  main{padding-top:36px;padding-bottom:70px}
+  .title-row{gap:10px}
+  .panel-grid{grid-template-columns:1fr}
+  .tabs{gap:6px}
+  .tab-btn{padding:9px 14px}
+  .notice{font-size:12.5px;line-height:1.55}
+  .content-card{border-radius:12px}
+  .players-directory-head{flex-direction:column;align-items:flex-start}
+  .profile-meta-list{grid-template-columns:1fr 1fr}
+}
+
+/* ---------- Móvil (≤ 480) ---------- */
+@media(max-width:480px){
+  main{padding-left:12px;padding-right:12px}
+  .title,h1.title{font-size:clamp(26px,9vw,36px)}
+  .btn,.btn-primary{padding-left:14px;padding-right:14px}
+  .fixture-card,.public-match-card{border-radius:10px}
+  .players-grid{grid-template-columns:1fr 1fr!important}
+  .profile-meta-list{grid-template-columns:1fr}
+}
+
+/* =====================================================================
+   PANEL ADMIN · interfaz renovada
+   ===================================================================== */
+
+/* Cabecera del panel: título, volver y tutorial ordenados */
+body:has(.admin-section-layout) .title-row{align-items:center;flex-wrap:wrap;gap:10px 16px}
+body:has(.admin-section-layout) .title-row .title{min-width:0}
+@media(min-width:761px){body:has(.admin-section-layout) .title-row .title{flex:1 1 320px}}
+@media(max-width:760px){body:has(.admin-section-layout) .title-row{flex-direction:column;align-items:flex-start}body:has(.admin-section-layout) .title-row .title{flex:0 0 auto}body:has(.admin-section-layout) .admin-tutorial-trigger{align-self:flex-start}}
+body:has(.admin-section-layout) .title-row .back{order:3}
+body:has(.admin-section-layout) .admin-tutorial-trigger{order:2;margin:0}
+
+/* Barra de sesión (rol + torneo) */
+body:has(.admin-section-layout) .notice{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin:4px 0 18px;padding:11px 16px;border-radius:12px;
+  border:1px solid rgba(255,157,77,.35);background:rgba(255,157,77,.07);color:var(--text-mid)
+}
+body:has(.admin-section-layout) .notice b{color:var(--text-hi)}
+
+/* Estructura: menú lateral + contenido */
+.admin-section-layout{
+  display:grid;grid-template-columns:248px minmax(0,1fr);gap:22px;
+  align-items:start;max-width:100%
+}
+.admin-section-nav{
+  position:sticky;top:78px;align-self:start;
+  max-height:calc(100vh - 100px);overflow-y:auto;overscroll-behavior:contain;
+  padding:10px;border:1px solid var(--border);border-radius:16px;
+  background:var(--panel);box-shadow:0 14px 34px rgba(0,0,0,.18);
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent
+}
+.admin-section-nav-title{
+  padding:14px 12px 6px;color:var(--text-low);font:700 10px Oswald,sans-serif;
+  letter-spacing:.14em;text-transform:uppercase
+}
+.admin-section-nav-title:first-child{padding-top:6px}
+.admin-section-nav button{
+  display:flex;align-items:center;gap:8px;width:100%;
+  padding:10px 12px;margin:2px 0;border:0;border-radius:10px;
+  background:transparent;color:var(--text-mid);
+  font:600 13px Inter,sans-serif;text-align:left;
+  transition:background .15s,color .15s,transform .1s
+}
+.admin-section-nav button:hover{background:var(--panel-2);color:var(--text-hi)}
+.admin-section-nav button.active{
+  background:rgba(52,232,143,.13);color:var(--green);
+  box-shadow:inset 3px 0 0 var(--green)
+}
+.admin-section-nav button:active{transform:scale(.98)}
+
+/* Tarjetas de contenido: ocupan todo el ancho disponible.
+   (.admin-section-content es un <main>, así que hay que anular el padding global de main) */
+html body .admin-section-content{min-width:0;max-width:none!important;margin:0!important;padding:0!important}
+.admin-section-content>.content-card{
+  max-width:none;width:100%;margin:0 0 16px;padding:24px;
+  border:1px solid var(--border);border-radius:16px;
+  background:var(--panel);box-shadow:0 10px 28px rgba(0,0,0,.14)
+}
+.admin-section-content .admin-title{
+  display:flex;align-items:center;gap:10px;margin:0 0 6px;
+  font:700 19px/1.25 Oswald,sans-serif;letter-spacing:.02em;color:var(--text-hi)
+}
+.admin-section-content .admin-title:not(:first-child){
+  margin-top:26px;padding-top:22px;border-top:1px solid var(--border)
+}
+.admin-section-content .admin-section-note{
+  margin:0 0 14px;color:var(--text-low);font-size:12.5px;line-height:1.6;max-width:70ch
+}
+
+/* Formularios */
+.admin-section-content .input,
+.admin-section-content select,
+.admin-section-content input[type=text],
+.admin-section-content input[type=date],
+.admin-section-content input[type=time],
+.admin-section-content input[type=number],
+.admin-section-content input[type=search],
+.admin-section-content textarea{
+  border-radius:10px;border:1px solid var(--border);background:var(--panel-2);
+  color:var(--text-hi);transition:border-color .15s,box-shadow .15s
+}
+.admin-section-content .input:focus,
+.admin-section-content select:focus,
+.admin-section-content textarea:focus,
+.admin-section-content input:focus{
+  outline:0;border-color:var(--green);box-shadow:0 0 0 3px rgba(52,232,143,.18)
+}
+.admin-section-content label{color:var(--text-mid)}
+
+/* Botones */
+.admin-section-content .btn{
+  border-radius:10px;font-weight:700;letter-spacing:.02em;
+  transition:filter .15s,transform .1s,border-color .15s
+}
+.admin-section-content .btn:hover{filter:brightness(1.12)}
+.admin-section-content .btn:active{transform:translateY(1px)}
+.admin-section-content .btn-primary{box-shadow:0 6px 16px rgba(52,232,143,.18)}
+
+/* Listas y tablas */
+.admin-section-content .admin-match-table-wrap{border-radius:12px;background:var(--panel-2)}
+.admin-section-content .admin-match-table th{
+  position:sticky;top:0;background:var(--panel-2);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase
+}
+.admin-section-content .admin-created-match,
+.admin-section-content .drag-team,
+.admin-section-content .fixture-builder-teams,
+.admin-section-content .fixture-builder-round{border-radius:12px}
+.admin-section-content .fixture-builder{gap:16px}
+.admin-section-content .fixture-builder-fields{align-items:end}
+.admin-section-content .round-toolbar{padding-bottom:4px}
+
+/* Acta */
+#actaManagement .admin-acta-actions{flex-wrap:wrap}
+#actaManagement .admin-acta-actions .btn{min-width:130px}
+
+/* Tablet: menú más compacto */
+@media(max-width:1100px){
+  .admin-section-layout{grid-template-columns:200px minmax(0,1fr);gap:16px}
+  .admin-section-nav button{font-size:12.5px;padding:9px 10px}
+  .admin-section-content>.content-card{padding:20px}
+}
+
+/* Móvil: el menú pasa a pestañas con scroll horizontal, siempre visibles */
+@media(max-width:900px){
+  .admin-section-layout{grid-template-columns:1fr;gap:12px}
+  .admin-section-nav{
+    position:sticky;top:var(--hfa-admin-top,64px);z-index:30;
+    display:flex;gap:6px;max-height:none;overflow-x:auto;overflow-y:hidden;
+    padding:8px;border-radius:14px;
+    background:color-mix(in srgb,var(--panel) 94%,transparent);
+    backdrop-filter:blur(10px);-webkit-overflow-scrolling:touch;scrollbar-width:none
+  }
+  .admin-section-nav::-webkit-scrollbar{display:none}
+  .admin-section-nav-title{display:none}
+  .admin-section-nav button{
+    flex:0 0 auto;width:auto;margin:0;white-space:nowrap;
+    padding:9px 14px;border-radius:999px;border:1px solid var(--border);
+    background:var(--panel-2);box-shadow:none
+  }
+  .admin-section-nav button.active{
+    border-color:var(--green);background:rgba(52,232,143,.14);box-shadow:none
+  }
+  .admin-section-content>.content-card{padding:16px;border-radius:14px}
+  .admin-section-content .admin-title{font-size:17px}
+  .admin-section-content .admin-title:not(:first-child){margin-top:20px;padding-top:18px}
+  .fixture-builder,.fixture-builder-fields{grid-template-columns:1fr!important}
+  .admin-match-filters{grid-template-columns:1fr!important}
+  .admin-match-heading{flex-direction:column;align-items:stretch}
+  .admin-section-content .btn{min-height:44px}
+  .admin-acta-fields,.admin-acta-filters{grid-template-columns:1fr!important}
+  .admin-acta-filters .admin-acta-label:nth-of-type(2),.admin-acta-filters #actaMatch{grid-column:1!important;grid-row:auto!important}
+}
+@media(max-width:480px){
+  body:has(.admin-section-layout) .notice{padding:10px 12px;font-size:12px}
+  .admin-section-content>.content-card{padding:14px 12px}
+  .admin-section-content .btn{width:100%}
+  .admin-section-content .admin-match-actions .btn,
+  .admin-section-content .round-chip,
+  .admin-section-content [data-round-choice]{width:auto}
+}

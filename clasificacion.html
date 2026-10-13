@@ -19,9 +19,53 @@
   .nav-right{display:flex;align-items:center;gap:12px}.nav-profile{display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:18px;padding:3px 9px 3px 4px;color:var(--text-hi)!important}.mini-avatar{width:28px;height:28px;object-fit:cover;object-position:center top;image-rendering:auto;border-radius:50%;background:var(--panel-2)}.nav-user{display:flex;align-items:center;gap:8px;padding:3px 8px;border:1px solid var(--border);border-radius:18px;background:rgba(18,26,23,.7);color:var(--text-hi)}.avatar{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green);color:#03140b;font-weight:700;font-size:10px}.nav-notification{font-size:17px;border:0;color:var(--text-hi)!important;padding:4px;background:transparent}main{max-width:1180px;margin:0 auto;padding:76px 28px 90px}.eyebrow{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--green);margin-bottom:12px}.title-row{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:14px}.title{font-family:'Oswald',sans-serif;font-size:clamp(38px,7vw,64px);line-height:1}.intro{max-width:560px;color:var(--text-mid);font-size:13.5px;line-height:1.7;margin-bottom:38px}
   .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}.tab-btn{padding:9px 17px;border-radius:20px;border:1px solid var(--border);background:var(--panel);color:var(--text-mid);font-size:12.5px;font-weight:600}.tab-btn:hover{border-color:var(--green-dim);color:var(--text-hi)}.tab-btn.active{background:var(--green);border-color:var(--green);color:#05130c}
   .table-wrap{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:#0d1218;box-shadow:0 16px 40px rgba(0,0,0,.22)}table{width:100%;border-collapse:collapse;font-size:13px}thead tr{background:#101720}th{text-align:left;padding:15px 14px;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-low);font-weight:600}th.center,td.center{text-align:center}td{padding:13px 14px;border-top:1px solid var(--border)}tbody tr{transition:background .12s}tbody tr:hover{background:var(--panel-2)}tbody tr.qualify{background:rgba(52,232,143,.035)}.pos{font-family:'Oswald',sans-serif;font-size:17px;color:var(--text-mid);display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px}.pos.medal{border-radius:50%;font-size:16px;color:#111820;font-weight:700}.pos.gold{background:#ffd84d}.pos.silver{background:#d5dbe2}.pos.bronze{background:#c1844c}.team-cell{display:flex;align-items:center;gap:10px;font-weight:600}.team-crest{width:32px;height:32px;border-radius:50%;background:var(--panel-2);border:1px solid var(--border);object-fit:contain;image-rendering:auto;background-size:contain;background-repeat:no-repeat;background-position:center;padding:3px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;color:var(--text-mid);font-size:11px;flex-shrink:0}.team-name{white-space:nowrap}.pts-cell{font-family:'Oswald',sans-serif;font-size:19px;font-weight:700;color:var(--green)}.empty{padding:24px 16px;color:var(--text-low);font-size:12px;font-style:italic}.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:15px;color:var(--text-low);font-size:11px}.legend span{display:flex;align-items:center;gap:6px}.legend i{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block}.back{color:var(--green);font-size:12px;font-weight:600}footer{border-top:1px solid var(--border);padding:30px 28px;text-align:center;color:var(--text-low);font-size:11.5px}
-  @media(max-width:700px){header{padding:12px 16px}nav{display:none}main{padding:52px 18px 70px}.title-row{align-items:start;flex-direction:column}.table-wrap{overflow:hidden}table{min-width:0;font-size:12px}th,td{padding:11px 6px}th:nth-child(7),td:nth-child(7){display:none}.team-cell{gap:7px}.team-name{max-width:112px;overflow:hidden;text-overflow:ellipsis}.team-crest{width:30px;height:30px}.pos{width:27px;height:27px}}
+  /* ===== Responsive: tabla de clasificación en celular ===== */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .team-name{min-width:0}
+  @media(max-width:900px){
+    header{padding:12px 16px}
+    main{padding:56px 18px 70px}
+    .title-row{align-items:flex-start;flex-direction:column;gap:8px}
+  }
+  @media(max-width:700px){
+    main{padding:40px 12px 70px}
+    .intro{margin-bottom:22px}
+    .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+    .tab-btn{padding:10px 0;text-align:center}
+    .table-wrap{border-radius:12px;overflow:hidden}
+    .table-wrap table{display:table!important;width:100%;table-layout:fixed;font-size:12px;overflow:visible!important}
+    .table-wrap thead th{padding:11px 0;font-size:9px;letter-spacing:.3px;text-align:center}
+    .table-wrap td{padding:10px 0;text-align:center}
+    .table-wrap th:nth-child(1),.table-wrap td:nth-child(1){width:34px}
+    .table-wrap th:nth-child(2),.table-wrap td:nth-child(2){width:auto;text-align:left;padding-left:2px}
+    .table-wrap th:nth-child(3),.table-wrap td:nth-child(3),
+    .table-wrap th:nth-child(4),.table-wrap td:nth-child(4),
+    .table-wrap th:nth-child(5),.table-wrap td:nth-child(5),
+    .table-wrap th:nth-child(6),.table-wrap td:nth-child(6){width:24px}
+    .table-wrap th:nth-child(7),.table-wrap td:nth-child(7){width:32px;display:table-cell}
+    .table-wrap th:nth-child(8),.table-wrap td:nth-child(8){width:34px}
+    .pos{width:24px;height:24px;font-size:14px}
+    .pos.medal{font-size:13px}
+    .team-cell{gap:6px;min-width:0}
+    .team-crest{width:24px;height:24px;padding:2px;font-size:9px}
+    .team-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+    .pts-cell{font-size:16px}
+    .legend{gap:8px 14px;font-size:10.5px}
+  }
+  @media(max-width:380px){
+    .table-wrap th:nth-child(1),.table-wrap td:nth-child(1){width:28px}
+    .table-wrap th:nth-child(3),.table-wrap td:nth-child(3),
+    .table-wrap th:nth-child(4),.table-wrap td:nth-child(4),
+    .table-wrap th:nth-child(5),.table-wrap td:nth-child(5),
+    .table-wrap th:nth-child(6),.table-wrap td:nth-child(6){width:21px}
+    .table-wrap th:nth-child(7),.table-wrap td:nth-child(7){width:28px}
+    .table-wrap th:nth-child(8),.table-wrap td:nth-child(8){width:30px}
+    .team-crest{display:none}
+  }
 </style>
+<script src="hfa-extras.js"></script>
 <script src="flags.js"></script>
+<link rel="stylesheet" href="hfa-responsive.css">
 </head>
 <body>
 <script src="loading.js"></script>
@@ -83,7 +127,7 @@
   }
   function render(division){
     const rows=standings(division),body=document.getElementById('standingsBody');
-    body.innerHTML=rows.length?rows.map((row,index)=>{const medal=index===0?'gold':index===1?'silver':index===2?'bronze':'';const difference=row.dg>0?'+'+row.dg:row.dg;return `<tr class="${index<2?'qualify':''}"><td><span class="pos ${medal?'medal '+medal:''}">${index+1}</span></td><td><div class="team-cell">${teamBadge(row.team)}<span class="team-name">${String(row.team.name)}</span></div></td><td class="center">${row.pj}</td><td class="center">${row.wins}</td><td class="center">${row.draws}</td><td class="center">${row.losses}</td><td class="center">${difference}</td><td class="center pts-cell">${row.pts}</td></tr>`}).join(''):'<tr><td colspan="8"><div class="empty">Aún no hay equipos registrados en esta división.</div></td></tr>';
+    body.innerHTML=rows.length?rows.map((row,index)=>{const medal=index===0?'gold':index===1?'silver':index===2?'bronze':'';const difference=row.dg>0?'+'+row.dg:row.dg;return `<tr class="${index<2?'qualify':''}"><td><span class="pos ${medal?'medal '+medal:''}">${index+1}</span></td><td class="team-td"><div class="team-cell">${teamBadge(row.team)}<span class="team-name">${String(row.team.name)}</span></div></td><td class="center">${row.pj}</td><td class="center">${row.wins}</td><td class="center">${row.draws}</td><td class="center">${row.losses}</td><td class="center">${difference}</td><td class="center pts-cell">${row.pts}</td></tr>`}).join(''):'<tr><td colspan="8"><div class="empty">Aún no hay equipos registrados en esta división.</div></td></tr>';
   }
   document.addEventListener('click', function (event) {
     const communityTrigger = event.target.closest('[data-community-menu]');
