@@ -1839,7 +1839,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const tn=id=>state.teams.find(t=>String(t.id)===String(id))?.name||'Equipo';
     const fx=(c.fixtures||[]).filter(f=>Number(f.r)===Number(adminRound)&&(builderGroup===''||String(f.g)===String(builderGroup)));
     const rows=fx.map(f=>'<div class="admin-created-match" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 10px"><span><b>'+hfaEsc(c.groups[f.g].name)+'</b> · '+hfaEsc(tn(f.a))+' vs '+hfaEsc(tn(f.b))+'</span>'+(hfaCupFixtureDone(c,f)?'<span class="muted">✔ Partido creado</span>':'<button class="btn btn-primary btn-sm" type="button" data-cup-fx-create="'+hfaEsc(f.id)+'">Crear partido</button>')+'</div>').join('');
-    return '<div class="round-toolbar"><span class="muted">Grupo</span>'+chips+'</div><div class="admin-created-matches" style="margin:0 0 12px"><div class="muted" style="padding:2px 2px 6px">Cruces de la jornada J'+adminRound+(builderGroup!==''?' · '+hfaEsc(c.groups[Number(builderGroup)]?.name||''):'')+' · usa la fecha y hora del formulario de abajo</div>'+(rows||'<div class="muted" style="padding:6px 2px">No hay cruces de fase de grupos en esta jornada'+(builderGroup!==''?' para este grupo':'')+'.</div>')+'</div>';
+    return '<div class="round-toolbar"><span class="muted">Grupo</span>'+chips+'</div><div class="admin-created-matches" style="margin:0 0 12px">'+(rows||'<div class="muted" style="padding:6px 2px">No hay cruces de fase de grupos en esta jornada'+(builderGroup!==''?' para este grupo':'')+'.</div>')+'</div>';
   }
   async function cupAfterChange(){if(window.hfaCopa){try{await window.hfaCopa.link()}catch(e){}}}
   /* Acta finalizada / reabierta / eliminada: la copa recalcula grupos y bracket y avisa a Clasificación */
@@ -2958,7 +2958,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     if(session.role!=='admin'&&session.role!=='prueba_moderador'&&session.role!=='moderador'&&session.role!=='arbitro')return '<div class="notice">No tienes permisos para acceder al panel de actas. Los árbitros pueden subir actas y los administradores gestionan toda la competición.</div>';
     const isAdmin=session.role==='admin';
     const activeTournamentOptions=state.tournaments.map(item=>'<option value="'+profileText(item.id)+'" '+(String(item.id)===String(activeTournamentId)?'selected':'')+'>'+profileText(item.name)+'</option>').join('');
-    if(!selectedActaMatchId&&state.matches.length)selectedActaMatchId=state.matches[0].id;
+    if(!selectedActaMatchId){const firstOpen=state.matches.find(match=>!match.finished&&(actaDivisionFilter==='all'||hfaMatchDivKey(match)===actaDivisionFilter));if(firstOpen)selectedActaMatchId=firstOpen.id}
     const actaMatches=state.matches.filter(match=>(actaDivisionFilter==='all'||hfaMatchDivKey(match)===actaDivisionFilter)&&(!match.finished||String(match.id)===String(selectedActaMatchId)));
     const selectedMatch=actaMatches.find(match=>match.id===selectedActaMatchId)||actaMatches[0]||null;
     if(selectedMatch&&selectedActaMatchId!==selectedMatch.id)selectedActaMatchId=selectedMatch.id;
