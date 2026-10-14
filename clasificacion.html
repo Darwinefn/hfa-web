@@ -182,13 +182,15 @@
   function currentTournament(){return state.tournaments.find(t=>String(t.id)===String(activeTournamentId))||null}
   function cupTournaments(){return state.tournaments.filter(isCupTournament)}
   function leagueTournaments(){return state.tournaments.filter(t=>!isCupTournament(t))}
+  function validId(id){return !!id&&(state.tournaments.some(t=>String(t.id)===String(id))||(id==='default'&&!leagueTournaments().length))}
+  /* Lo que ve el visitante (Liga/Copa) se guarda aparte: NO toca el torneo activo del panel admin */
   function readActive(){
-    let id='';try{id=localStorage.getItem('hfa:activeTournament')||''}catch(error){}
-    if(id==='default'&&!leagueTournaments().length){activeTournamentId='default';return}
-    if(!state.tournaments.some(t=>String(t.id)===String(id)))id=String(state.tournaments[0]?.id||'default');
+    let id='';try{id=sessionStorage.getItem('hfa:viewTournament')||''}catch(error){}
+    if(!validId(id)){id='';try{id=localStorage.getItem('hfa:activeTournament')||''}catch(error){}}
+    if(!validId(id))id=String(state.tournaments[0]?.id||'default');
     activeTournamentId=id;
   }
-  function setActive(id){activeTournamentId=String(id);try{localStorage.setItem('hfa:activeTournament',activeTournamentId)}catch(error){}}
+  function setActive(id){activeTournamentId=String(id);try{sessionStorage.setItem('hfa:viewTournament',activeTournamentId)}catch(error){}}
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
   function renderTournamentTabs(){
     const modes=document.getElementById('modeTabs'),box=document.getElementById('tournamentTabs');
@@ -234,7 +236,7 @@
   });
   /* Si el admin cambia el torneo activo en otra pestaña, esta página lo sigue */
   window.addEventListener('storage',function(event){
-    if(event.key==='hfa:activeTournament'){readActive();renderAll()}
+    if(event.key==='hfa:activeTournament'){try{sessionStorage.removeItem('hfa:viewTournament')}catch(error){}readActive();renderAll()}
     /* El admin finalizó un acta de copa: se recarga y se redibuja al instante */
     if(event.key==='hfa:cupsync'){loadAll().then(function(){readActive();renderAll()}).catch(function(){})}
   });

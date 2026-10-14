@@ -656,6 +656,7 @@
       var c = st.matches.filter(function (m) { return same(m.cupId, cup.id) && samePair(m, a, b) && !used(m.id); });
       var exact = c.find(function (m) { return Number(m.round) === round; });
       if (exact || !any) return exact;
+      if (any === 'ko') return c.sort(function (x, y) { return (Number(x.round) || 0) - (Number(y.round) || 0); })[0];
       var gmax = groupRoundMax(cup);
       c = c.filter(function (m) { return !(Number(m.round) > gmax) || /grupo/i.test(m.cupRound || ''); }).sort(function (x, y) { return (Number(x.round) || 0) - (Number(y.round) || 0); });
       return c[0];
@@ -679,7 +680,7 @@
       round.forEach(function (o, kk) {
         if (o.bye || o.a == null || o.b == null) return;
         if (auto && rr === 0 && cup.format !== 'grupos') return;
-        mk(o.a, o.b, cup.rounds[rr][kk].date, cup.rounds[rr][kk].time, base + rr + 1, roundName(round.length), cup.rounds[rr][kk]);
+        mk(o.a, o.b, cup.rounds[rr][kk].date, cup.rounds[rr][kk].time, base + rr + 1, roundName(round.length), cup.rounds[rr][kk], 'ko');
       });
     });
     return changed;
@@ -716,10 +717,9 @@
       var st = app().state, m = (st.matches || []).find(function (x) { return same(x.id, matchId); }), ch = 0;
       cups.forEach(function (c) {
         if (m && m.cupId && !same(m.cupId, c.id)) return;
-        ch += syncCupMatches(c, false);
-        ch += syncCupMatches(c, true, null, true);
+        ch += syncCupMatches(c, false);   /* solo vincula; nunca crea partidos */
       });
-      return ch ? Promise.all([save(), app().setJSON('matches', st.matches)]) : null;
+      return ch ? save() : null;           /* solo guarda las copas; no toca los partidos */
     });
   }
   /* Vuelve a leer y a dibujar la copa que está montada en la vista pública (Clasificación) */

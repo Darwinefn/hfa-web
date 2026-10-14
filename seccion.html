@@ -1845,7 +1845,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   /* Acta finalizada / reabierta / eliminada: la copa recalcula grupos y bracket y avisa a Clasificación */
   async function cupAfterActa(match){
     if(!match||(!match.cupId&&String(match.division||'').toLowerCase()!=='copa'))return;
-    if(window.hfaCopa){try{if(window.hfaCopa.load)await window.hfaCopa.load();if(window.hfaCopa.afterActa)await window.hfaCopa.afterActa(match.id)}catch(e){}}
+    if(window.hfaCopa){try{if(window.hfaCopa.afterActa)await window.hfaCopa.afterActa(match.id)}catch(e){}}
     try{
       if(window.hfaCopa&&window.hfaCopa.needsPens&&match.finished){
         const np=await window.hfaCopa.needsPens(match.id);
@@ -2351,14 +2351,14 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     }
   });
   function adminMatchList(){
-    const tournamentOptions='<option value="">Todas las temporadas</option>'+state.tournaments.map(item=>'<option value="'+item.id+'" '+(String(item.id)===String(activeTournamentId)?'selected':'')+'>'+(item.type==='copa'?'🏆 ':'')+profileText(item.name)+'</option>').join('');
+    const tournamentOptions='<option value="">Todas las temporadas</option>'+state.tournaments.map(item=>'<option value="'+item.id+'" '+''+'>'+(item.type==='copa'?'🏆 ':'')+profileText(item.name)+'</option>').join('');
     const divisionOptions='<option value="">Todas las divisiones</option><option value="1">1D</option><option value="2">2D</option><option value="3">3D</option><option value="4">4D</option><option value="copa">🏆 Copa</option>';
-    const roundOptions=[...new Set(state.matches.filter(inActiveTournament).map(item=>Number(item.round)||1))].sort((a,b)=>a-b).map(round=>'<option value="'+round+'">J'+round+' · Jornada '+round+'</option>').join('');
+    const roundOptions=[...new Set(state.matches.map(item=>Number(item.round)||1))].sort((a,b)=>a-b).map(round=>'<option value="'+round+'">J'+round+' · Jornada '+round+'</option>').join('');
     const rows=state.matches.length?state.matches.map(match=>{
       const home=match.home||team(match.teamAId)?.name||'Equipo A',away=match.away||team(match.teamBId)?.name||'Equipo B';
       const round=Number(match.round)||1;
       const division=hfaMatchDivKey(match);
-      return '<tr data-admin-match-row="'+match.id+'"'+(inActiveTournament(match)?'':' style="display:none"')+' data-match-tournament="'+(match.tournamentId||activeTournamentId||'')+'" data-match-division="'+division+'" data-match-round="'+round+'"><td>'+profileText(home)+'</td><td>'+profileText(away)+'</td><td>'+(match.finished?((match.scoreA??0)+' - '+(match.scoreB??0)):'—')+'</td><td><span class="admin-match-status '+(match.finished?'finished':match.live?'live':'scheduled')+'">'+(match.finished?'Finalizado':match.live?'🔴 En vivo':'Programado')+'</span></td><td>'+profileText(match.date||'—')+(match.time?' '+profileText(match.time)+' COL':'')+'</td><td>J'+round+' · Jornada '+round+'</td><td>'+profileText(match.mvp||'—')+'</td><td class="admin-match-actions">'+(match.finished?'':'<button class="admin-match-icon live'+(match.live?' on':'')+'" type="button" data-live-toggle="'+match.id+'" title="'+(match.live?'Terminar en vivo':'Iniciar en vivo')+'" aria-label="'+(match.live?'Terminar en vivo':'Iniciar en vivo')+'">🔴</button>')+'<button class="admin-match-icon" type="button" data-open-acta="'+match.id+'" title="'+(match.finished?'Editar acta':'Registrar / finalizar acta')+'" aria-label="'+(match.finished?'Editar acta':'Registrar o finalizar acta')+'">⚽</button><button class="admin-match-icon edit" type="button" data-edit-match="'+match.id+'" title="Editar alineación y acta" aria-label="Editar alineación y acta">✎</button><button class="admin-match-icon delete" type="button" data-delete-match="'+match.id+'" title="Eliminar partido" aria-label="Eliminar partido">🗑</button></td></tr>';
+      return '<tr data-admin-match-row="'+match.id+'"'+' data-match-tournament="'+(match.tournamentId||activeTournamentId||'')+'" data-match-division="'+division+'" data-match-round="'+round+'"><td>'+profileText(home)+'</td><td>'+profileText(away)+'</td><td>'+(match.finished?((match.scoreA??0)+' - '+(match.scoreB??0)):'—')+'</td><td><span class="admin-match-status '+(match.finished?'finished':match.live?'live':'scheduled')+'">'+(match.finished?'Finalizado':match.live?'🔴 En vivo':'Programado')+'</span></td><td>'+profileText(match.date||'—')+(match.time?' '+profileText(match.time)+' COL':'')+'</td><td>J'+round+' · Jornada '+round+'</td><td>'+profileText(match.mvp||'—')+'</td><td class="admin-match-actions">'+(match.finished?'':'<button class="admin-match-icon live'+(match.live?' on':'')+'" type="button" data-live-toggle="'+match.id+'" title="'+(match.live?'Terminar en vivo':'Iniciar en vivo')+'" aria-label="'+(match.live?'Terminar en vivo':'Iniciar en vivo')+'">🔴</button>')+'<button class="admin-match-icon" type="button" data-open-acta="'+match.id+'" title="'+(match.finished?'Editar acta':'Registrar / finalizar acta')+'" aria-label="'+(match.finished?'Editar acta':'Registrar o finalizar acta')+'">⚽</button><button class="admin-match-icon edit" type="button" data-edit-match="'+match.id+'" title="Editar alineación y acta" aria-label="Editar alineación y acta">✎</button><button class="admin-match-icon delete" type="button" data-delete-match="'+match.id+'" title="Eliminar partido" aria-label="Eliminar partido">🗑</button></td></tr>';
     }).join(''):'<tr><td colspan="8"><div class="empty">No hay partidos creados.</div></td></tr>';
     return '<div class="content-card admin-match-card" id="adminMatchList"><div class="admin-match-heading"><div><div class="admin-title">⚽ Gestión de partidos</div><div class="admin-match-subtitle">Edita actas, finaliza resultados y consulta los encuentros por división.</div></div><button class="btn btn-primary" type="button" data-new-admin-match>＋ NUEVO PARTIDO</button></div><div class="admin-match-filters"><label class="admin-match-filter"><span>Temporada</span><select class="input" id="adminTournamentFilter">'+tournamentOptions+'</select></label><label class="admin-match-filter"><span>División</span><select class="input" id="adminDivisionFilter">'+divisionOptions+'</select></label><label class="admin-match-filter"><span>Jornada</span><select class="input" id="adminRoundFilter"><option value="">Todas las jornadas</option>'+roundOptions+'</select></label></div><div class="admin-match-table-wrap"><table class="admin-match-table"><thead><tr><th>Local</th><th>Visitante</th><th>Resultado</th><th>Estado</th><th>Fecha</th><th>Jornada</th><th>MVP</th><th>Acciones</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   }
@@ -2909,12 +2909,12 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       if(remove){
         if(!confirm('¿Eliminar todos los datos de esta acta?'))return;
         match.goals=[];match.cards=[];match.subs=[];match.mentions=[];match.lineupA=[];match.lineupB=[];match.mvp='';match.acta='';match.scoreA=0;match.scoreB=0;match.finished=false;match.live=false;match.liveSince='';
-        await setJSON('matches',state.matches);await hfaAchAfterChange();await cupAfterActa(match);selectedActaMatchId=null;content();return;
+        await setJSON('matches',state.matches);await hfaAchAfterChange();selectedActaMatchId=null;content();setTimeout(()=>{cupAfterActa(match).catch(()=>{})},0);return;
       }
       match.mvp=document.getElementById('mvpInput')?.value.trim()||match.mvp||'';
       match.acta=document.getElementById('actaText')?.value.trim()||match.acta||'';hfaApplyYoutube(match);
       if(finalize){match.scoreA=(match.goals||[]).filter(goal=>goal.side==='A').length;match.scoreB=(match.goals||[]).filter(goal=>goal.side==='B').length;match.finished=true;match.live=false;match.liveSince='';selectedActaMatchId=null}
-      await setJSON('matches',state.matches);await hfaAchAfterChange();await cupAfterActa(match);content();
+      await setJSON('matches',state.matches);await hfaAchAfterChange();content();setTimeout(()=>{cupAfterActa(match).catch(()=>{})},0);
     });
     const matchCard=document.getElementById('createMatch')?.closest('.content-card');
     if(matchCard){matchCard.id='adminMatchBuilder';matchCard.classList.remove('admin-match-builder-hidden')}
@@ -2959,7 +2959,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const isAdmin=session.role==='admin';
     const activeTournamentOptions=state.tournaments.map(item=>'<option value="'+profileText(item.id)+'" '+(String(item.id)===String(activeTournamentId)?'selected':'')+'>'+profileText(item.name)+'</option>').join('');
     if(!selectedActaMatchId&&state.matches.length)selectedActaMatchId=state.matches[0].id;
-    const actaMatches=state.matches.filter(match=>inActiveTournament(match)&&(actaDivisionFilter==='all'||hfaMatchDivKey(match)===actaDivisionFilter)&&(!match.finished||String(match.id)===String(selectedActaMatchId)));
+    const actaMatches=state.matches.filter(match=>(actaDivisionFilter==='all'||hfaMatchDivKey(match)===actaDivisionFilter)&&(!match.finished||String(match.id)===String(selectedActaMatchId)));
     const selectedMatch=actaMatches.find(match=>match.id===selectedActaMatchId)||actaMatches[0]||null;
     if(selectedMatch&&selectedActaMatchId!==selectedMatch.id)selectedActaMatchId=selectedMatch.id;
     const matchOptions=actaMatches.length?actaMatches.map(match=>{const home=match.home||team(match.teamAId)?.name||'Equipo A',away=match.away||team(match.teamBId)?.name||'Equipo B';return '<option value="'+match.id+'" '+(match.id===selectedActaMatchId?'selected':'')+'>'+home+' vs '+away+' · '+divisionLabel(match.division||team(match.teamAId)?.division||team(match.teamBId)?.division)+' · J'+(Number(match.round)||1)+'</option>'}).join(''):'<option value="">No hay partidos en este torneo / división</option>';
@@ -3476,7 +3476,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
         match.scoreA=(match.goals||[]).filter(goal=>goal.side==='A').length;
         match.scoreB=(match.goals||[]).filter(goal=>goal.side==='B').length;
         match.finished=true;match.live=false;match.liveSince='';
-        await setJSON('matches',state.matches);await hfaAchAfterChange();await cupAfterActa(match);
+        await setJSON('matches',state.matches);await hfaAchAfterChange();setTimeout(()=>{cupAfterActa(match).catch(()=>{})},0);
         selectedActaMatchId=null;
         adminSection=['admin','moderador','prueba_moderador'].includes(session.role)?'matches':'acts';
         content();
