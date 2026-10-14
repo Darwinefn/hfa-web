@@ -1839,7 +1839,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const tn=id=>state.teams.find(t=>String(t.id)===String(id))?.name||'Equipo';
     const fx=(c.fixtures||[]).filter(f=>Number(f.r)===Number(adminRound)&&(builderGroup===''||String(f.g)===String(builderGroup)));
     const rows=fx.map(f=>'<div class="admin-created-match" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 10px"><span><b>'+hfaEsc(c.groups[f.g].name)+'</b> · '+hfaEsc(tn(f.a))+' vs '+hfaEsc(tn(f.b))+'</span>'+(hfaCupFixtureDone(c,f)?'<span class="muted">✔ Partido creado</span>':'<button class="btn btn-primary btn-sm" type="button" data-cup-fx-create="'+hfaEsc(f.id)+'">Crear partido</button>')+'</div>').join('');
-    return '<div class="round-toolbar"><span class="muted">Grupo</span>'+chips+'</div><div class="admin-created-matches" style="margin:0 0 12px">'+(rows||'<div class="muted" style="padding:6px 2px">No hay cruces de fase de grupos en esta jornada'+(builderGroup!==''?' para este grupo':'')+'.</div>')+'</div>';
+    return '<div class="round-toolbar"><span class="muted">Grupo</span>'+chips+'</div>';
   }
   async function cupAfterChange(){if(window.hfaCopa){try{await window.hfaCopa.link()}catch(e){}}}
   /* Acta finalizada / reabierta / eliminada: la copa recalcula grupos y bracket y avisa a Clasificación */
