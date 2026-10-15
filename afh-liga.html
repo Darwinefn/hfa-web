@@ -464,6 +464,7 @@ section.block{padding-top:44px;padding-bottom:64px}
 
 <div class="ticker"><div class="ticker-track" id="tickerTrack"></div></div>
 <section class="home-news" id="homeNews" aria-label="Noticias"></section>
+<section class="sponsors" id="homeSponsors" aria-label="Patrocinadores" hidden><div class="sponsors-title">Patrocinadores</div><div class="marquee"><div class="marquee-track" id="marqueeTrack"></div></div></section>
 
 
 <section class="block" id="resumen">
@@ -760,15 +761,14 @@ section.block{padding-top:44px;padding-bottom:64px}
   }
 
   // ---------- Sponsors + ticker ----------
-  const defaultSponsors = [
-    {name:'Tu marca aquí', mark:'➕'}, {name:'Espacio disponible', mark:'➕'},
-    {name:'Tu marca aquí', mark:'➕'}, {name:'Espacio disponible', mark:'➕'},
-  ];
   function renderSponsors(){
-    const track = document.getElementById('marqueeTrack');
-    const sponsors = state.sponsors.length ? state.sponsors.map(item => typeof item === 'string' ? {name:item, mark:'★'} : item) : defaultSponsors;
-    const build = () => sponsors.map(s => `
-      <div class="sponsor-item"><div class="sponsor-mark">${s.mark}</div><div class="sponsor-name">${esc(s.name)}</div></div>`).join('');
+    const track = document.getElementById('marqueeTrack'), box = document.getElementById('homeSponsors');
+    if(!track || !box) return;
+    const sponsors = (Array.isArray(state.sponsors) ? state.sponsors : []).map(item => typeof item === 'string' ? {name:item, logo:''} : item).filter(item => item && item.name);
+    if(!sponsors.length){ box.hidden = true; track.innerHTML = ''; return; }
+    box.hidden = false;
+    const mark = s => /^(https?:\/\/|data:image\/)/i.test(String(s.logo||'')) ? `<img src="${esc(s.logo)}" alt="" style="width:100%;height:100%;object-fit:contain" referrerpolicy="no-referrer">` : '★';
+    const build = () => sponsors.map(s => `<div class="sponsor-item"><div class="sponsor-mark" style="width:72px;height:72px;border-radius:14px;border-style:solid;overflow:hidden;padding:6px;box-sizing:border-box">${mark(s)}</div><div class="sponsor-name">${esc(s.name)}</div></div>`).join('');
     track.innerHTML = build() + build();
   }
   function renderTicker(){
@@ -1389,6 +1389,7 @@ section.block{padding-top:44px;padding-bottom:64px}
     renderHero();
     renderTicker();
     renderHomeNews();
+    renderSponsors();
     renderMainNav();
     renderNavAuth();
     renderResumen();
