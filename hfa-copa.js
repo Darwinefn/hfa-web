@@ -16,9 +16,9 @@
   var cups = [], selectedId = null;
   var pubMode = null, pubTab = null, pubTabFor = null, pubGroup = 'all', pubDiv = 'all', pubOnly = null, pubHost = null;
   var admTab = null, admTabFor = null;
-  var DRAFT0 = { name: '', ids: [], order: 'random', format: 'grupos', groups: 2, q: 2, dbl: false, divs: ['1'], logo: '' };
+  var DRAFT0 = { name: '', ids: [], order: 'random', format: 'grupos', groups: 2, q: 2, dbl: false, divs: ['1'], logo: '', manual: {} };
   var draft = JSON.parse(JSON.stringify(DRAFT0));
-  var showForm = false, adminHost = null;
+  var showForm = false, adminHost = null, editG = null;
 
   /* ---------- utilidades ---------- */
   function app() { return window.hfaApp; }
@@ -46,6 +46,31 @@
   function cupHasDiv(c, d) { var ds = cupDivs(c); return d === '' ? !ds.length : ds.indexOf(String(d)) > -1; }
   function divLabel(c) { var ds = cupDivs(c); return ds.length ? ds.map(function (d) { return d + 'D'; }).join('+') : 'Mixta'; }
   function logoSrc(u) { u = String(u || '').trim(); return /^(https?:\/\/|data:image\/)/i.test(u) ? u : ''; }
+  /* Sube una imagen desde el dispositivo y la reduce (máx. 256 px, conserva transparencia) para guardarla con la copa. */
+  function fileToLogo(file) {
+    return new Promise(function (resolve, reject) {
+      if (!file || !/^image\//i.test(file.type)) { reject(new Error('Elige un archivo de imagen (PNG, JPG, WEBP, GIF o SVG).')); return; }
+      if (file.size > 8 * 1024 * 1024) { reject(new Error('La imagen es demasiado grande (máx. 8 MB).')); return; }
+      var fr = new FileReader();
+      fr.onerror = function () { reject(new Error('No se pudo leer la imagen.')); };
+      fr.onload = function () {
+        var img = new Image();
+        img.onerror = function () { reject(new Error('No se pudo abrir la imagen.')); };
+        img.onload = function () {
+          function make(max) {
+            var w = img.naturalWidth || max, h = img.naturalHeight || max, k = Math.min(1, max / Math.max(w, h));
+            var cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(w * k)); cv.height = Math.max(1, Math.round(h * k));
+            cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+            return cv.toDataURL('image/png');
+          }
+          var out = make(256); if (out.length > 180000) out = make(160);
+          resolve(out);
+        };
+        img.src = fr.result;
+      };
+      fr.readAsDataURL(file);
+    });
+  }
   function logoImg(c, cls) { var u = logoSrc(c && c.logo); return u ? '<img class="' + (cls || 'cup-logo') + '" src="' + esc(u) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'">' : ''; }
   function divTag(c) { return '<b class="cup-div">' + divLabel(c) + '</b>'; }
   var ALLDIVS = ['1', '2', '3', '4', ''];
@@ -119,6 +144,15 @@
     }
     return groups;
   }
+  /* reparto manual: map = { idEquipo: indiceGrupo } → { parts: [[ids]...], un: [ids sin grupo] } */
+  function manualParts(ids, map, G) {
+    var parts = [], un = [], i; for (i = 0; i < G; i++) parts.push([]);
+    (ids || []).forEach(function (id) {
+      var g = map ? map[id] : null;
+      if (g !== null && g !== undefined && g !== '' && +g >= 0 && +g < G) parts[+g].push(id); else un.push(id);
+    });
+    return { parts: parts, un: un };
+  }
   function roundRobin(ids) {
     var arr = ids.slice(), rounds = [], r, i;
     if (arr.length % 2) arr.push(null);
@@ -141,10 +175,10 @@
     return fx;
   }
   /* (re)genera la estructura de una copa a partir de sus equipos y opciones */
-  function structure(cup, ids, order) {
+  function structure(cup, ids, order, manual) {
     cup.teamIds = ids;
     if (cup.format === 'grupos') {
-      var G = cup.G, parts = distribute(ids, G, order);
+      var G = cup.G, parts = order === 'manual' ? manualParts(ids, manual, G).parts : distribute(ids, G, order);
       cup.groups = parts.map(function (arr, i) { return { id: 'g' + i, name: groupName(i), teamIds: arr }; });
       cup.fixtures = makeFixtures(cup.groups, cup.dbl);
       cup.rounds = buildGroupRounds(G, cup.q);
@@ -393,6 +427,7 @@
     '.cup-tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}.cup-tcard{position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px;min-width:0;border:1px solid var(--border);border-radius:12px;background:var(--panel);color:var(--text-hi);text-align:left;cursor:pointer}.cup-tcard:hover{border-color:var(--green-dim)}.cup-tcard .cup-crest{width:34px;height:34px;flex-basis:34px}.cup-tn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 13px Inter,sans-serif}' +
     '.cup-tcard.on{border-color:var(--green);background:rgba(52,232,143,.12)}.cup-tcard.on .cup-div{background:var(--green);color:#05130c;border-color:var(--green)}.cup-chk{position:absolute;top:-7px;right:-7px;display:grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--green);color:#05130c;font:700 11px Oswald,sans-serif;font-style:normal}' +
     '.cup-divbar{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.cup-divbar button{padding:7px 16px;border-radius:999px;border:1px solid var(--border);background:var(--panel);color:var(--text-mid);font:700 12px Oswald,sans-serif;letter-spacing:.06em;cursor:pointer}.cup-divbar button.on{background:var(--green);border-color:var(--green);color:#05130c}' +
+    '.cup-agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin:0 0 12px}.cup-arow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:var(--panel)}.cup-arow-t{display:flex;align-items:center;gap:8px;min-width:0;font:600 13px Inter,sans-serif;color:var(--text-hi)}.cup-arow-t span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cup-arow select{width:auto;min-width:112px;flex:0 0 auto}.cup-gcount{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}.cup-gcount span{padding:5px 12px;border-radius:999px;border:1px solid var(--border);background:var(--panel);font:600 12px Inter,sans-serif;color:var(--text-mid)}.cup-gcount span.bad{border-color:#ff7a7a;color:#ff9a9a}' +
     '.cup-hero-ic.has-logo{background:transparent;border-color:transparent;font-size:0;padding:0;width:64px;height:64px;flex-basis:64px}.cup-hero-ic .cup-logo{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.35))}.cup-chip .cup-logo-sm{width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:6px}.cup-logo-row{display:flex;align-items:center;gap:10px;margin-top:8px}.cup-logo-prev{display:grid;place-items:center;width:46px;height:46px;flex:0 0 46px;border:1px dashed var(--border);border-radius:12px;background:var(--panel-2);font-size:20px;overflow:hidden}.cup-logo-prev img{width:100%;height:100%;object-fit:contain}' +
     '.cup-hero h3 .cup-div{vertical-align:middle;margin-left:6px;font-size:12px}.cup-chip .cup-div{margin-right:4px;font-size:9px}' +
     '.cup-pick{padding:6px 12px 6px 6px;gap:8px}.cup-pick .cup-crest{width:26px;height:26px;flex-basis:26px}.cup-pn{min-width:0;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
@@ -533,7 +568,12 @@
     var n = draft.ids.length, msg = '', ok = true, html = '';
     if (n < 2) { ok = false; msg = 'Elige al menos 2 equipos.'; }
     if (n > 32) { ok = false; msg = 'El máximo son 32 equipos.'; }
-    if (draft.format === 'grupos') {
+    if (draft.format === 'grupos' && draft.order === 'manual') {
+      var mp = manualParts(draft.ids, draft.manual, draft.groups), mq = draft.groups * draft.q;
+      if (ok && mp.un.length) { ok = false; msg = 'Asigna grupo a ' + mp.un.length + ' equipo' + (mp.un.length === 1 ? '' : 's') + ' que faltan.'; }
+      if (ok) mp.parts.forEach(function (arr, i) { if (ok && arr.length < draft.q + 1) { ok = false; msg = groupName(i) + ' tiene ' + arr.length + ' equipo' + (arr.length === 1 ? '' : 's') + ' y necesita al menos ' + (draft.q + 1) + '.'; } });
+      if (ok) { var msz = pow2(mq); html = '<b>' + n + '</b> equipos en <b>' + draft.groups + ' grupos manuales</b> (' + mp.parts.map(function (a, i) { return groupName(i).replace('Grupo ', '') + ': ' + a.length; }).join(' · ') + ') · ' + (draft.dbl ? 'ida y vuelta' : 'solo ida') + '.<br>Clasifican <b>' + mq + '</b> a eliminatorias → bracket de <b>' + msz + '</b>' + (msz > mq ? ' (' + (msz - mq) + ' BYE)' : '') + '.'; }
+    } else if (draft.format === 'grupos') {
       var G = draft.groups, base = Math.floor(n / G), extra = n % G, qual = G * draft.q;
       if (ok && base < draft.q + 1) { ok = false; msg = 'Con ' + G + ' grupos y ' + draft.q + ' clasificado(s) por grupo necesitas al menos ' + (G * (draft.q + 1)) + ' equipos.'; }
       if (ok) {
@@ -545,6 +585,13 @@
       html = '<b>' + n + '</b> equipos → bracket de <b>' + s2 + '</b>' + (s2 > n ? ' (' + (s2 - n) + ' BYE)' : '') + '.';
     }
     return { ok: ok, msg: msg, html: ok ? html : msg };
+  }
+  function assignHTML(ids, map, G, attr) {
+    var mp = manualParts(ids, map, G);
+    var opts = function (sel) { var o = '<option value="">— grupo —</option>'; for (var i = 0; i < G; i++) o += '<option value="' + i + '"' + (sel !== undefined && sel !== null && sel !== '' && String(sel) === String(i) ? ' selected' : '') + '>' + groupName(i) + '</option>'; return o; };
+    var counts = '<div class="cup-gcount">' + mp.parts.map(function (a, i) { return '<span class="' + (a.length ? '' : 'bad') + '"><b>' + groupName(i) + '</b> · ' + a.length + '</span>'; }).join('') + (mp.un.length ? '<span class="bad">Sin grupo · ' + mp.un.length + '</span>' : '') + '</div>';
+    var rows = ids.map(function (id) { var t = team(id); return '<label class="cup-arow"><span class="cup-arow-t">' + badge(t) + '<span>' + esc(t ? t.name : 'Equipo') + '</span></span><select class="input" ' + attr + '="' + esc(id) + '">' + opts(map ? map[id] : null) + '</select></label>'; }).join('');
+    return counts + '<div class="cup-agrid">' + rows + '</div>';
   }
   function shownTeams() {
     return teams().filter(function (t) { return draft.divs.indexOf(divCode(t)) > -1; });
@@ -568,7 +615,7 @@
     return '<div class="cup-form"><h4>Nueva copa</h4><div class="cup-note">Crea la copa de una o varias divisiones en tres pasos. El bracket se rellena solo con los clasificados de cada grupo.</div>' +
       '<div class="cup-step"><b>1</b>División <small style="font-weight:500;opacity:.7">(puedes elegir varias)</small></div><div class="cup-dtabs">' + tabs + '</div>' +
       '<div class="cup-step"><b>2</b>Nombre y formato</div><div class="cup-row"><input class="input" id="cupNewName" placeholder="Nombre de la copa (ej. Copa HFA ' + esc(dlabel) + ')" maxlength="60" value="' + esc(draft.name) + '"></div>' +
-      '<div class="cup-logo-row"><span class="cup-logo-prev" id="cupLogoPrev">' + (logoSrc(draft.logo) ? '<img src="' + esc(logoSrc(draft.logo)) + '" alt="" referrerpolicy="no-referrer">' : '🖼️') + '</span><input class="input" id="cupNewLogo" placeholder="Logo de la copa (URL de imagen, opcional)" value="' + esc(draft.logo) + '" style="flex:1 1 220px"></div>' +
+      '<div class="cup-logo-row"><span class="cup-logo-prev" id="cupLogoPrev">' + (logoSrc(draft.logo) ? '<img src="' + esc(logoSrc(draft.logo)) + '" alt="">' : '🖼️') + '</span><button type="button" class="btn" data-cup-act="pick-logo">⬆ Subir logo</button>' + (logoSrc(draft.logo) ? '<button type="button" class="btn" data-cup-act="clear-logo">Quitar</button>' : '') + '<small class="cup-note" style="margin:0">Opcional · imagen de tu dispositivo</small><input type="file" id="cupLogoFile" accept="image/*" hidden></div>' +
       '<div class="cup-formats"><button type="button" class="cup-fmt' + (g ? ' on' : '') + '" data-cup-act="format" data-v="grupos"><b>🏟️ Fase de grupos + eliminatorias</b>Los equipos juegan en grupos y los mejores pasan al bracket.</button><button type="button" class="cup-fmt' + (!g ? ' on' : '') + '" data-cup-act="format" data-v="directo"><b>⚔️ Solo eliminatorias</b>Bracket de eliminación directa desde el primer partido.</button></div>' +
       '<div class="cup-step"><b>3</b>Equipos de ' + esc(dlabel) + '</div>' +
       '<div class="cup-bar" style="margin:0 0 10px"><span class="cup-note"><b>' + sel + '</b> de ' + shown.length + ' elegidos</span><span class="cup-actions"><button type="button" class="btn" data-cup-act="sel-all">Elegir todos</button><button type="button" class="btn" data-cup-act="sel-none">Quitar todos</button></span></div>' +
@@ -577,7 +624,8 @@
       (g ? '<div class="cup-row"><span class="cup-lab">Número de grupos</span>' + seg('groups', draft.groups, gopts) + '</div>' +
         '<div class="cup-row"><span class="cup-lab">Clasifican por grupo</span>' + seg('q', draft.q, [[1, '1 (solo el primero)'], [2, '2 (primero y segundo)']]) + '</div>' +
         '<div class="cup-row"><span class="cup-lab">Partidos del grupo</span>' + seg('dbl', draft.dbl ? 1 : 0, [[0, 'Solo ida'], [1, 'Ida y vuelta']]) + '</div>' : '') +
-      '<div class="cup-row"><span class="cup-lab">Sorteo</span>' + seg('order', draft.order, [['random', '🎲 Aleatorio'], ['order', g ? '① Cabezas de serie (orden elegido)' : '① Orden en que los elegí']]) + '</div>' +
+      '<div class="cup-row"><span class="cup-lab">Sorteo</span>' + seg('order', (draft.order === 'manual' && !g) ? 'order' : draft.order, [['random', '🎲 Aleatorio'], ['order', g ? '① Cabezas de serie (orden elegido)' : '① Orden en que los elegí']].concat(g ? [['manual', '✍️ Grupos manuales']] : [])) + '</div>' +
+      (g && draft.order === 'manual' ? '<div class="cup-bar" style="margin:6px 0 10px"><span class="cup-note"><b>Elige el grupo de cada equipo</b> (los equipos son los que marcaste en el paso 3).</span><span class="cup-actions"><button type="button" class="btn" data-cup-act="m-fill">🎲 Repartir los que faltan</button><button type="button" class="btn" data-cup-act="m-clear">Limpiar</button></span></div>' + (draft.ids.length ? assignHTML(draft.ids, draft.manual, draft.groups, 'data-cup-man') : '<div class="cup-empty">Primero elige los equipos en el paso 3.</div>') : '') +
       '<div class="cup-sum' + (info.ok ? '' : ' bad') + '">' + info.html + '</div>' +
       '<div class="cup-bar"><span></span><div class="cup-actions">' + (cups.length ? '<button type="button" class="btn" data-cup-act="cancel-new">Cancelar</button>' : '') + '<button type="button" class="btn btn-primary" data-cup-act="create"' + (info.ok ? '' : ' disabled') + '>Crear copa de ' + esc(dlabel) + '</button></div></div></div>';
   }
@@ -634,7 +682,8 @@
       html += heroHTML(cup, res);
       html += '<div class="cup-bar" style="margin-top:0"><span class="cup-note">Gestiona grupos, calendario y eliminatorias de esta copa.</span><div class="cup-actions">' +
         (gd && !gd.complete ? '<button type="button" class="btn" data-cup-act="close-groups">Cerrar fase de grupos</button>' : (gd && cup.closed ? '<button type="button" class="btn" data-cup-act="open-groups">Reabrir fase de grupos</button>' : '')) +
-        '<button type="button" class="btn btn-primary" data-cup-act="go-matches">📅 Crear partidos en Jornadas y partidos</button><button type="button" class="btn" data-cup-act="logo">🖼️ ' + (logoSrc(cup.logo) ? 'Cambiar logo' : 'Añadir logo') + '</button><button type="button" class="btn" data-cup-act="reshuffle">🎲 Resortear</button><button type="button" class="btn cup-danger" data-cup-act="delete">Eliminar copa</button></div></div>';
+        '<button type="button" class="btn btn-primary" data-cup-act="go-matches">📅 Crear partidos en Jornadas y partidos</button><button type="button" class="btn" data-cup-act="logo">🖼️ ' + (logoSrc(cup.logo) ? 'Cambiar logo' : 'Subir logo') + '</button>' + (logoSrc(cup.logo) ? '<button type="button" class="btn" data-cup-act="logo-del">Quitar logo</button>' : '') + '<button type="button" class="btn" data-cup-act="reshuffle">🎲 Resortear</button>' + (cup.format === 'grupos' ? '<button type="button" class="btn" data-cup-act="edit-groups">✍️ Editar grupos</button>' : '') + '<button type="button" class="btn cup-danger" data-cup-act="delete">Eliminar copa</button></div></div>';
+      if (editG && same(editG.cupId, cup.id) && cup.format === 'grupos') html += '<div class="cup-form"><h4>✍️ Editar grupos</h4><div class="cup-note">Mueve cada equipo a su grupo. Al guardar se regenera el calendario de grupos y se borran los resultados y partidos creados de esta copa.</div>' + assignHTML(cup.teamIds, editG.map, cup.G, 'data-cup-eman') + '<div class="cup-bar"><span></span><div class="cup-actions"><button type="button" class="btn" data-cup-act="edit-groups-cancel">Cancelar</button><button type="button" class="btn btn-primary" data-cup-act="edit-groups-save">Guardar grupos</button></div></div></div>';
       var tabs = tabsFor(cup, res);
       if (admTabFor !== cup.id || !tabs.some(function (t) { return t[0] === admTab; })) { admTabFor = cup.id; admTab = gd && !gd.complete ? 'grupos' : 'elim'; }
       if (tabs.length > 1) html += '<div class="cup-tabs">' + tabs.map(function (t) { return '<button type="button" class="cup-tab' + (admTab === t[0] ? ' active' : '') + '" data-cup-tab="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div>';
@@ -798,6 +847,26 @@
       });
       renderAdmin(); return;
     }
+    if (act === 'm-clear') { draft.manual = {}; renderAdmin(); return; }
+    if (act === 'm-fill') {
+      var fp = manualParts(draft.ids, draft.manual, draft.groups);
+      shuffle(fp.un).forEach(function (id) { var gi = 0; fp.parts.forEach(function (a, i) { if (a.length < fp.parts[gi].length) gi = i; }); fp.parts[gi].push(id); draft.manual[id] = gi; });
+      renderAdmin(); return;
+    }
+    if (act === 'edit-groups' && cup && cup.format === 'grupos') {
+      var em = {}; cup.groups.forEach(function (g, i) { g.teamIds.forEach(function (id) { em[id] = i; }); });
+      editG = { cupId: cup.id, map: em }; renderAdmin(); return;
+    }
+    if (act === 'edit-groups-cancel') { editG = null; renderAdmin(); return; }
+    if (act === 'edit-groups-save' && cup && editG && same(editG.cupId, cup.id)) {
+      var ep = manualParts(cup.teamIds, editG.map, cup.G), bad = '';
+      if (ep.un.length) bad = 'Asigna grupo a ' + ep.un.length + ' equipo(s) que faltan.';
+      else ep.parts.forEach(function (a, i) { if (!bad && a.length < cup.q + 1) bad = groupName(i) + ' tiene ' + a.length + ' equipo(s) y necesita al menos ' + (cup.q + 1) + '.'; });
+      if (bad) { alert(bad); return; }
+      if (!confirm('Se regenerarán los grupos y su calendario. Se borrarán los resultados y los partidos creados de esta copa. ¿Guardar?')) return;
+      structure(cup, cup.teamIds, 'manual', editG.map); editG = null;
+      resetCupMatches(cup).then(done); return;
+    }
     if (act === 'order') { draft.order = v; renderAdmin(); return; }
     if (act === 'format') { draft.format = v; renderAdmin(); return; }
     if (act === 'groups') { draft.groups = +v; renderAdmin(); return; }
@@ -813,7 +882,7 @@
       if (logoSrc(draft.logo)) c.logo = logoSrc(draft.logo);
       c.tournamentId = 'copa-' + c.id;
       if (c.format === 'grupos') { c.G = draft.groups; c.q = draft.q; c.dbl = draft.dbl; }
-      structure(c, draft.ids.slice(), draft.order);
+      structure(c, draft.ids.slice(), (draft.order === 'manual' && c.format !== 'grupos') ? 'order' : draft.order, draft.manual);
       cups.push(c); selectedId = c.id; showForm = false; draft = JSON.parse(JSON.stringify(DRAFT0));
       st.tournaments.push({ id: c.tournamentId, name: c.name, type: 'copa', cupId: c.id, division: c.division, divisions: c.divisions });
       app().setJSON('tournaments', st.tournaments).then(done).then(function () { goMatches(c.id); });
@@ -831,14 +900,17 @@
       structure(cup, shuffle(cup.teamIds), 'random');
       resetCupMatches(cup).then(done); return;
     }
+    if (act === 'pick-logo') { var lf = adminHost && adminHost.querySelector('#cupLogoFile'); if (lf) lf.click(); return; }
+    if (act === 'clear-logo') { draft.logo = ''; renderAdmin(); return; }
     if (act === 'logo') {
-      var nu = prompt('URL del logo de la copa (deja vacío para quitarlo):', cup.logo || '');
-      if (nu === null) return;
-      nu = nu.trim();
-      if (nu && !logoSrc(nu)) { alert('La URL debe empezar por http:// o https://'); return; }
-      if (nu) cup.logo = nu; else delete cup.logo;
-      done(); return;
+      var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+      inp.onchange = function () {
+        var f = inp.files && inp.files[0]; if (!f) return;
+        fileToLogo(f).then(function (u) { cup.logo = u; done(); }, function (er) { alert(er.message); });
+      };
+      inp.click(); return;
     }
+    if (act === 'logo-del') { delete cup.logo; done(); return; }
     if (act === 'delete') {
       if (!confirm('¿Eliminar la copa “' + cup.name + '”? Se borrarán también su torneo y todos sus partidos.')) return;
       cups = cups.filter(function (x) { return x !== cup; });
@@ -916,6 +988,8 @@
   function onAdminChange(e) {
     var t = e.target, cup = current();
     if (t.matches('select[data-cup-act="pick"]')) { selectedId = t.value; showForm = false; renderAdmin(); return; }
+    if (t.matches('select[data-cup-man]')) { var mk = t.getAttribute('data-cup-man'); if (t.value === '') delete draft.manual[mk]; else draft.manual[mk] = +t.value; renderAdmin(); return; }
+    if (t.matches('select[data-cup-eman]') && editG) { var ek = t.getAttribute('data-cup-eman'); if (t.value === '') delete editG.map[ek]; else editG.map[ek] = +t.value; renderAdmin(); return; }
     if (t.matches('[data-cup-team]') && cup) {
       var card = t.closest('.cup-adm-tie'), tie = cup.rounds[+card.dataset.r][+card.dataset.k], side = t.getAttribute('data-cup-team');
       tie[side] = t.value === '' ? null : (team(t.value) ? team(t.value).id : t.value);
@@ -929,13 +1003,12 @@
       el.__cupBound = true;
       el.addEventListener('click', onAdminClick);
       el.addEventListener('change', onAdminChange);
-      el.addEventListener('input', function (e) {
-        if (e.target.id === 'cupNewName') draft.name = e.target.value;
-        if (e.target.id === 'cupNewLogo') {
-          draft.logo = e.target.value.trim();
-          var pv = el.querySelector('#cupLogoPrev'), u = logoSrc(draft.logo);
-          if (pv) { pv.textContent = ''; if (u) { var im = document.createElement('img'); im.alt = ''; im.referrerPolicy = 'no-referrer'; im.onerror = function () { pv.textContent = '⚠️'; }; im.src = u; pv.appendChild(im); } else pv.textContent = draft.logo ? '⚠️' : '🖼️'; }
-        }
+      el.addEventListener('input', function (e) { if (e.target.id === 'cupNewName') draft.name = e.target.value; });
+      el.addEventListener('change', function (e) {
+        if (e.target.id !== 'cupLogoFile') return;
+        var f = e.target.files && e.target.files[0]; e.target.value = '';
+        if (!f) return;
+        fileToLogo(f).then(function (u) { draft.logo = u; renderAdmin(); }, function (er) { alert(er.message); });
       });
     }
     el.innerHTML = '<div class="cup-note">Cargando copas…</div>';
