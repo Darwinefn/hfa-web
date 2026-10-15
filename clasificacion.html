@@ -78,12 +78,12 @@
 <body>
 <script src="loading.js"></script>
 <header>
-  <a class="brand" href="afh-liga.html"><div class="brand-mark" aria-label="Logo HFA"></div><div class="brand-name">Habbo<span> </span>Fútbol<span> Asociación</span></div></a>
+  <a class="brand" href="/"><div class="brand-mark" aria-label="Logo HFA"></div><div class="brand-name">Habbo<span> </span>Fútbol<span> Asociación</span></div></a>
   <nav id="classificationNav"></nav>
 </header>
 <main>
   <div class="eyebrow">Competición oficial</div>
-  <div class="title-row"><h1 class="title">Clasificación</h1><a class="back" href="afh-liga.html">← Volver al inicio</a></div>
+  <div class="title-row"><h1 class="title">Clasificación</h1><a class="back" href="/">← Volver al inicio</a></div>
   <p class="intro" id="introText">Consulta la posición de cada equipo, sus partidos jugados, la diferencia de goles y los puntos acumulados en cada división.</p>
   <div class="tabs" id="modeTabs" hidden></div>
   <div class="tabs" id="tournamentTabs" hidden></div>
@@ -103,8 +103,8 @@
   function renderNav(){
     let session=null;try{session=JSON.parse(localStorage.getItem('hfa:session')||'null')}catch(error){}
     const links=session?
-      [['afh-liga.html','Inicio',''],['seccion.html?view=comunidad','Comunidad','comunidad'],['clasificacion.html','Clasificación','clasificacion'],['seccion.html?view=torneos','Torneos','torneos'],['seccion.html?view=estadisticas','Estadísticas','estadisticas'],['seccion.html?view=partidos','Partidos','partidos'],['seccion.html?view=album','Álbum','album'],['seccion.html?view=cuenta','Cuenta','cuenta'],['seccion.html?view=buzon','Buzón','buzon'],['seccion.html?view=admin','Admin','admin']]:
-      [['afh-liga.html','Inicio',''],['seccion.html?view=comunidad','Comunidad','comunidad'],['clasificacion.html','Clasificación','clasificacion'],['seccion.html?view=torneos','Torneos','torneos'],['seccion.html?view=estadisticas','Estadísticas','estadisticas'],['seccion.html?view=partidos','Partidos','partidos'],['seccion.html?view=album','Álbum','album'],['seccion.html?view=cuenta','Cuenta','cuenta'],['seccion.html?view=buzon','Buzón','buzon']];
+      [['/','Inicio',''],['seccion.html?view=comunidad','Comunidad','comunidad'],['clasificacion.html','Clasificación','clasificacion'],['seccion.html?view=torneos','Torneos','torneos'],['seccion.html?view=estadisticas','Estadísticas','estadisticas'],['seccion.html?view=partidos','Partidos','partidos'],['seccion.html?view=album','Álbum','album'],['seccion.html?view=cuenta','Cuenta','cuenta'],['seccion.html?view=buzon','Buzón','buzon'],['seccion.html?view=admin','Admin','admin']]:
+      [['/','Inicio',''],['seccion.html?view=comunidad','Comunidad','comunidad'],['clasificacion.html','Clasificación','clasificacion'],['seccion.html?view=torneos','Torneos','torneos'],['seccion.html?view=estadisticas','Estadísticas','estadisticas'],['seccion.html?view=partidos','Partidos','partidos'],['seccion.html?view=album','Álbum','album'],['seccion.html?view=cuenta','Cuenta','cuenta'],['seccion.html?view=buzon','Buzón','buzon']];
     const communityOpen = false;
     const menu = links.map(item => {
       if (item[1] === 'Comunidad') {

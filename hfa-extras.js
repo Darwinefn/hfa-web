@@ -610,7 +610,7 @@
   /* ---------- Cerrar sesión (funciona en todas las secciones) + caras de los avatares ---------- */
   function doLogout() {
     try { ['hfa:session', 'hfa:adminAuth', 'hfa:loginWelcome'].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}
-    location.href = 'afh-liga.html';
+    location.href = '/';
   }
   document.addEventListener('click', function (e) {
     var t = e.target && e.target.closest ? e.target.closest('#logoutButton,#navLogoutBtn,[data-hfa-logout]') : null;
