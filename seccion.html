@@ -1113,6 +1113,9 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     return {home,draw:drawPct,away,low:(expectedA+expectedB-0.8).toFixed(1),high:(expectedA+expectedB+1.8).toFixed(1),hit};
   }
   function activeTournament(){return state.tournaments.find(item=>item.id===activeTournamentId)||state.tournaments[0]}
+  /* Torneo finalizado: sus partidos pasan de "estadística actual" a "trayectoria" */
+  function hfaTournamentFinished(id){const t=state.tournaments.find(item=>String(item.id)===String(id));return !!(t&&t.finished)}
+  function hfaActiveTournamentFinished(){const t=activeTournament();return !!(t&&t.finished)}
   /* ---- Sincronía torneo activo ⇄ copa ⇄ gestión de partidos ⇄ actas ---- */
   function inActiveTournament(m){if(!activeTournamentId)return true;if(!m.tournamentId)return String(m.division||'').toLowerCase()!=='copa'&&!hfaCupOfTournament(activeTournament());return String(m.tournamentId)===String(activeTournamentId)}
   function hfaMatchDivKey(m){return String(m.division||'').toLowerCase()==='copa'?'copa':divisionCode(m.division||team(m.teamAId)?.division||team(m.teamBId)?.division)}
@@ -1157,6 +1160,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
 
     const matches=state.matches.filter(match=>{
       if(!match.finished) return false;
+      if(hfaActiveTournamentFinished()) return false;
       if(match.tournamentId && activeTournamentId && match.tournamentId!==activeTournamentId) return false;
       if(divisionFilter!=='all'){
         const matchDivision=String(match.division||team(match.teamAId)?.division||team(match.teamBId)?.division||'');
@@ -1205,7 +1209,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   function hfaLogoSrc(u){u=String(u||'').trim();return /^(https?:\/\/|data:image\/)/i.test(u)?u:''}
   function hfaTorneoCard(tid,name,logo,label,emoji,active){
     const src=hfaLogoSrc(logo);
-    return '<button class="panel-card" style="text-align:left;border:0;color:inherit;display:flex;align-items:center;gap:14px" data-goto-class="'+profileText(tid)+'"><span style="flex:0 0 64px;width:64px;height:64px;display:grid;place-items:center;font-size:34px">'+(src?'<img src="'+src+'" alt="" style="width:100%;height:100%;object-fit:contain" referrerpolicy="no-referrer" onerror="this.outerHTML=\''+emoji+'\'">':emoji)+'</span><span><div class="panel-label">'+label+(active?' · activo':'')+'</div><div class="match-name">'+profileText(name)+'</div><div style="font-size:12px;color:var(--text-low);margin-top:4px">Ver clasificación →</div></span></button>';
+    return '<button class="panel-card" style="text-align:left;border:0;color:inherit;display:flex;align-items:center;gap:14px" data-goto-class="'+profileText(tid)+'"><span style="flex:0 0 64px;width:64px;height:64px;display:grid;place-items:center;font-size:34px">'+(src?'<img src="'+src+'" alt="" style="width:100%;height:100%;object-fit:contain" referrerpolicy="no-referrer" onerror="this.outerHTML=\''+emoji+'\'">':emoji)+'</span><span><div class="panel-label">'+label+(active?' · activo':'')+(hfaTournamentFinished(tid)?' · 🏁 finalizado':'')+'</div><div class="match-name">'+profileText(name)+'</div><div style="font-size:12px;color:var(--text-low);margin-top:4px">Ver clasificación →</div></span></button>';
   }
   function torneos(){
     const cups=hfaCups(),cupTids=new Set(cups.map(c=>String(c.tournamentId)));
@@ -1715,10 +1719,18 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     return {id,name,isCup};
   }
   /* Estadísticas de por vida: suma TODOS los torneos (ligas y copas); byTournament da la trayectoria torneo a torneo */
-  function profileStatsFor(username){
+  function profileStatsFor(username,scope){
+    /* scope: 'all' (por defecto) · 'current' = solo torneo activo no finalizado · 'career' = solo torneos finalizados */
     const key=toPlayerKey(username),result={goals:0,assists:0,mvps:0,mentions:0,matches:0,seasons:new Map(),byTournament:new Map()};
     const ensure=match=>{const info=hfaMatchTournament(match);if(!result.byTournament.has(info.id))result.byTournament.set(info.id,{id:info.id,name:info.name,isCup:info.isCup,goals:0,assists:0,mvps:0,mentions:0,matches:0,teams:new Set(),order:0});const row=result.byTournament.get(info.id);row.order=Math.max(row.order,Number(match.date?Date.parse(match.date)||0:0)||Number(match.createdAt)||0);return row};
     state.matches.filter(match=>match.finished).forEach(match=>{
+      if(scope==='current'||scope==='career'){
+        const info=hfaMatchTournament(match),at=activeTournament();
+        const legacy=info.id==='sin-torneo',tid=legacy?(at?String(at.id):''):info.id;
+        const finished=hfaTournamentFinished(tid);
+        if(scope==='current'&&(finished||!at||tid!==String(at.id)))return;
+        if(scope==='career'&&!finished)return;
+      }
       const inA=(match.lineupA||[]).map(playerName).filter(Boolean).some(n=>toPlayerKey(n)===key),inB=(match.lineupB||[]).map(playerName).filter(Boolean).some(n=>toPlayerKey(n)===key);
       const myGoals=(match.goals||[]).filter(item=>toPlayerKey(item.player)===key).length,myAssists=(match.goals||[]).filter(item=>toPlayerKey(item.assist)===key).length,isMvp=!!match.mvp&&toPlayerKey(match.mvp)===key,myMentions=(match.mentions||[]).filter(item=>toPlayerKey(item)===key).length;
       const involved=inA||inB||myGoals>0||myAssists>0||isMvp;
@@ -1732,10 +1744,10 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     return result;
   }
   function hfaCareerHtml(username){
-    const st=profileStatsFor(username),rows=[...st.byTournament.values()].sort((a,b)=>b.order-a.order);
-    if(!rows.length)return '<div class="muted">Todavía no hay torneos jugados con partidos finalizados.</div>';
+    const st=profileStatsFor(username,'career'),rows=[...st.byTournament.values()].sort((a,b)=>b.order-a.order);
+    if(!rows.length)return '<div class="muted">Todavía no hay torneos finalizados en tu trayectoria.</div>';
     const cell='padding:8px 6px;text-align:center;border-top:1px solid var(--border)';
-    return '<div class="table-wrap"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr style="color:var(--text-low);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em"><th style="padding:6px;text-align:left">Torneo</th><th>PJ</th><th>⚽</th><th>🅰</th><th>🏆 MVP</th><th>⭐</th></tr></thead><tbody>'+rows.map(r=>'<tr><td style="padding:8px 6px;text-align:left;border-top:1px solid var(--border)"><b>'+(r.isCup?'🏆 ':'')+profileText(r.name)+'</b>'+(r.teams.size?'<div class="muted" style="font-size:11px">'+[...r.teams].map(profileText).join(', ')+'</div>':'')+'</td><td style="'+cell+'">'+r.matches+'</td><td style="'+cell+'">'+r.goals+'</td><td style="'+cell+'">'+r.assists+'</td><td style="'+cell+'">'+r.mvps+'</td><td style="'+cell+'">'+r.mentions+'</td></tr>').join('')+'</tbody><tfoot><tr style="font-weight:700"><td style="padding:8px 6px;text-align:left;border-top:2px solid var(--border)">De por vida</td><td style="'+cell+'">'+st.matches+'</td><td style="'+cell+'">'+st.goals+'</td><td style="'+cell+'">'+st.assists+'</td><td style="'+cell+'">'+st.mvps+'</td><td style="'+cell+'">'+st.mentions+'</td></tr></tfoot></table></div>';
+    return '<div class="table-wrap"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr style="color:var(--text-low);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em"><th style="padding:6px;text-align:left">Torneo</th><th>PJ</th><th>⚽</th><th>🅰</th><th>🏆 MVP</th><th>⭐</th></tr></thead><tbody>'+rows.map(r=>'<tr><td style="padding:8px 6px;text-align:left;border-top:1px solid var(--border)"><b>'+(r.isCup?'🏆 ':'')+profileText(r.name)+'</b>'+(r.teams.size?'<div class="muted" style="font-size:11px">'+[...r.teams].map(profileText).join(', ')+'</div>':'')+'</td><td style="'+cell+'">'+r.matches+'</td><td style="'+cell+'">'+r.goals+'</td><td style="'+cell+'">'+r.assists+'</td><td style="'+cell+'">'+r.mvps+'</td><td style="'+cell+'">'+r.mentions+'</td></tr>').join('')+'</tbody><tfoot><tr style="font-weight:700"><td style="padding:8px 6px;text-align:left;border-top:2px solid var(--border)">Total trayectoria</td><td style="'+cell+'">'+st.matches+'</td><td style="'+cell+'">'+st.goals+'</td><td style="'+cell+'">'+st.assists+'</td><td style="'+cell+'">'+st.mvps+'</td><td style="'+cell+'">'+st.mentions+'</td></tr></tfoot></table></div>';
   }
   function calculateGRL(username){
     const stats=profileStatsFor(username);
@@ -1782,7 +1794,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   async function hydrateProfile(){
     if(!session)return;
     const account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(session.username))||{};
-    const playerStats=profileStatsFor(session.username);
+    const playerStats=profileStatsFor(session.username,'current');
     const values={Goles:playerStats.goals,Asistencias:playerStats.assists,MVPs:playerStats.mvps,Partidos:playerStats.matches,'Pases clave':playerStats.assists,Puntuación:playerStats.goals+playerStats.assists+playerStats.mvps,'Rendimiento':playerStats.goals+playerStats.assists+playerStats.mvps+playerStats.mentions};
     document.querySelectorAll('.profile-metric-card,.profile-mini-metric').forEach(card=>{const label=card.querySelector('span')?.textContent.trim();if(label&&values[label]!==undefined)card.querySelector('strong').textContent=values[label]});
     const score=document.querySelector('.profile-total-score');if(score)score.textContent=calculateGRL(session.username);
@@ -2082,7 +2094,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     return '<div class="content-card" id="rosterManagement"><div class="admin-title">Buscar y agregar jugadores</div><div class="admin-section-note">Busca una cuenta registrada. Al seleccionarla verás sus divisiones y podrás elegir un equipo permitido.</div><label class="admin-team-filter-label" for="rosterPlayerSearch">Jugador registrado</label><input class="input" id="rosterPlayerSearch" type="search" placeholder="Buscar jugador por nombre"><div id="rosterPlayerResults" class="roster-player-results" aria-live="polite"></div><div class="admin-team-delete"><div class="admin-title">Eliminar equipo</div><label class="admin-team-filter-label" for="deleteTeamDivision">Busca por división y selecciona el equipo que quieres eliminar.</label><select class="input" id="deleteTeamDivision"><option value="">Selecciona una división</option>'+['1','2','3','4'].map(value=>'<option value="'+value+'">'+value+'D</option>').join('')+'</select><select class="input" id="deleteTeamSelect" disabled><option value="">Selecciona primero una división</option></select><button class="btn delete-team-button" type="button" data-delete-team disabled>🗑 Eliminar equipo seleccionado</button><span class="muted">Se eliminarán también sus partidos y ofertas pendientes; las cuentas de sus jugadores no se borrarán.</span></div></div>';
   }
   function ownerManagement(){const teamOptions=state.teams.length?state.teams.map(item=>'<option value="'+item.id+'">'+item.name+'</option>').join(''):'<option value="">No hay equipos</option>';const ownerOptions=accounts.filter(item=>item.role==='dueno'||item.role==='pendiente').map(item=>'<option value="'+item.username+'">'+item.username+'</option>').join('');return playerDivisionManagement()+rosterManagement()+tournamentManagement()+'<div class="content-card" id="ownerManagement"><div class="admin-title">Asignar dueño de equipo</div><select class="input" id="ownerTeam">'+teamOptions+'</select><select class="input" id="ownerAccount"><option value="">Selecciona una cuenta</option>'+ownerOptions+'</select><button class="btn btn-primary" id="assignOwner">Asignar dueño</button><div class="admin-list">El dueño asignado verá la sección Jugadores.</div></div>'}
-  function tournamentManagement(){const options=state.tournaments.map(item=>'<option value="'+profileText(item.id)+'" '+(item.id===activeTournamentId?'selected':'')+'>'+profileText(item.name)+'</option>').join(''),rows=state.tournaments.map(item=>'<div class="match-row"><div><div class="match-name">'+profileText(item.name)+(item.id===activeTournamentId?' · Activo':'')+'</div></div><button class="btn delete-team-button" type="button" data-delete-tournament="'+profileText(item.id)+'">Eliminar</button></div>').join('');return '<div class="content-card" id="tournamentManagement"><div class="admin-title">Crear y administrar torneos</div><div class="admin-section-note">Crea torneos, elige cuál queda activo y elimina los que ya no se usarán. Al eliminar un torneo también se eliminarán sus partidos asociados.</div><label class="admin-team-filter-label" for="activeTournamentSelect">Torneo activo</label><select class="input" id="activeTournamentSelect" '+(options?'':'disabled')+'>'+(options||'<option value="">No hay torneos</option>')+'</select><button class="btn" id="saveActiveTournament" '+(options?'':'disabled')+'>Usar torneo seleccionado</button><div class="admin-title" style="margin-top:20px">Crear torneo nuevo</div><input class="input" id="newTournamentName" placeholder="Nombre del torneo"><button class="btn btn-primary" id="createTournament">Crear torneo</button><div class="admin-title" style="margin-top:20px">Torneos existentes</div><div class="admin-list">'+(rows||'<div class="empty">Todavía no hay torneos.</div>')+'</div></div>'}
+  function tournamentManagement(){const options=state.tournaments.map(item=>'<option value="'+profileText(item.id)+'" '+(item.id===activeTournamentId?'selected':'')+'>'+profileText(item.name)+'</option>').join(''),rows=state.tournaments.map(item=>'<div class="match-row"><div><div class="match-name">'+profileText(item.name)+(item.id===activeTournamentId?' · Activo':'')+(item.finished?' · 🏁 Finalizado':'')+'</div></div><button class="btn" type="button" data-finish-tournament="'+profileText(item.id)+'">'+(item.finished?'Reabrir':'Finalizar')+'</button><button class="btn delete-team-button" type="button" data-delete-tournament="'+profileText(item.id)+'">Eliminar</button></div>').join('');return '<div class="content-card" id="tournamentManagement"><div class="admin-title">Crear y administrar torneos</div><div class="admin-section-note">Crea torneos, elige cuál queda activo, finaliza los que ya terminaron (sus estadísticas pasan a la trayectoria de cada jugador) y elimina los que ya no se usarán. Al eliminar un torneo también se eliminarán sus partidos asociados.</div><label class="admin-team-filter-label" for="activeTournamentSelect">Torneo activo</label><select class="input" id="activeTournamentSelect" '+(options?'':'disabled')+'>'+(options||'<option value="">No hay torneos</option>')+'</select><button class="btn" id="saveActiveTournament" '+(options?'':'disabled')+'>Usar torneo seleccionado</button><div class="admin-title" style="margin-top:20px">Crear torneo nuevo</div><input class="input" id="newTournamentName" placeholder="Nombre del torneo"><button class="btn btn-primary" id="createTournament">Crear torneo</button><div class="admin-title" style="margin-top:20px">Torneos existentes</div><div class="admin-list">'+(rows||'<div class="empty">Todavía no hay torneos.</div>')+'</div></div>'}
   const HFA_CONN={normal:{label:'Conexión normal',cls:'normal',icon:'✓'},exitlag:{label:'ExitLag / VPN probable',cls:'exitlag',icon:'⚡'},vpn:{label:'VPN detectada',cls:'vpn',icon:'🛡'}};
   function hfaLiveMinute(match){const t=Date.parse(match&&match.liveSince||'');if(!t)return '';return Math.max(0,Math.floor((Date.now()-t)/60000))+"'"}
   function hfaFace(name){return '<img class="live-face" src="https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(name||'')+'&size=l&headonly=1&direction=2&head_direction=2&gesture=sml&action=std&img_format=png" alt="" loading="lazy">'}
@@ -2884,6 +2896,27 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
         const tournament={id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),name};
         state.tournaments.push(tournament);hfaSetActiveTournament(tournament.id);
         await setJSON('tournaments',state.tournaments);localStorage.setItem('hfa:activeTournament',activeTournamentId);nav();content();
+        return;
+      }
+      const finishTournamentButton=event.target.closest('[data-finish-tournament]');
+      if(finishTournamentButton){
+        event.preventDefault();
+        event.stopPropagation();
+        if(session?.role!=='admin')return;
+        const tournament=state.tournaments.find(item=>String(item.id)===String(finishTournamentButton.dataset.finishTournament));
+        if(!tournament)return;
+        if(!tournament.finished){
+          if(!confirm('¿Finalizar el torneo "'+tournament.name+'"?\n\nSus goles, asistencias y MVP dejarán de aparecer en la estadística actual y se sumarán a la trayectoria de cada jugador.'))return;
+          tournament.finished=true;tournament.finishedAt=Date.now();
+          if(String(activeTournamentId)===String(tournament.id)){
+            const next=state.tournaments.find(item=>!item.finished&&String(item.id)!==String(tournament.id));
+            if(next){activeTournamentId=String(next.id);try{localStorage.setItem('hfa:activeTournament',activeTournamentId)}catch(error){}}
+          }
+        }else{
+          tournament.finished=false;delete tournament.finishedAt;
+        }
+        await setJSON('tournaments',state.tournaments);
+        nav();content();
         return;
       }
       const deleteTournamentButton=event.target.closest('[data-delete-tournament]');
