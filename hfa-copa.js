@@ -16,7 +16,7 @@
   var cups = [], selectedId = null;
   var pubMode = null, pubTab = null, pubTabFor = null, pubGroup = 'all', pubDiv = 'all', pubOnly = null, pubHost = null;
   var admTab = null, admTabFor = null;
-  var DRAFT0 = { name: '', ids: [], order: 'random', format: 'grupos', groups: 2, q: 2, dbl: false, div: '1' };
+  var DRAFT0 = { name: '', ids: [], order: 'random', format: 'grupos', groups: 2, q: 2, dbl: false, divs: ['1'] };
   var draft = JSON.parse(JSON.stringify(DRAFT0));
   var showForm = false, adminHost = null;
 
@@ -41,8 +41,17 @@
     if (t && t.crest) return '<img class="cup-crest" src="' + esc(crestSrc(t.crest)) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.outerHTML=\'<span class=&quot;cup-crest cup-crest-ini&quot;>' + ini + '</span>\'">';
     return '<span class="cup-crest cup-crest-ini">' + ini + '</span>';
   }
-  function cupDiv(c) { return c && c.division ? String(c.division) : ''; }
-  function divTag(c) { var d = cupDiv(c); return '<b class="cup-div">' + (d ? d + 'D' : 'Mixta') + '</b>'; }
+  /* Una copa puede ser de una o varias divisiones: c.divisions = ['1','2'] (c.division queda para compatibilidad: solo si es de una). Vacío = Mixta. */
+  function cupDivs(c) { if (c && Array.isArray(c.divisions) && c.divisions.length) return c.divisions.map(String); return c && c.division ? [String(c.division)] : []; }
+  function cupHasDiv(c, d) { var ds = cupDivs(c); return d === '' ? !ds.length : ds.indexOf(String(d)) > -1; }
+  function divLabel(c) { var ds = cupDivs(c); return ds.length ? ds.map(function (d) { return d + 'D'; }).join('+') : 'Mixta'; }
+  function divTag(c) { return '<b class="cup-div">' + divLabel(c) + '</b>'; }
+  var ALLDIVS = ['1', '2', '3', '4', ''];
+  function draftLabel() {
+    var ds = draft.divs.filter(function (d) { return d; }).sort();
+    if (draft.divs.indexOf('') > -1 && ds.length === 4) return 'Mixta';
+    return ds.length ? ds.map(function (d) { return d + 'D'; }).join('+') : 'Mixta';
+  }
   function roundName(n) {
     return ({ 1: 'Final', 2: 'Semifinales', 4: 'Cuartos de final', 8: 'Octavos de final', 16: 'Dieciseisavos' })[n] || ('Ronda de ' + (n * 2));
   }
@@ -469,9 +478,9 @@
     var html = pubOnly ? '' : '<h2 class="cup-h">Copas</h2><div class="cup-sub">Fase de grupos y eliminatorias. Se actualizan solas con los resultados de las actas.</div>';
     if (pubOnly && !only) { host.innerHTML = '<div class="cup-empty">Esta copa todavía no está disponible.</div>'; return; }
     if (!cups.length) { host.innerHTML = html + '<div class="cup-empty">Todavía no hay copas creadas.</div>'; return; }
-    var present = ['1', '2', '3', '4', ''].filter(function (d) { return cups.some(function (c) { return cupDiv(c) === d; }); });
+    var present = ['1', '2', '3', '4', ''].filter(function (d) { return cups.some(function (c) { return cupHasDiv(c, d); }); });
     if (pubDiv !== 'all' && present.indexOf(pubDiv) === -1) pubDiv = 'all';
-    var list = only ? [only] : cups.filter(function (c) { return pubDiv === 'all' || cupDiv(c) === pubDiv; });
+    var list = only ? [only] : cups.filter(function (c) { return pubDiv === 'all' || cupHasDiv(c, pubDiv); });
     var cup = only || list.find(function (c) { return same(c.id, selectedId); }) || list[list.length - 1], res = resolve(cup);
     if (!only && present.length > 1) html += '<div class="cup-divbar"><button type="button" class="' + (pubDiv === 'all' ? 'on' : '') + '" data-cup-div="all">Todas</button>' + present.map(function (d) { return '<button type="button" class="' + (pubDiv === d ? 'on' : '') + '" data-cup-div="' + d + '">' + (d ? d + 'D' : 'Mixta') + '</button>'; }).join('') + '</div>';
     if (list.length > 1) html += '<div class="cup-chips">' + list.map(function (c) { return '<button type="button" class="cup-chip' + (same(c.id, cup.id) ? ' active' : '') + '" data-cup-pick="' + esc(c.id) + '">' + divTag(c) + ' ' + esc(c.name) + '<small>' + esc(cupStatus(c)) + '</small></button>'; }).join('') + '</div>';
@@ -535,15 +544,15 @@
     return { ok: ok, msg: msg, html: ok ? html : msg };
   }
   function shownTeams() {
-    return teams().filter(function (t) { return draft.div === 'all' || divCode(t) === draft.div; });
+    return teams().filter(function (t) { return draft.divs.indexOf(divCode(t)) > -1; });
   }
   function formHTML() {
     var all = teams(), shown = shownTeams();
     var divs = ['1', '2', '3', '4'];
     var tabs = divs.map(function (d) {
       var n = all.filter(function (t) { return divCode(t) === d; }).length;
-      return '<button type="button" class="cup-dtab' + (draft.div === d ? ' on' : '') + '" data-cup-act="div" data-v="' + d + '"><b>' + d + 'D</b><small>' + n + ' equipos</small></button>';
-    }).join('') + '<button type="button" class="cup-dtab' + (draft.div === 'all' ? ' on' : '') + '" data-cup-act="div" data-v="all"><b>Mixta</b><small>' + all.length + ' equipos</small></button>';
+      return '<button type="button" class="cup-dtab' + (draft.divs.indexOf(d) > -1 ? ' on' : '') + '" data-cup-act="div" data-v="' + d + '"><b>' + d + 'D</b><small>' + n + ' equipos</small></button>';
+    }).join('') + '<button type="button" class="cup-dtab' + (draft.divs.length === ALLDIVS.length ? ' on' : '') + '" data-cup-act="div" data-v="all"><b>Todas</b><small>' + all.length + ' equipos</small></button>';
     var cards = shown.map(function (t) {
       var i = draft.ids.findIndex(function (x) { return same(x, t.id); });
       return '<button type="button" class="cup-tcard' + (i > -1 ? ' on' : '') + '" data-cup-act="toggle" data-id="' + esc(t.id) + '">' + badge(t) + '<span class="cup-tn">' + esc(t.name) + (t.cupOnly ? ' 🏆' : '') + '</span><small class="cup-div">' + (divCode(t) ? divCode(t) + 'D' : '—') + '</small>' + (i > -1 ? '<i class="cup-chk">' + (draft.order === 'order' ? (i + 1) : '✓') + '</i>' : '') + '</button>';
@@ -552,9 +561,9 @@
     var seg = function (act, cur, opts) { return '<span class="cup-seg">' + opts.map(function (o) { return '<button type="button" class="' + (String(cur) === String(o[0]) ? 'on' : '') + '" data-cup-act="' + act + '" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</span>'; };
     var info = draftInfo(), g = draft.format === 'grupos';
     var gopts = []; for (var i = 2; i <= 8; i++) gopts.push([i, i]);
-    var dlabel = draft.div === 'all' ? 'Mixta' : draft.div + 'D';
-    return '<div class="cup-form"><h4>Nueva copa</h4><div class="cup-note">Crea la copa de una división en tres pasos. El bracket se rellena solo con los clasificados de cada grupo.</div>' +
-      '<div class="cup-step"><b>1</b>División</div><div class="cup-dtabs">' + tabs + '</div>' +
+    var dlabel = draftLabel();
+    return '<div class="cup-form"><h4>Nueva copa</h4><div class="cup-note">Crea la copa de una o varias divisiones en tres pasos. El bracket se rellena solo con los clasificados de cada grupo.</div>' +
+      '<div class="cup-step"><b>1</b>División <small style="font-weight:500;opacity:.7">(puedes elegir varias)</small></div><div class="cup-dtabs">' + tabs + '</div>' +
       '<div class="cup-step"><b>2</b>Nombre y formato</div><div class="cup-row"><input class="input" id="cupNewName" placeholder="Nombre de la copa (ej. Copa HFA ' + esc(dlabel) + ')" maxlength="60" value="' + esc(draft.name) + '"></div>' +
       '<div class="cup-formats"><button type="button" class="cup-fmt' + (g ? ' on' : '') + '" data-cup-act="format" data-v="grupos"><b>🏟️ Fase de grupos + eliminatorias</b>Los equipos juegan en grupos y los mejores pasan al bracket.</button><button type="button" class="cup-fmt' + (!g ? ' on' : '') + '" data-cup-act="format" data-v="directo"><b>⚔️ Solo eliminatorias</b>Bracket de eliminación directa desde el primer partido.</button></div>' +
       '<div class="cup-step"><b>3</b>Equipos de ' + esc(dlabel) + '</div>' +
@@ -614,7 +623,7 @@
   function renderAdmin() {
     var el = adminHost; if (!el || !el.isConnected) return;
     var cup = current(), html = '<div class="cup-adm">';
-    html += '<div class="cup-adm-top">' + (cups.length ? '<select class="input" data-cup-act="pick">' + cups.map(function (c) { return '<option value="' + esc(c.id) + '"' + (cup && same(c.id, cup.id) ? ' selected' : '') + '>[' + (cupDiv(c) ? cupDiv(c) + 'D' : 'Mixta') + '] ' + esc(c.name) + ' — ' + esc(cupStatus(c)) + '</option>'; }).join('') + '</select>' : '') +
+    html += '<div class="cup-adm-top">' + (cups.length ? '<select class="input" data-cup-act="pick">' + cups.map(function (c) { return '<option value="' + esc(c.id) + '"' + (cup && same(c.id, cup.id) ? ' selected' : '') + '>[' + divLabel(c) + '] ' + esc(c.name) + ' — ' + esc(cupStatus(c)) + '</option>'; }).join('') + '</select>' : '') +
       '<button type="button" class="btn ' + (cups.length ? '' : 'btn-primary') + '" data-cup-act="new">＋ Nueva copa</button></div>';
     if (showForm || !cups.length) html += formHTML();
     if (cup && !(showForm && !cups.length)) {
@@ -777,14 +786,15 @@
       var tname = nameEl ? nameEl.value.trim() : '', tcrest = crestEl ? crestEl.value.trim() : '';
       if (!tname) { alert('Escribe el nombre del equipo de copa.'); return; }
       if (teams().some(function (x) { return String(x.name).toLowerCase() === tname.toLowerCase(); })) { alert('Ya existe un equipo con ese nombre.'); return; }
-      var nt = { id: uid('e'), name: tname, division: draft.div === 'all' ? '' : draft.div, players: [], crest: tcrest, cupOnly: true };
+      var nt = { id: uid('e'), name: tname, division: (draft.divs.length === 1 ? draft.divs[0] : ''), players: [], crest: tcrest, cupOnly: true };
       app().state.teams.push(nt); draft.ids.push(nt.id);
       app().setJSON('teams', app().state.teams).then(function () { renderAdmin(); });
       return;
     }
     if (act === 'div') {
-      draft.div = v;
-      draft.ids = draft.ids.filter(function (id) { var t = team(id); return t && (v === 'all' || divCode(t) === v); });
+      if (v === 'all') draft.divs = draft.divs.length === ALLDIVS.length ? ['1'] : ALLDIVS.slice();
+      else { var k = draft.divs.indexOf(v); if (k > -1) { if (draft.divs.length > 1) draft.divs.splice(k, 1); } else draft.divs.push(v); }
+      draft.ids = draft.ids.filter(function (id) { var t = team(id); return t && draft.divs.indexOf(divCode(t)) > -1; });
       renderAdmin(); return;
     }
     if (act === 'sel-all' || act === 'sel-none') {
@@ -805,12 +815,13 @@
       if (!name) { alert('Escribe un nombre para la copa.'); return; }
       if (cups.some(function (c) { return String(c.name).toLowerCase() === name.toLowerCase(); })) { alert('Ya existe una copa con ese nombre.'); return; }
       var info = draftInfo(); if (!info.ok) { alert(info.msg); return; }
-      var c = { id: uid('c'), name: name, format: draft.format, division: draft.div === 'all' ? '' : draft.div, createdAt: Date.now() };
+      var cd = draft.divs.indexOf('') > -1 ? [] : draft.divs.slice().sort();
+      var c = { id: uid('c'), name: name, format: draft.format, division: cd.length === 1 ? cd[0] : '', divisions: cd, createdAt: Date.now() };
       c.tournamentId = 'copa-' + c.id;
       if (c.format === 'grupos') { c.G = draft.groups; c.q = draft.q; c.dbl = draft.dbl; }
       structure(c, draft.ids.slice(), draft.order);
       cups.push(c); selectedId = c.id; showForm = false; draft = JSON.parse(JSON.stringify(DRAFT0));
-      st.tournaments.push({ id: c.tournamentId, name: c.name, type: 'copa', cupId: c.id, division: c.division });
+      st.tournaments.push({ id: c.tournamentId, name: c.name, type: 'copa', cupId: c.id, division: c.division, divisions: c.divisions });
       app().setJSON('tournaments', st.tournaments).then(done).then(function () { goMatches(c.id); });
       return;
     }
