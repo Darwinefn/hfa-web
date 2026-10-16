@@ -3604,8 +3604,8 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const password=document.getElementById('authPassword').value;
     let position=[];try{position=JSON.parse(document.getElementById('authPosition')?.value||'[]')}catch(error){position=[]}
     const hint=document.getElementById('authHint');
-    const validHabboName=/^[A-Za-z0-9._-]{3,25}$/;
-    if(!validHabboName.test(username)){hint.textContent='Escribe un nombre de Habbo.es válido, de 3 a 25 caracteres y sin espacios.';hint.classList.add('error');return}
+    const validHabboName=/^[A-Za-z0-9._\-=?!@:,]{3,25}$/;
+    if(!validHabboName.test(username)){hint.textContent='Escribe un nombre de Habbo.es válido, de 3 a 25 caracteres, sin espacios (se permiten letras, números y - = ? ! @ : . ,).';hint.classList.add('error');return}
     if(password.length<6){hint.textContent='La contraseña debe tener al menos 6 caracteres.';hint.classList.add('error');return}
     if(authMode==='register'){
       const confirmation=document.getElementById('authPasswordConfirm')?.value||'';
