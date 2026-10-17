@@ -221,12 +221,17 @@ async function recordLogin(username, req) {
 // Comprueba usuario + hash de contraseña contra MongoDB y devuelve la cuenta con su rol REAL
 // (el rol nunca se toma de lo que diga el navegador).
 async function authAccount(username, hash) {
-  if (!process.env.MONGODB_URI) return null;
+  if (!process.env.MONGODB_URI) return { error: 'no_db' };
   const id = String(username || '').trim().toLowerCase();
-  if (!/^[a-z0-9._-]{3,25}$/.test(id) || !hash) return null;
+  if (!/^[a-z0-9._-]{3,25}$/.test(id)) return { error: 'bad_user' };
+  if (!hash) return { error: 'no_hash' };
   const doc = await (await mongoAccountsCollection()).findOne({ _id: id });
-  if (!doc || !doc.passHash || String(doc.passHash) !== String(hash)) return null;
+  if (!doc) return { error: 'no_account' };
+  if (!doc.passHash || String(doc.passHash) !== String(hash)) return { error: 'bad_credentials' };
   const resolved = resolveRoles(doc);
+  // roles.json y la colección role_assignments también pueden asignar el rol.
+  const override = fileRoles()[id] || (await dbRoles([id]))[id];
+  if (override) { resolved.role = override; resolved.roles = [override]; }
   return { id: id, username: doc.username || id, role: resolved.role, roles: resolved.roles };
 }
 
@@ -247,7 +252,7 @@ async function writeStaffLog(entry) {
 // Cambio de rol hecho desde el panel admin. Solo un admin válido puede hacerlo.
 async function handleSetRole(body, req) {
   const admin = await authAccount(body.adminUser, body.adminHash);
-  if (!admin || admin.roles.indexOf('admin') === -1) return { status: 403, ok: false };
+  if (!admin || admin.error || admin.roles.indexOf('admin') === -1) return { status: 403, ok: false, reason: (admin && admin.error) || 'not_admin' };
   const targetId = String(body.username || '').trim().toLowerCase();
   if (!/^[a-z0-9._-]{3,25}$/.test(targetId)) return { status: 400, ok: false };
   const list = Array.isArray(body.roles) ? normalizeRoleList(body.roles) : normalizeRoleList([body.role]);
@@ -268,7 +273,7 @@ async function handleSetRole(body, req) {
 // Un movimiento que hace una persona con rol (partido, acta, equipo, noticia...).
 async function handleStaffLog(body, req) {
   const who = await authAccount(body.username, body.hash);
-  if (!who || who.role === 'pendiente') return { status: 403, ok: false };
+  if (!who || who.error || who.role === 'pendiente') return { status: 403, ok: false, reason: (who && who.error) || 'no_role' };
   await writeStaffLog({
     user: who.username, role: who.role, event: body.event, detail: body.detail, target: body.target, ip: clientIp(req)
   });
@@ -278,7 +283,8 @@ async function handleStaffLog(body, req) {
 // Lectura de logs: solo administradores.
 async function handleGetLogs(body) {
   const admin = await authAccount(body.adminUser, body.adminHash);
-  if (!admin || admin.roles.indexOf('admin') === -1) return { status: 403, ok: false };
+  if (!admin || admin.error) return { status: 403, ok: false, reason: (admin && admin.error) || 'bad_credentials' };
+  if (admin.roles.indexOf('admin') === -1) return { status: 403, ok: false, reason: 'not_admin', role: admin.role };
   const filter = {};
   const roleFilter = normalizeRole(body.role);
   if (body.role && body.role !== 'all' && roleFilter !== 'pendiente') filter.role = roleFilter;
@@ -381,6 +387,6 @@ module.exports = async (req, res) => {
     }
     return res.status(405).json({ ok: false });
   } catch (e) {
-    return res.status(500).json({ ok: false });
+    return res.status(500).json({ ok: false, reason: 'server_error' });
   }
 };

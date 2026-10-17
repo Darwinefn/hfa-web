@@ -1760,7 +1760,8 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   }
   function offerEligibility(playerName,ownerName=session?.username){
     if(!hfaHasRole(session,'dueno'))return {ok:false,message:'Solo los dueños de equipos pueden enviar ofertas.'};
-    const owned=state.teams.find(item=>item.ownerUsername===ownerName),account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(playerName));
+    if(toPlayerKey(playerName)===toPlayerKey(ownerName))return {ok:false,message:'No puedes enviarte una oferta a ti mismo.'};
+    const owned=state.teams.find(item=>String(item.ownerUsername||'').toLowerCase()===String(ownerName||'').toLowerCase()),account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(playerName));
     if(!owned)return {ok:false,message:'Solo los dueños de equipo pueden enviar ofertas.'};
     const enabled=Array.isArray(account?.enabledDivisions)?account.enabledDivisions:(account?.division?[String(account.division)]:[]);
     if(!enabled.includes(String(owned.division)))return {ok:false,message:'Este jugador no tiene habilitada la división '+divisionLabel(owned.division)+' para tu equipo.'};
@@ -3474,19 +3475,21 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const offerButton=event.target.closest('[data-send-offer]');
     if(offerButton){
       if(!hfaHasRole(session,'dueno')){alert('Solo los dueños de equipos pueden enviar ofertas.');return}
-      const owned=state.teams.find(item=>item.ownerUsername===session?.username);
+      const owned=state.teams.find(item=>String(item.ownerUsername||'').toLowerCase()===String(session?.username||'').toLowerCase());
       const terms=document.getElementById('contractTerms')?.value.trim()||'Contrato pendiente de condiciones';
+      if(toPlayerKey(offerButton.dataset.sendOffer)===toPlayerKey(session?.username)){alert('No puedes enviarte una oferta a ti mismo.');return}
       if(owned){state.offers.push({id:Date.now().toString(36),teamId:owned.id,player:offerButton.dataset.sendOffer,ownerUsername:session.username,terms,status:'pendiente'});await setJSON('offers',state.offers);offerButton.textContent='Oferta enviada';offerButton.disabled=true}
       return;
     }
     if(event.target.id==='sendOffer'){
       if(!hfaHasRole(session,'dueno')){alert('Solo los dueños de equipos pueden enviar ofertas.');return}
       const player=document.getElementById('playerOfferSelect').value.trim();
-      const selectedTeam=state.teams.find(item=>item.ownerUsername===session?.username);
+      const selectedTeam=state.teams.find(item=>String(item.ownerUsername||'').toLowerCase()===String(session?.username||'').toLowerCase());
       const assignedNames=new Set(state.teams.flatMap(item=>item.players||[]).map(name=>name.toLowerCase()));
       const knownPlayer=accounts.some(account=>account.username.toLowerCase()===player.toLowerCase())&&!assignedNames.has(player.toLowerCase());
       const hint=document.getElementById('offerHint');
       if(!player){hint.textContent='Selecciona un jugador registrado.';hint.classList.add('error');return}
+      if(toPlayerKey(player)===toPlayerKey(session?.username)){hint.textContent='No puedes enviarte una oferta a ti mismo.';hint.classList.add('error');return}
       if(!selectedTeam){hint.textContent='No tienes un equipo asignado.';hint.classList.add('error');return}
       if(!knownPlayer){hint.textContent='Ese jugador no está registrado en las plantillas o actas.';hint.classList.add('error');return}
       state.offers.push({id:Date.now().toString(36),teamId:selectedTeam.id,player,ownerUsername:session.username,terms:document.getElementById('contractTerms').value.trim()||'Contrato pendiente de condiciones',status:'pendiente'});

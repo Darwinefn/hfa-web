@@ -13,8 +13,11 @@
   var ROLE_LABEL = { admin: 'Administrador', moderador: 'Moderador', prueba_moderador: 'Prueba moderador', arbitro: 'Árbitro', dueno: 'Dueño de equipo' };
   var KEY_LABEL = {
     matches: 'partido', teams: 'equipo', news: 'noticia', palmares: 'palmarés', sponsors: 'patrocinador',
-    offers: 'oferta de contrato', tournaments: 'torneo', cups: 'copa', competition: 'nombre de la competición'
+    offers: 'oferta de contrato', tournaments: 'torneo', cups: 'copa', competition: 'nombre de la competición',
+    accounts: 'cuenta de usuario', profileComments: 'comentario de perfil', achievements: 'logro',
+    achievementPins: 'logro fijado', achievementFeed: 'aviso de logro'
   };
+  var SKIP_KEYS = { userRoles: 1 };
   var recent = {};
 
   function esc(v) {
@@ -28,11 +31,12 @@
     try {
       var s = (typeof session !== 'undefined' && session) || JSON.parse(localStorage.getItem('hfa:session') || 'null');
       if (!s || !s.username || !s.role || s.role === 'pendiente') return null;
-      var hash = localStorage.getItem('hfa:adminAuth') || '';
-      if (!hash && typeof accounts !== 'undefined') {
+      var hash = '';
+      if (typeof accounts !== 'undefined') {
         var me = accounts.find(function (a) { return String(a.username).toLowerCase() === String(s.username).toLowerCase(); });
         hash = (me && me.passHash) || '';
       }
+      if (!hash) hash = localStorage.getItem('hfa:adminAuth') || '';
       return hash ? { username: s.username, role: s.role, hash: hash } : null;
     } catch (e) { return null; }
   }
@@ -85,13 +89,14 @@
       afterValue.forEach(function (it, i) {
         var id = itemId(it, i);
         seen[id] = 1;
-        if (!(id in prev)) events.push(['Creó ' + label, itemLabel(it)]);
+        if (!(id in prev)) events.push([key === 'accounts' ? 'Nueva cuenta' : 'Creó ' + label, itemLabel(it)]);
         else if (JSON.stringify(prev[id]) !== JSON.stringify(it)) {
-          var f = changedFields(prev[id], it).slice(0, 5).join(', ');
+          var f = changedFields(prev[id], it).filter(function (n) { return !/hash|pass|^ips?$|lastIp|lastLogin/i.test(n); }).slice(0, 5).join(', ');
+          if (key === 'accounts' && !f) return;
           events.push(['Editó ' + label, itemLabel(it) + (f ? ' (' + f + ')' : '')]);
         }
       });
-      Object.keys(prev).forEach(function (id) { if (!seen[id]) events.push(['Eliminó ' + label, itemLabel(prev[id])]); });
+      if (key !== 'accounts') Object.keys(prev).forEach(function (id) { if (!seen[id]) events.push(['Eliminó ' + label, itemLabel(prev[id])]); });
     } else if (JSON.stringify(before) !== JSON.stringify(afterValue)) {
       events.push(['Actualizó ' + label, typeof afterValue === 'string' ? afterValue : '']);
     }
@@ -99,7 +104,8 @@
   }
 
   function watch(key, value, beforeText) {
-    if (!KEY_LABEL[key]) return;
+    if (SKIP_KEYS[key]) return;
+    if (!KEY_LABEL[key]) KEY_LABEL[key] = key;
     try {
       describe(key, beforeText, value).slice(0, 8).forEach(function (ev) { sendLog(ev[0], ev[1]); });
     } catch (e) {}
@@ -203,7 +209,15 @@
     var data = await post({ action: 'getLogs', adminUser: me.username, adminHash: me.hash, role: role, user: user, limit: 300 });
     if (!data || !data.ok) {
       meta.textContent = '';
-      list.innerHTML = '<div class="empty">No se pudieron cargar los logs. Comprueba que MongoDB esté conectado y que tu cuenta tenga el rol ADMIN en la base de datos.</div>';
+      var why = {
+        no_db: 'El servidor no tiene MongoDB configurado (falta MONGODB_URI en Vercel).',
+        bad_credentials: 'Tu contraseña guardada en este navegador no coincide con la de la base de datos. Cierra sesión y vuelve a entrar.',
+        no_account: 'Tu cuenta no existe en la colección "accounts" de MongoDB.',
+        not_admin: 'En MongoDB tu cuenta tiene el rol "' + ((data && data.role) || 'sin rol') + '", no admin.',
+        server_error: 'Error del servidor al leer MongoDB.'
+      };
+      var reason = data && data.reason;
+      list.innerHTML = '<div class="empty">No se pudieron cargar los logs. ' + esc(why[reason] || 'El servidor no reconoció la petición: comprueba que subiste el db.js nuevo a /api y que Vercel terminó de desplegar.') + '</div>';
       return;
     }
     var logs = data.logs || [];
@@ -229,6 +243,8 @@
     var t = e.target;
     if (!t || !t.closest) return;
     if (t.closest('.admin-section-nav [data-admin-section="logs"]')) { loadLogs(); startAuto(); return; }
+    var nb = t.closest('.admin-section-nav [data-admin-section]');
+    if (nb) { sendLog('Abrió una sección del panel', (nb.textContent || '').trim()); }
     if (t.closest('#hfaLogsRefresh')) { loadLogs(); return; }
   });
   document.addEventListener('change', function (e) { if (e.target && e.target.id === 'hfaLogsRole') loadLogs(); });
