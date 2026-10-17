@@ -1,3 +1,4 @@
+const { MongoClient } = require('mongodb');
 
 const URL_ = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
@@ -5,6 +6,41 @@ let mongoClientPromise;
 
 // Roles válidos. Se asignan SOLO desde MongoDB (campo "role" de la colección "accounts").
 const ROLES = ['pendiente', 'admin', 'prueba_moderador', 'moderador', 'arbitro', 'dueno'];
+// Prioridad cuando una cuenta tiene varios roles (el primero manda).
+const ROLE_PRIORITY = ['admin', 'moderador', 'prueba_moderador', 'arbitro', 'dueno'];
+const STAFF_ROLES = ['admin', 'moderador', 'prueba_moderador', 'arbitro'];
+
+// Acepta cómo lo escribas en MongoDB: "Admin", "ADMINISTRADOR", "Árbitro", "Dueño de equipo",
+// "prueba moderador", "sin rol"... y lo convierte al valor interno.
+function normalizeRole(value) {
+  let r = String(value == null ? '' : value).trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\s-]+/g, '_');
+  const alias = {
+    administrador: 'admin', administradora: 'admin', admin: 'admin',
+    moderador: 'moderador', moderadora: 'moderador', mod: 'moderador',
+    prueba_moderador: 'prueba_moderador', prueba_de_moderador: 'prueba_moderador', moderador_prueba: 'prueba_moderador', prueba_mod: 'prueba_moderador',
+    arbitro: 'arbitro', arbitra: 'arbitro',
+    dueno: 'dueno', dueno_de_equipo: 'dueno', dueno_equipo: 'dueno', owner: 'dueno',
+    pendiente: 'pendiente', sin_rol: 'pendiente', ninguno: 'pendiente', ''  : 'pendiente'
+  };
+  return alias[r] || (ROLES.indexOf(r) !== -1 ? r : 'pendiente');
+}
+
+function normalizeRoleList(list) {
+  const set = (Array.isArray(list) ? list : []).map(normalizeRole).filter(r => r !== 'pendiente');
+  return ROLE_PRIORITY.filter(r => set.indexOf(r) !== -1);
+}
+
+// Rol(es) reales de una cuenta. "role" (lo que pones en MongoDB) manda siempre;
+// "roles" (varios roles guardados por el panel) solo vale si sigue coincidiendo con "role".
+function resolveRoles(account) {
+  const primary = normalizeRole(account && account.role);
+  const stored = normalizeRoleList(account && account.roles);
+  if (primary === 'pendiente') return { role: 'pendiente', roles: [] };
+  if (stored.length && stored[0] === primary) return { role: primary, roles: stored };
+  return { role: primary, roles: [primary] };
+}
 
 // Archivo opcional roles.json (en la raíz del proyecto): { "NombreHabbo": "admin", ... }
 // Al desplegar, esos roles se aplican a las cuentas y se guardan en MongoDB.
@@ -13,8 +49,8 @@ function fileRoles() {
     const data = require('../roles.json');
     const map = {};
     Object.keys(data || {}).forEach(name => {
-      const role = String(data[name] || '').trim().toLowerCase();
-      if (ROLES.indexOf(role) !== -1) map[String(name).trim().toLowerCase()] = role;
+      const role = normalizeRole(data[name]);
+      if (role !== 'pendiente') map[String(name).trim().toLowerCase()] = role;
     });
     return map;
   } catch (e) { return {}; }
@@ -26,8 +62,8 @@ async function dbRoles(names) {
     const rows = await (await mongoDb()).collection('role_assignments').find(filter).toArray();
     const map = {};
     rows.forEach(row => {
-      const role = String(row.role || '').trim().toLowerCase();
-      if (ROLES.indexOf(role) !== -1) map[String(row._id).trim().toLowerCase()] = role;
+      const role = normalizeRole(row.role);
+      if (role !== 'pendiente') map[String(row._id).trim().toLowerCase()] = role;
     });
     return map;
   } catch (e) { return {}; }
@@ -40,26 +76,11 @@ async function applyFileRoles(collection, accounts) {
     const role = map[String(account.username || '').toLowerCase()];
     if (role && account.role !== role) {
       account.role = role;
-      changes.push({ updateOne: { filter: { _id: String(account.username).toLowerCase() }, update: { $set: { role: role } } } });
+      account.roles = [role];
+      changes.push({ updateOne: { filter: { _id: String(account.username).toLowerCase() }, update: { $set: { role: role, roles: [role] } } } });
     }
   });
   if (changes.length) await collection.bulkWrite(changes);
-}
-
-// Acepta variantes escritas a mano: "Admin", "ADMINISTRADOR", "Árbitro", "Dueño", "prueba moderador"...
-function normalizeRole(value) {
-  const key = String(value || '').trim().toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[\s-]+/g, '_');
-  const aliases = {
-    administrador: 'admin',
-    prueba_moderador: 'prueba_moderador',
-    moderador_prueba: 'prueba_moderador',
-    dueno_de_equipo: 'dueno',
-    dueno_equipo: 'dueno'
-  };
-  const role = aliases[key] || key;
-  return ROLES.indexOf(role) === -1 ? 'pendiente' : role;
 }
 
 // IP real del visitante (Vercel la envía en x-forwarded-for). No se puede falsear desde el navegador.
@@ -83,7 +104,6 @@ async function redis(cmd) {
 
 async function mongoCollection() {
   if (!mongoClientPromise) {
-    const { MongoClient } = require('mongodb');
     const client = new MongoClient(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 8000 });
     mongoClientPromise = client.connect().catch(error => {
       mongoClientPromise = null;
@@ -135,6 +155,7 @@ async function saveMongoAccounts(value, req, trusted) {
     }
     // Campos que el navegador NO puede escribir: los pone el servidor o se cambian en MongoDB.
     delete fields.role;
+    delete fields.roles;
     delete fields.ip;
     delete fields.lastIp;
     delete fields.ips;
@@ -185,135 +206,92 @@ async function recordLogin(username, req) {
   const result = await collection.updateOne({ _id: id }, update);
   if (!result.matchedCount) return false;
   await logAccess('login', id, ip);
-  return true;
-}
-
-// El admin cambia el rol de una cuenta desde la web. Se verifica que quien lo pide sea admin
-// (usuario + hash de contraseña) y se guarda el rol en MongoDB (cuenta + asignaciones de rol).
-async function setRole(body) {
-  if (!process.env.MONGODB_URI) return false;
-  const adminId = String(body.adminUser || '').trim().toLowerCase();
-  const targetId = String(body.username || '').trim().toLowerCase();
-  const role = String(body.role || '').trim().toLowerCase();
-  if (!adminId || !targetId || ROLES.indexOf(role) === -1) return false;
-  const collection = await mongoAccountsCollection();
-  const admin = await collection.findOne({ _id: adminId });
-  if (!admin || normalizeRole(admin.role) !== 'admin') return false;
-  if (!admin.passHash || String(admin.passHash) !== String(body.adminHash || '')) return false;
-  const result = await collection.updateOne({ _id: targetId }, { $set: { role: role } });
-  if (!result.matchedCount) return false;
   try {
-    await (await mongoDb()).collection('role_assignments').updateOne(
-      { _id: targetId }, { $set: { role: role, updatedAt: new Date() } }, { upsert: true });
-  } catch (e) {}
-  return true;
-}
-
-// Comprueba la conexión de quien da "Presente": ¿VPN / proxy / IP de centro de datos (típico de ExitLag)?
-// Solo devuelve señales (verdadero/falso, ISP y nº de cuentas con la misma IP); la IP nunca se guarda ni se devuelve.
-async function lookupIp(ip) {
-  if (!ip) return { checked: false };
-  const clean = String(ip).replace(/^::ffff:/, '');
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3500);
-    const r = await fetch('https://api.ipapi.is/?q=' + encodeURIComponent(clean), { signal: controller.signal, headers: { Accept: 'application/json' } });
-    clearTimeout(timer);
-    if (r.ok) {
-      const d = await r.json();
-      if (d && typeof d === 'object' && !d.error && ('is_vpn' in d || 'is_datacenter' in d || 'is_proxy' in d)) {
-        return {
-          checked: true,
-          vpn: !!d.is_vpn || !!d.is_tor,
-          proxy: !!d.is_proxy,
-          datacenter: !!d.is_datacenter,
-          isp: String((d.company && d.company.name) || (d.asn && d.asn.org) || '').slice(0, 60)
-        };
-      }
+    const doc = await collection.findOne({ _id: id }, { projection: { role: 1, roles: 1, username: 1 } });
+    const resolved = resolveRoles(doc || {});
+    if (resolved.role !== 'pendiente') {
+      await writeStaffLog({ user: (doc && doc.username) || id, role: resolved.role, event: 'Inició sesión', detail: 'Inicio de sesión desde la IP ' + (ip || 'desconocida'), ip: ip });
     }
   } catch (e) {}
-  return { checked: false };
+  return true;
 }
 
-// Quien puede ver las IP de los presentes: admin y moderadores (se verifica usuario + hash de contraseña).
-async function isStaff(body) {
-  if (!process.env.MONGODB_URI) return false;
-  const adminId = String((body && body.adminUser) || '').trim().toLowerCase();
-  if (!adminId) return false;
-  const account = await (await mongoAccountsCollection()).findOne({ _id: adminId });
-  if (!account || !account.passHash || String(account.passHash) !== String((body && body.adminHash) || '')) return false;
-  return ['admin', 'moderador', 'prueba_moderador'].indexOf(normalizeRole(account.role)) !== -1;
+
+// ---------- LOGS de movimientos de los roles (colección "staff_logs") ----------
+// Comprueba usuario + hash de contraseña contra MongoDB y devuelve la cuenta con su rol REAL
+// (el rol nunca se toma de lo que diga el navegador).
+async function authAccount(username, hash) {
+  if (!process.env.MONGODB_URI) return { error: 'no_db' };
+  const id = String(username || '').trim().toLowerCase();
+  if (!/^[a-z0-9._-]{3,25}$/.test(id)) return { error: 'bad_user' };
+  if (!hash) return { error: 'no_hash' };
+  const doc = await (await mongoAccountsCollection()).findOne({ _id: id });
+  if (!doc) return { error: 'no_account' };
+  if (!doc.passHash || String(doc.passHash) !== String(hash)) return { error: 'bad_credentials' };
+  const resolved = resolveRoles(doc);
+  // roles.json y la colección role_assignments también pueden asignar el rol.
+  const override = fileRoles()[id] || (await dbRoles([id]))[id];
+  if (override) { resolved.role = override; resolved.roles = [override]; }
+  return { id: id, username: doc.username || id, role: resolved.role, roles: resolved.roles };
 }
 
-// La IP de cada presente se guarda en una colección privada (nunca en los datos públicos del partido).
-async function logAttendance(body, ip, conn, geo, ipChanged, shared) {
+async function writeStaffLog(entry) {
   try {
-    const matchId = String((body && body.matchId) || '').slice(0, 80);
-    const username = String((body && body.username) || '').trim().toLowerCase();
-    if (!matchId || !/^[a-z0-9._-]{3,25}$/.test(username)) return;
-    const now = new Date();
-    await (await mongoDb()).collection('attendance_log').updateOne(
-      { matchId: matchId, username: username },
-      {
-        $set: { ip: ip, conn: conn, at: now, vpn: !!geo.vpn, proxy: !!geo.proxy, datacenter: !!geo.datacenter, isp: geo.isp || '', ipChanged: !!ipChanged, shared: shared || 0 },
-        $addToSet: { ips: ip },
-        $setOnInsert: { firstAt: now }
-      },
-      { upsert: true }
-    );
+    await (await mongoDb()).collection('staff_logs').insertOne({
+      at: new Date(),
+      user: String(entry.user || '').slice(0, 40),
+      role: String(entry.role || '').slice(0, 40),
+      event: String(entry.event || '').slice(0, 60),
+      detail: String(entry.detail || '').slice(0, 400),
+      target: String(entry.target || '').slice(0, 40),
+      ip: String(entry.ip || '').slice(0, 64)
+    });
   } catch (e) {}
 }
 
-async function attendanceIps(body) {
-  if (!(await isStaff(body))) return { ok: false };
-  const filter = body.matchId ? { matchId: String(body.matchId).slice(0, 80) } : {};
-  const rows = await (await mongoDb()).collection('attendance_log').find(filter).sort({ at: -1 }).limit(2000).toArray();
-  return {
-    ok: true,
-    rows: rows.map(row => ({ matchId: row.matchId, username: row.username, ip: row.ip || '', ips: row.ips || [], conn: row.conn || '', at: row.at }))
-  };
+// Cambio de rol hecho desde el panel admin. Solo un admin válido puede hacerlo.
+async function handleSetRole(body, req) {
+  const admin = await authAccount(body.adminUser, body.adminHash);
+  if (!admin || admin.error || admin.roles.indexOf('admin') === -1) return { status: 403, ok: false, reason: (admin && admin.error) || 'not_admin' };
+  const targetId = String(body.username || '').trim().toLowerCase();
+  if (!/^[a-z0-9._-]{3,25}$/.test(targetId)) return { status: 400, ok: false };
+  const list = Array.isArray(body.roles) ? normalizeRoleList(body.roles) : normalizeRoleList([body.role]);
+  const primary = list[0] || 'pendiente';
+  const collection = await mongoAccountsCollection();
+  const before = await collection.findOne({ _id: targetId }, { projection: { role: 1, roles: 1, username: 1 } });
+  if (!before) return { status: 404, ok: false };
+  await collection.updateOne({ _id: targetId }, { $set: { role: primary, roles: list } });
+  const prev = resolveRoles(before).roles;
+  await writeStaffLog({
+    user: admin.username, role: admin.role, event: 'Cambió roles', target: before.username || targetId,
+    detail: (before.username || targetId) + ': ' + (prev.join(', ') || 'sin rol') + ' → ' + (list.join(', ') || 'sin rol'),
+    ip: clientIp(req)
+  });
+  return { status: 200, ok: true, role: primary, roles: list };
 }
 
-// Modo mantenimiento: lo activa solo un administrador. Mientras está activo, la web solo se muestra a los admins.
-async function setMaintenance(body) {
-  const admin = await authAdmin(body);
-  if (!admin) return false;
-  const enabled = !!(body && body.enabled);
-  const message = String((body && body.message) || '').trim().slice(0, 220);
-  await setValue('maintenance', JSON.stringify({ enabled: enabled, message: message, by: admin.username, at: new Date().toISOString() }), null);
-  return true;
+// Un movimiento que hace una persona con rol (partido, acta, equipo, noticia...).
+async function handleStaffLog(body, req) {
+  const who = await authAccount(body.username, body.hash);
+  if (!who || who.error || who.role === 'pendiente') return { status: 403, ok: false, reason: (who && who.error) || 'no_role' };
+  await writeStaffLog({
+    user: who.username, role: who.role, event: body.event, detail: body.detail, target: body.target, ip: clientIp(req)
+  });
+  return { status: 200, ok: true };
 }
 
-// Temática global de la web (la ven todos los usuarios). Solo la cambia un administrador.
-async function setSiteTheme(body) {
-  if (!process.env.MONGODB_URI) return false;
-  const theme = String((body && body.theme) || '').trim().toLowerCase();
-  if (['mundial', 'normal'].indexOf(theme) === -1) return false;
-  const adminId = String((body && body.adminUser) || '').trim().toLowerCase();
-  if (!adminId) return false;
-  const account = await (await mongoAccountsCollection()).findOne({ _id: adminId });
-  if (!account || !account.passHash || String(account.passHash) !== String((body && body.adminHash) || '')) return false;
-  if (normalizeRole(account.role) !== 'admin') return false;
-  await setValue('sitetheme', JSON.stringify({ theme: theme, by: adminId, at: new Date().toISOString() }), null);
-  return true;
-}
-
-async function checkConnection(body, req) {
-  const ip = clientIp(req);
-  const id = String((body && body.username) || '').trim().toLowerCase();
-  let ipChanged = false;
-  let shared = 0;
-  if (process.env.MONGODB_URI && /^[a-z0-9._-]{3,25}$/.test(id)) {
-    try {
-      const collection = await mongoAccountsCollection();
-      const account = await collection.findOne({ _id: id }, { projection: { ip: 1 } });
-      if (account && account.ip && ip && String(account.ip) !== ip) ipChanged = true;
-      if (ip) shared = await collection.countDocuments({ _id: { $ne: id }, $or: [{ ip: ip }, { lastIp: ip }, { ips: ip }] });
-    } catch (e) {}
-  }
-  const geo = await lookupIp(ip);
-  await logAttendance(body, ip, String((body && body.conn) || '').slice(0, 12), geo, ipChanged, shared);
-  return { ok: true, checked: !!geo.checked, vpn: !!geo.vpn, proxy: !!geo.proxy, datacenter: !!geo.datacenter, isp: geo.isp || '', ipChanged: ipChanged, shared: shared };
+// Lectura de logs: solo administradores.
+async function handleGetLogs(body) {
+  const admin = await authAccount(body.adminUser, body.adminHash);
+  if (!admin || admin.error) return { status: 403, ok: false, reason: (admin && admin.error) || 'bad_credentials' };
+  if (admin.roles.indexOf('admin') === -1) return { status: 403, ok: false, reason: 'not_admin', role: admin.role };
+  const filter = {};
+  const roleFilter = normalizeRole(body.role);
+  if (body.role && body.role !== 'all' && roleFilter !== 'pendiente') filter.role = roleFilter;
+  if (body.user) filter.user = String(body.user).slice(0, 40);
+  const limit = Math.max(1, Math.min(Number(body.limit) || 200, 500));
+  const rows = await (await mongoDb()).collection('staff_logs').find(filter, { projection: { _id: 0 } }).sort({ at: -1 }).limit(limit).toArray();
+  return { status: 200, ok: true, logs: rows.map(r => ({ ...r, at: r.at instanceof Date ? r.at.toISOString() : r.at })) };
 }
 
 async function getMongoAccounts() {
@@ -321,8 +299,12 @@ async function getMongoAccounts() {
   const accounts = await collection.find({}, { projection: { _id: 0 } }).sort({ username: 1 }).toArray();
   if (accounts.length) {
     // Si alguien escribe un rol mal en MongoDB, la web lo trata como "sin rol".
-    accounts.forEach(account => { account.role = normalizeRole(account.role); });
     try { await applyFileRoles(collection, accounts); } catch (e) {}
+    accounts.forEach(account => {
+      const resolved = resolveRoles(account);
+      account.role = resolved.role;
+      account.roles = resolved.roles;
+    });
     return JSON.stringify(accounts);
   }
 
@@ -371,142 +353,6 @@ async function setValue(key, value, req) {
   throw new Error('Database is not configured');
 }
 
-/* =====================================================================
-   Copias de seguridad
-   Todo se valida en el servidor: el navegador nunca decide saldos ni cuotas.
-   Requiere MongoDB (MONGODB_URI).
-   ===================================================================== */
-const crypto = require('crypto');
-const BACKUP_COLLS = ['app_data', 'accounts', 'role_assignments'];
-
-function rid() { return Date.now().toString(36) + crypto.randomBytes(4).toString('hex'); }
-function nowIso() { return new Date().toISOString(); }
-function unwrap(r) { return r && Object.prototype.hasOwnProperty.call(r, 'value') && Object.prototype.hasOwnProperty.call(r, 'ok') ? r.value : r; }
-async function dbc(name) { return (await mongoDb()).collection(name); }
-
-// Usuario normal: usuario + hash de contraseña (el mismo sistema que setRole / isStaff).
-async function authUser(body, userKey, hashKey) {
-  if (!process.env.MONGODB_URI) return null;
-  const id = String((body && body[userKey || 'user']) || '').trim().toLowerCase();
-  if (!/^[a-z0-9._-]{3,25}$/.test(id)) return null;
-  const account = await (await mongoAccountsCollection()).findOne({ _id: id });
-  if (!account || !account.passHash || String(account.passHash) !== String((body && body[hashKey || 'hash']) || '')) return null;
-  return account;
-}
-async function authAdmin(body) {
-  const account = await authUser(body, 'adminUser', 'adminHash');
-  return account && normalizeRole(account.role) === 'admin' ? account : null;
-}
-
-/* ---------- copias de seguridad (solo administradores) ---------- */
-async function makeSnapshot(by, label) {
-  const db = await mongoDb();
-  const id = rid(), counts = {};
-  for (const name of BACKUP_COLLS) {
-    const docs = await db.collection(name).find({}).toArray();
-    counts[name] = docs.length;
-    for (let i = 0; i < docs.length; i += 100) {
-      await db.collection('backup_items').insertMany(docs.slice(i, i + 100).map(d => ({ backupId: id, coll: name, doc: d })));
-    }
-  }
-  await db.collection('backups').insertOne({ _id: id, at: nowIso(), by: by, label: String(label || '').slice(0, 80), counts: counts });
-  const old = await db.collection('backups').find({}).sort({ at: -1 }).skip(15).toArray();   // se conservan las 15 últimas
-  for (const b of old) {
-    await db.collection('backup_items').deleteMany({ backupId: b._id });
-    await db.collection('backups').deleteOne({ _id: b._id });
-  }
-  return { id: id, counts: counts };
-}
-
-async function backupAction(body) {
-  const admin = await authAdmin(body);
-  if (!admin) return { ok: false, error: 'auth' };
-  const db = await mongoDb();
-  const what = String(body.op || '');
-
-  if (what === 'save') {
-    const snap = await makeSnapshot(admin.username, body.label || 'Copia manual');
-    return { ok: true, id: snap.id, counts: snap.counts };
-  }
-  if (what === 'list') {
-    const rows = await db.collection('backups').find({}).sort({ at: -1 }).limit(15).toArray();
-    return { ok: true, rows: rows };
-  }
-  if (what === 'delete') {
-    const id = String(body.id || '');
-    await db.collection('backup_items').deleteMany({ backupId: id });
-    await db.collection('backups').deleteOne({ _id: id });
-    return { ok: true };
-  }
-  if (what === 'restoreSnapshot') {
-    const id = String(body.id || '');
-    const meta = await db.collection('backups').findOne({ _id: id });
-    if (!meta) return { ok: false, error: 'nobackup' };
-    await makeSnapshot(admin.username, 'Automática · antes de restaurar');   // red de seguridad
-    for (const name of BACKUP_COLLS) {
-      const items = await db.collection('backup_items').find({ backupId: id, coll: name }).toArray();
-      await db.collection(name).deleteMany({});
-      for (let i = 0; i < items.length; i += 100) {
-        await db.collection(name).insertMany(items.slice(i, i + 100).map(x => x.doc), { ordered: false });
-      }
-    }
-    return { ok: true };
-  }
-  if (what === 'export') {                       // descarga por páginas (límite de tamaño de Vercel)
-    const name = String(body.coll || '');
-    if (BACKUP_COLLS.indexOf(name) === -1) return { ok: false, error: 'coll' };
-    const skip = Math.max(0, Number(body.skip) || 0);
-    const col = db.collection(name);
-    const total = await col.countDocuments({});
-    const page = await col.find({}).sort({ _id: 1 }).skip(skip).limit(300).toArray();
-    const docs = []; let size = 0;
-    for (const d of page) {
-      const s = JSON.stringify(d).length;
-      if (docs.length && size + s > 2800000) break;
-      docs.push(d); size += s;
-    }
-    return { ok: true, coll: name, docs: docs, next: skip + docs.length, total: total, done: skip + docs.length >= total };
-  }
-  if (what === 'import') {                       // restaurar desde un archivo, por trozos
-    const name = String(body.coll || '');
-    if (BACKUP_COLLS.indexOf(name) === -1 || !Array.isArray(body.docs)) return { ok: false, error: 'coll' };
-    if (body.pre) await makeSnapshot(admin.username, 'Automática · antes de restaurar archivo');
-    const col = db.collection(name);
-    if (body.reset) await col.deleteMany({});
-    const ops = body.docs.filter(d => d && typeof d._id === 'string').map(d => ({ replaceOne: { filter: { _id: d._id }, replacement: d, upsert: true } }));
-    if (ops.length) await col.bulkWrite(ops, { ordered: false });
-    return { ok: true, n: ops.length };
-  }
-  return { ok: false, error: 'op' };
-}
-
-/* ---------- Datos de vídeos de YouTube (API Data v3 con YOUTUBE_API_KEY; sin clave solo título y canal) ---------- */
-const ytCache = new Map();
-async function ytInfo(body) {
-  const id = String((body && body.id) || '');
-  if (!/^[A-Za-z0-9_-]{11}$/.test(id)) return { ok: false, error: 'id' };
-  const hit = ytCache.get(id);
-  if (hit && Date.now() - hit.t < 30 * 60 * 1000) return hit.v;
-  let out = { ok: true, id: id, title: '', channel: '', views: null, duration: '', publishedAt: '', full: false };
-  try {
-    const key = process.env.YOUTUBE_API_KEY;
-    if (key) {
-      const r = await fetch('https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=' + id + '&key=' + encodeURIComponent(key));
-      const j = await r.json();
-      const it = j && j.items && j.items[0];
-      if (it) {
-        out = { ok: true, id: id, title: it.snippet.title || '', channel: it.snippet.channelTitle || '', views: it.statistics && it.statistics.viewCount != null ? Number(it.statistics.viewCount) : null, duration: it.contentDetails.duration || '', publishedAt: it.snippet.publishedAt || '', full: true };
-      }
-    }
-    if (!out.title) {
-      const r = await fetch('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + id));
-      if (r.ok) { const j = await r.json(); out.title = j.title || ''; out.channel = j.author_name || ''; }
-    }
-  } catch (e) {}
-  ytCache.set(id, { t: Date.now(), v: out });
-  return out;
-}
-
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   try {
@@ -518,40 +364,29 @@ module.exports = async (req, res) => {
     }
     if (req.method === 'POST') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-      if (body.action === 'setRole') {
-        const ok = await setRole(body);
-        return res.status(ok ? 200 : 403).json({ ok: ok });
-      }
-      if (body.action === 'setMaintenance') {
-        const ok = await setMaintenance(body);
-        return res.status(ok ? 200 : 403).json({ ok: ok });
-      }
-      if (body.action === 'setSiteTheme') {
-        const ok = await setSiteTheme(body);
-        return res.status(ok ? 200 : 403).json({ ok: ok });
-      }
-      if (body.action === 'ytInfo') { return res.status(200).json(await ytInfo(body)); }
-      if (body.action === 'backup') { const r = await backupAction(body); return res.status(r.ok ? 200 : 403).json(r); }
-      if (body.action === 'attendanceIps') {
-        const result = await attendanceIps(body);
-        return res.status(result.ok ? 200 : 403).json(result);
-      }
-      if (body.action === 'checkConn') {
-        return res.status(200).json(await checkConnection(body, req));
-      }
       if (body.action === 'login') {
         const ok = await recordLogin(body.username, req);
         return res.status(200).json({ ok: ok });
       }
+      if (body.action === 'setRole') {
+        const r = await handleSetRole(body, req);
+        return res.status(r.status).json(r);
+      }
+      if (body.action === 'log') {
+        const r = await handleStaffLog(body, req);
+        return res.status(r.status).json(r);
+      }
+      if (body.action === 'getLogs') {
+        const r = await handleGetLogs(body);
+        return res.status(r.status).json(r);
+      }
       const key = String(body.key || '');
       if (!/^[A-Za-z0-9:_-]{1,60}$/.test(key) || typeof body.value !== 'string') return res.status(400).json({ ok: false });
-      if (key === 'sitetheme' || key === 'maintenance') return res.status(403).json({ ok: false });
       await setValue(key, body.value, req);
       return res.status(200).json({ ok: true });
     }
     return res.status(405).json({ ok: false });
   } catch (e) {
-    console.error('HFA db error:', e && e.message);
-    return res.status(500).json({ ok: false });
+    return res.status(500).json({ ok: false, reason: 'server_error' });
   }
 };
