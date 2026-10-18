@@ -4,7 +4,7 @@ const { MongoClient } = require('mongodb');
 // (copias de seguridad, mantenimiento, tema, etc.) se le pasa a él, para no perder funciones.
 let originalHandler = null;
 try { originalHandler = require('./_db-original.js'); } catch (e) { originalHandler = null; }
-const OWN_ACTIONS = ['login', 'auth', 'changePassword', 'resetPassword', 'privateAccounts', 'setRole', 'log', 'getLogs'];
+const OWN_ACTIONS = ['login', 'auth', 'changePassword', 'resetPassword', 'privateAccounts', 'setRole', 'log', 'getLogs', 'setMaintenance'];
 
 const URL_ = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
@@ -432,6 +432,17 @@ async function handleGetLogs(body) {
   return { status: 200, ok: true, logs: rows.map(r => ({ ...r, at: r.at instanceof Date ? r.at.toISOString() : r.at })) };
 }
 
+// Mantenimiento: solo administradores.
+async function handleSetMaintenance(body, req) {
+  const admin = await authAccount(body.adminUser, body.adminHash);
+  if (!admin || admin.error) return { status: 403, ok: false, reason: (admin && admin.error) || 'bad_credentials' };
+  if (admin.roles.indexOf('admin') === -1) return { status: 403, ok: false, reason: 'not_admin' };
+  const value = JSON.stringify({ enabled: !!body.enabled, message: String(body.message || '').trim().slice(0, 220) });
+  await setValue('maintenance', value, req);
+  try { await writeStaffLog({ user: admin.username, role: admin.role, event: body.enabled ? 'Activó el mantenimiento' : 'Desactivó el mantenimiento', detail: '', ip: clientIp(req) }); } catch (e) {}
+  return { status: 200, ok: true };
+}
+
 async function getMongoAccounts() {
   const collection = await mongoAccountsCollection();
   const accounts = await collection.find({}, { projection: { _id: 0 } }).sort({ username: 1 }).toArray();
@@ -537,6 +548,10 @@ module.exports = async (req, res) => {
       }
       if (body.action === 'log') {
         const r = await handleStaffLog(body, req);
+        return res.status(r.status).json(r);
+      }
+      if (body.action === 'setMaintenance') {
+        const r = await handleSetMaintenance(body, req);
         return res.status(r.status).json(r);
       }
       if (body.action === 'getLogs') {
