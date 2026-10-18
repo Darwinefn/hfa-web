@@ -1,5 +1,11 @@
 const { MongoClient } = require('mongodb');
 
+// Si renombraste tu db.js anterior a api/_db-original.js, todo lo que este archivo no maneja
+// (copias de seguridad, mantenimiento, tema, etc.) se le pasa a él, para no perder funciones.
+let originalHandler = null;
+try { originalHandler = require('./_db-original.js'); } catch (e) { originalHandler = null; }
+const OWN_ACTIONS = ['login', 'auth', 'changePassword', 'resetPassword', 'privateAccounts', 'setRole', 'log', 'getLogs'];
+
 const URL_ = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 let mongoClientPromise;
@@ -83,6 +89,29 @@ async function applyFileRoles(collection, accounts) {
   if (changes.length) await collection.bulkWrite(changes);
 }
 
+// Datos que NUNCA salen en la lista pública de cuentas.
+const PRIVATE_FIELDS = ['passHash', 'password', 'pass', 'ip', 'lastIp', 'ips', '_id'];
+function publicAccount(account) {
+  const out = {};
+  Object.keys(account || {}).forEach(k => { if (PRIVATE_FIELDS.indexOf(k) === -1) out[k] = account[k]; });
+  return out;
+}
+function sanitizeAccountsJson(value) {
+  try {
+    const list = JSON.parse(value);
+    return Array.isArray(list) ? JSON.stringify(list.map(publicAccount)) : value;
+  } catch (e) { return value; }
+}
+const HASH_RE = /^[0-9a-f]{64}$/;
+const authAttempts = new Map();
+function tooManyAttempts(key) {
+  const now = Date.now();
+  const list = (authAttempts.get(key) || []).filter(t => now - t < 10 * 60 * 1000);
+  authAttempts.set(key, list);
+  return list.length >= 10;
+}
+function noteAttempt(key) { const l = authAttempts.get(key) || []; l.push(Date.now()); authAttempts.set(key, l); }
+
 // IP real del visitante (Vercel la envía en x-forwarded-for). No se puede falsear desde el navegador.
 function clientIp(req) {
   const xf = req && req.headers && req.headers['x-forwarded-for'];
@@ -154,6 +183,9 @@ async function saveMongoAccounts(value, req, trusted) {
       return { updateOne: { filter: { _id: id }, update: { $set: fields }, upsert: true } };
     }
     // Campos que el navegador NO puede escribir: los pone el servidor o se cambian en MongoDB.
+    const newHash = fields.passHash;
+    delete fields.passHash;
+    delete fields.password;
     delete fields.role;
     delete fields.roles;
     delete fields.ip;
@@ -167,6 +199,7 @@ async function saveMongoAccounts(value, req, trusted) {
         update: {
           $set: fields,
           $setOnInsert: {
+            passHash: HASH_RE.test(String(newHash || '')) ? newHash : '',
             role: preRoles[id] || 'pendiente',
             ip: ip,
             lastIp: ip,
@@ -280,6 +313,111 @@ async function handleStaffLog(body, req) {
   return { status: 200, ok: true };
 }
 
+// Inicio de sesión: la comprobación de la contraseña se hace aquí, nunca en el navegador.
+async function handleAuth(body, req) {
+  const id = String(body.username || '').trim().toLowerCase();
+  const throttleKey = clientIp(req) + '|' + id;
+  if (tooManyAttempts(throttleKey)) return { status: 429, ok: false, reason: 'too_many' };
+  const who = await authAccount(body.username, body.hash);
+  if (!who || who.error) {
+    noteAttempt(throttleKey);
+    return { status: 200, ok: false, reason: (who && who.error) === 'no_account' ? 'no_account' : 'bad_credentials' };
+  }
+  const doc = await (await mongoAccountsCollection()).findOne({ _id: who.id });
+  const account = publicAccount(doc || {});
+  account.role = who.role;
+  account.roles = who.roles;
+  try { await recordLogin(who.id, req); } catch (e) {}
+  return { status: 200, ok: true, account: account };
+}
+
+// Cambio de contraseña propio (pide la contraseña actual).
+async function handleChangePassword(body) {
+  if (!HASH_RE.test(String(body.newHash || ''))) return { status: 400, ok: false };
+  const who = await authAccount(body.username, body.oldHash);
+  if (!who || who.error) return { status: 403, ok: false, reason: 'bad_credentials' };
+  await (await mongoAccountsCollection()).updateOne({ _id: who.id }, { $set: { passHash: body.newHash } });
+  await writeStaffLog({ user: who.username, role: who.role, event: 'Cambió su contraseña', detail: '' });
+  return { status: 200, ok: true };
+}
+
+// Restablecer la contraseña de otra persona: solo admin.
+async function handleResetPassword(body, req) {
+  if (!HASH_RE.test(String(body.newHash || ''))) return { status: 400, ok: false };
+  const admin = await authAccount(body.adminUser, body.adminHash);
+  if (!admin || admin.error || admin.roles.indexOf('admin') === -1) return { status: 403, ok: false };
+  const targetId = String(body.username || '').trim().toLowerCase();
+  const res = await (await mongoAccountsCollection()).updateOne({ _id: targetId }, { $set: { passHash: body.newHash } });
+  if (!res.matchedCount) return { status: 404, ok: false };
+  await writeStaffLog({ user: admin.username, role: admin.role, event: 'Restableció una contraseña', target: targetId, detail: 'Cuenta: ' + targetId, ip: clientIp(req) });
+  return { status: 200, ok: true };
+}
+
+// IPs de las cuentas: solo admin y moderadores (panel de IPs).
+async function handlePrivateAccounts(body) {
+  const who = await authAccount(body.adminUser, body.adminHash);
+  if (!who || who.error || !(who.roles.indexOf('admin') !== -1 || who.roles.indexOf('moderador') !== -1 || who.roles.indexOf('prueba_moderador') !== -1)) return { status: 403, ok: false };
+  const rows = await (await mongoAccountsCollection()).find({}, { projection: { _id: 0, username: 1, ip: 1, lastIp: 1, ips: 1 } }).toArray();
+  return { status: 200, ok: true, accounts: rows };
+}
+
+// ---------- Quién hace la petición (cabeceras x-hfa-user / x-hfa-hash) ----------
+async function requester(req) {
+  try {
+    const u = req && req.headers && req.headers['x-hfa-user'];
+    const h = req && req.headers && req.headers['x-hfa-hash'];
+    if (!u || !h) return null;
+    const who = await authAccount(decodeURIComponent(String(u)), String(h));
+    return who && !who.error ? who : null;
+  } catch (e) { return null; }
+}
+const PUBLIC_KEYS = ['divisions', 'teams', 'matches', 'tournaments', 'sponsors', 'news', 'maintenance', 'competition', 'palmares', 'cups',
+  'achievements', 'achievementPins', 'achievementFeed', 'profileComments', 'siteTheme', 'theme'];
+// Solo personal con rol puede escribir estas claves.
+const STAFF_WRITE_KEYS = ['news', 'sponsors', 'competition', 'palmares', 'tournaments', 'cups', 'divisions'];
+function isOfferMine(offer, who) {
+  const me = String(who.username || '').toLowerCase();
+  return String(offer && offer.player || '').toLowerCase() === me || String(offer && offer.ownerUsername || '').toLowerCase() === me;
+}
+function parseList(text) { try { const v = JSON.parse(text); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+
+// Lectura de una clave con sus reglas de privacidad.
+async function readKey(key, req) {
+  if (key === 'offers') {
+    const who = await requester(req);
+    if (!who) return '[]';
+    const all = parseList(await getValue('offers'));
+    return JSON.stringify(who.roles.indexOf('admin') !== -1 ? all : all.filter(o => isOfferMine(o, who)));
+  }
+  if (key === 'userRoles') {
+    const who = await requester(req);
+    return who && who.roles.indexOf('admin') !== -1 ? getValue(key) : '{}';
+  }
+  return getValue(key);
+}
+
+// Escritura de una clave: hay que haber iniciado sesión (salvo registrarse en "accounts").
+async function writeKey(key, value, req) {
+  if (typeof value !== 'string' || value.length > 4 * 1024 * 1024) return { status: 400, ok: false };
+  if (key === 'accounts') { await setValue(key, value, req); return { status: 200, ok: true }; }
+  const who = await requester(req);
+  if (!who) return { status: 403, ok: false, reason: 'login_required' };
+  const isAdmin = who.roles.indexOf('admin') !== -1;
+  const isStaff = who.roles.some(r => STAFF_ROLES.indexOf(r) !== -1);
+  if (key === 'userRoles' && !isAdmin) return { status: 403, ok: false, reason: 'not_admin' };
+  if (STAFF_WRITE_KEYS.indexOf(key) !== -1 && !isStaff) return { status: 403, ok: false, reason: 'not_staff' };
+  if (key === 'offers' && !isAdmin) {
+    // Cada persona solo ve sus ofertas, así que se fusiona sin borrar las de los demás.
+    const incoming = parseList(value).filter(o => isOfferMine(o, who));
+    const current = parseList(await getValue('offers'));
+    const merged = current.filter(o => !isOfferMine(o, who)).concat(incoming);
+    await setValue('offers', JSON.stringify(merged), req);
+    return { status: 200, ok: true };
+  }
+  await setValue(key, value, req);
+  return { status: 200, ok: true };
+}
+
 // Lectura de logs: solo administradores.
 async function handleGetLogs(body) {
   const admin = await authAccount(body.adminUser, body.adminHash);
@@ -322,13 +460,14 @@ async function getMongoAccounts() {
 
 async function getValue(key) {
   if (process.env.MONGODB_URI) {
-    if (key === 'accounts') return getMongoAccounts();
+    if (key === 'accounts') return sanitizeAccountsJson(await getMongoAccounts());
     const document = await (await mongoCollection()).findOne({ _id: 'hfa:' + key }, { projection: { value: 1 } });
     return document ? document.value : null;
   }
   if (URL_ && TOKEN) {
     const value = await redis(['GET', 'hfa:' + key]);
-    return value === undefined ? null : value;
+    if (value === undefined) return null;
+    return key === 'accounts' && typeof value === 'string' ? sanitizeAccountsJson(value) : value;
   }
   throw new Error('Database is not configured');
 }
@@ -359,14 +498,38 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
       const key = String((req.query && req.query.key) || '');
       if (!/^[A-Za-z0-9:_-]{1,60}$/.test(key)) return res.status(400).json({ ok: false });
-      const value = await getValue(key);
+      const known = key === 'accounts' || key === 'offers' || key === 'userRoles' || PUBLIC_KEYS.indexOf(key) !== -1;
+      if (!known) {
+        if (originalHandler) return originalHandler(req, res);
+        return res.status(200).json({ ok: true, value: null });
+      }
+      const value = await readKey(key, req);
       return res.status(200).json({ ok: true, value: value });
     }
     if (req.method === 'POST') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      if (originalHandler && body.action && OWN_ACTIONS.indexOf(body.action) === -1) {
+        return originalHandler(req, res);
+      }
       if (body.action === 'login') {
         const ok = await recordLogin(body.username, req);
         return res.status(200).json({ ok: ok });
+      }
+      if (body.action === 'auth') {
+        const r = await handleAuth(body, req);
+        return res.status(r.status).json(r);
+      }
+      if (body.action === 'changePassword') {
+        const r = await handleChangePassword(body);
+        return res.status(r.status).json(r);
+      }
+      if (body.action === 'resetPassword') {
+        const r = await handleResetPassword(body, req);
+        return res.status(r.status).json(r);
+      }
+      if (body.action === 'privateAccounts') {
+        const r = await handlePrivateAccounts(body);
+        return res.status(r.status).json(r);
       }
       if (body.action === 'setRole') {
         const r = await handleSetRole(body, req);
@@ -381,9 +544,9 @@ module.exports = async (req, res) => {
         return res.status(r.status).json(r);
       }
       const key = String(body.key || '');
-      if (!/^[A-Za-z0-9:_-]{1,60}$/.test(key) || typeof body.value !== 'string') return res.status(400).json({ ok: false });
-      await setValue(key, body.value, req);
-      return res.status(200).json({ ok: true });
+      if (body.action || !/^[A-Za-z0-9:_-]{1,60}$/.test(key) || typeof body.value !== 'string') return res.status(400).json({ ok: false });
+      const written = await writeKey(key, body.value, req);
+      return res.status(written.status).json(written);
     }
     return res.status(405).json({ ok: false });
   } catch (e) {
