@@ -1,0 +1,7 @@
+# Archivos que NO se publican en Vercel (no se pueden descargar desde la web)
+users.json
+**/users.json
+usuarios.json
+**/usuarios.json
+accounts.json
+**/accounts.json

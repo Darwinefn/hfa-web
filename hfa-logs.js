@@ -31,12 +31,7 @@
     try {
       var s = (typeof session !== 'undefined' && session) || JSON.parse(localStorage.getItem('hfa:session') || 'null');
       if (!s || !s.username || !s.role || s.role === 'pendiente') return null;
-      var hash = '';
-      if (typeof accounts !== 'undefined') {
-        var me = accounts.find(function (a) { return String(a.username).toLowerCase() === String(s.username).toLowerCase(); });
-        hash = (me && me.passHash) || '';
-      }
-      if (!hash) hash = localStorage.getItem('hfa:adminAuth') || '';
+      var hash = localStorage.getItem('hfa:adminAuth') || '';
       return hash ? { username: s.username, role: s.role, hash: hash } : null;
     } catch (e) { return null; }
   }

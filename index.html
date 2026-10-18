@@ -537,15 +537,17 @@ section.block{padding-top:44px;padding-bottom:64px}
   }
 
   const HFA_API = '/api/db';
+  function hfaAuthHeaders(){const h={};try{const s=JSON.parse(localStorage.getItem('hfa:session')||'null'),a=localStorage.getItem('hfa:adminAuth');if(s&&s.username&&a){h['x-hfa-user']=encodeURIComponent(s.username);h['x-hfa-hash']=a}}catch(e){}return h}
+  try{if(localStorage.getItem('hfa:session')&&!localStorage.getItem('hfa:adminAuth')){localStorage.removeItem('hfa:session')}}catch(e){}
   async function hfaRemoteGet(key){
-    const r = await fetch(HFA_API + '?key=' + encodeURIComponent(key), {cache:'no-store'});
+    const r = await fetch(HFA_API + '?key=' + encodeURIComponent(key), {cache:'no-store', headers:hfaAuthHeaders()});
     if (!r.ok) throw new Error('api');
     const d = await r.json();
     if (!d || d.ok !== true) throw new Error('api');
     return d.value;
   }
   async function hfaRemoteSet(key, text){
-    const r = await fetch(HFA_API, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({key:key, value:text})});
+    const r = await fetch(HFA_API, {method:'POST', headers:Object.assign({'Content-Type':'application/json'}, hfaAuthHeaders()), body: JSON.stringify({key:key, value:text})});
     if (!r.ok) throw new Error('api');
   }
   async function hfaSetRoleRemote(username, role){
@@ -655,7 +657,7 @@ section.block{padding-top:44px;padding-bottom:64px}
       if (savedSession && savedSession.username){
         const account = state.accounts.find(item => String(item.username).toLowerCase() === String(savedSession.username).toLowerCase());
         session = account ? {username: account.username, role: account.role || 'pendiente'} : savedSession;
-        if (account){ try{ localStorage.setItem('hfa:session', JSON.stringify(session)); if (['admin','moderador','prueba_moderador'].includes(session.role)) localStorage.setItem('hfa:adminAuth', account.passHash); else localStorage.removeItem('hfa:adminAuth'); }catch(e){} }
+        if (account){ try{ localStorage.setItem('hfa:session', JSON.stringify(session)); }catch(e){} }
       }
     }catch(e){}
   }
@@ -1468,17 +1470,23 @@ section.block{padding-top:44px;padding-bottom:64px}
         await storageSetJSON('accounts', state.accounts, true);
         session = {username, role};
         localStorage.setItem('hfa:session', JSON.stringify(session));
+        localStorage.setItem('hfa:adminAuth', passHash);
         renderAll();
         showAccountCreated();
       } else {
-        state.accounts = await storageGetJSON('accounts', state.accounts, true);
-        const account = state.accounts.find(a => a.username.toLowerCase() === username.toLowerCase());
-        if (!account){ hint.textContent = 'No existe esa cuenta. Regístrate primero.'; hint.style.color = 'var(--red)'; return; }
-        const passHash = await sha256(password);
-        if (passHash !== account.passHash){ hint.textContent = 'Contraseña incorrecta.'; hint.style.color = 'var(--red)'; return; }
+        const loginHash = await sha256(password);
+        let authResult = {ok:false, reason:'network'};
+        try{ const r = await fetch(HFA_API, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'auth', username:username, hash:loginHash})}); authResult = await r.json(); }catch(err){}
+        if (!authResult.ok){
+          const msg = authResult.reason === 'no_account' ? 'No existe esa cuenta. Regístrate primero.'
+            : authResult.reason === 'too_many' ? 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.'
+            : (authResult.reason === 'bad_credentials' ? 'Contraseña incorrecta.' : 'No se pudo conectar con el servidor. Inténtalo de nuevo.');
+          hint.textContent = msg; hint.style.color = 'var(--red)'; return;
+        }
+        const account = authResult.account;
         session = {username: account.username, role: account.role};
         localStorage.setItem('hfa:session', JSON.stringify(session));
-        if (['admin','moderador','prueba_moderador'].includes(session.role)) localStorage.setItem('hfa:adminAuth', account.passHash); else localStorage.removeItem('hfa:adminAuth');
+        localStorage.setItem('hfa:adminAuth', loginHash);
         renderAll();
         showLoginWelcome(session.username);
       }

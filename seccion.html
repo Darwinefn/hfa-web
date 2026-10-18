@@ -930,6 +930,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   window.hfaApp={state:state,getJSON:getJSON,setJSON:setJSON,session:function(){return session},activeTournamentId:function(){return activeTournamentId},refresh:function(){nav();content()}};
   let accounts=[];
   let authMode='login';
+try{if(localStorage.getItem('hfa:session')&&!localStorage.getItem('hfa:adminAuth')){localStorage.removeItem('hfa:session')}}catch(e){}
   let session=null;
   let activeTournamentId='default';
   let statsDivision='all';
@@ -940,8 +941,9 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   let playerGrlFilter='all';
   let playerFreeAgentFilter='all';
   const HFA_API='/api/db';
-  async function hfaRemoteGet(key){const r=await fetch(HFA_API+'?key='+encodeURIComponent(key),{cache:'no-store'});if(!r.ok)throw new Error('api');const d=await r.json();if(!d||d.ok!==true)throw new Error('api');return d.value}
-  async function hfaRemoteSet(key,text){const r=await fetch(HFA_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:key,value:text})});if(!r.ok)throw new Error('api')}
+  function hfaAuthHeaders(){const h={};try{const s=JSON.parse(localStorage.getItem('hfa:session')||'null'),a=localStorage.getItem('hfa:adminAuth');if(s&&s.username&&a){h['x-hfa-user']=encodeURIComponent(s.username);h['x-hfa-hash']=a}}catch(e){}return h}
+  async function hfaRemoteGet(key){const r=await fetch(HFA_API+'?key='+encodeURIComponent(key),{cache:'no-store',headers:hfaAuthHeaders()});if(!r.ok)throw new Error('api');const d=await r.json();if(!d||d.ok!==true)throw new Error('api');return d.value}
+  async function hfaRemoteSet(key,text){const r=await fetch(HFA_API,{method:'POST',headers:Object.assign({'Content-Type':'application/json'},hfaAuthHeaders()),body:JSON.stringify({key:key,value:text})});if(!r.ok)throw new Error('api')}
   async function hfaMergeAccounts(list){try{const text=await hfaRemoteGet('accounts');if(!text)return;const remote=JSON.parse(text);if(!Array.isArray(remote)||!Array.isArray(list))return;remote.forEach(item=>{if(item&&item.username&&!list.some(local=>String(local.username).toLowerCase()===String(item.username).toLowerCase()))list.push(item)})}catch(error){}}
   function showAccountCreated(){
     document.getElementById('accountCreatedOverlay')?.remove();
@@ -1023,15 +1025,15 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       const pass=window.prompt('Nueva contraseña temporal para '+username+' (mínimo 6 caracteres):');
       if(pass===null)return;
       if(pass.length<6){window.alert('La contraseña debe tener al menos 6 caracteres.');return}
-      account.passHash=await hashPassword(pass);
-      await setJSON('accounts',accounts);
+      const reset=await hfaApi({action:'resetPassword',adminUser:session.username,adminHash:localStorage.getItem('hfa:adminAuth')||'',username:username,newHash:await hashPassword(pass)});
+      if(!reset.ok){window.alert('No se pudo restablecer la contraseña. Vuelve a iniciar sesión como admin e inténtalo de nuevo.');return}
       window.alert('Contraseña restablecida. Pásale la temporal a '+username+'.');
     }
   });
   document.addEventListener('focusin',async function(e){
     if(e.target&&e.target.id==='rosterPlayerSearch'){const box=e.target;try{accounts=await getJSON('accounts',accounts)}catch(err){}box.dispatchEvent(new Event('input',{bubbles:true}))}
   });
-  async function getJSON(key,fallback){try{const text=await hfaRemoteGet(key);if(text!==null&&text!==undefined){const parsed=JSON.parse(text);try{localStorage.setItem('hfa:'+key,text)}catch(error){}return parsed}}catch(error){}let remoteValue;try{if(window.storage){const result=await window.storage.get(key,true);if(result&&result.value!==undefined&&result.value!==null)remoteValue=JSON.parse(result.value)}}catch(error){}try{const localValue=localStorage.getItem('hfa:'+key);if(localValue)return JSON.parse(localValue)}catch(error){}return remoteValue===undefined?fallback:remoteValue}
+  async function getJSON(key,fallback){try{const text=await hfaRemoteGet(key);if(text!==null&&text!==undefined){const parsed=JSON.parse(text);try{localStorage.setItem('hfa:'+key,text)}catch(error){}if(key==='accounts')await hfaAttachPrivate(parsed);return parsed}}catch(error){}let remoteValue;try{if(window.storage){const result=await window.storage.get(key,true);if(result&&result.value!==undefined&&result.value!==null)remoteValue=JSON.parse(result.value)}}catch(error){}try{const localValue=localStorage.getItem('hfa:'+key);if(localValue)return JSON.parse(localValue)}catch(error){}return remoteValue===undefined?fallback:remoteValue}
   const HFA_ROLE_PRIORITY=['admin','moderador','prueba_moderador','arbitro','dueno'];
   function hfaRolesOf(x){if(!x)return [];let list=Array.isArray(x.roles)?x.roles.slice():[];if(x.role)list.push(x.role);list=list.map(r=>String(r).toLowerCase()).filter((r,i,a)=>HFA_ROLE_PRIORITY.includes(r)&&a.indexOf(r)===i);return HFA_ROLE_PRIORITY.filter(r=>list.includes(r))}
   function hfaHasRole(x,role){return hfaRolesOf(x).includes(role)}
@@ -1041,7 +1043,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   async function hfaSave(key,list){
     const text=JSON.stringify(list);
     try{localStorage.setItem('hfa:'+key,text)}catch(error){}
-    try{const r=await fetch(HFA_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:key,value:text})});if(!r.ok)return false;let d=null;try{d=await r.json()}catch(error){}return !(d&&d.ok===false)}catch(error){return false}
+    try{const r=await fetch(HFA_API,{method:'POST',headers:Object.assign({'Content-Type':'application/json'},hfaAuthHeaders()),body:JSON.stringify({key:key,value:text})});if(!r.ok)return false;let d=null;try{d=await r.json()}catch(error){}return !(d&&d.ok===false)}catch(error){return false}
   }
   function hfaImgToDataUrl(file,max,type,quality){
     return new Promise((resolve,reject)=>{const fr=new FileReader();fr.onerror=()=>reject(new Error('No se pudo leer la imagen'));fr.onload=()=>{const img=new Image();img.onerror=()=>reject(new Error('La imagen no es válida'));img.onload=()=>{const k=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.width*k));c.height=Math.max(1,Math.round(img.height*k));const x=c.getContext('2d');if(type==='image/jpeg'){x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height)}x.drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL(type,quality))};img.src=String(fr.result)};fr.readAsDataURL(file)});
@@ -1051,7 +1053,10 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     const rows=hfaSponsorList().map(item=>'<div class="sponsor-admin-row">'+(item.logo?'<img src="'+item.logo+'" alt="">':'<span class="sp-ph">⚑</span>')+'<div class="match-name">'+profileText(item.name)+'</div><button class="btn" data-delete-sponsor="'+profileText(item.id||item.name)+'">Eliminar</button></div>').join('')||'<div class="empty">Todavía no hay patrocinadores.</div>';
     return '<div class="content-card"><div class="admin-title">Sponsors y patrocinadores</div><div class="admin-section-note">Cada patrocinador necesita nombre y logo. Aparecen en el inicio.</div><div class="admin-community-form"><input class="input" id="sponsorInput" placeholder="Nombre del patrocinador"><input class="input" id="sponsorLogoFile" type="file" accept="image/*"><input class="input wide" id="sponsorLogoUrl" type="url" placeholder="o URL del logo (opcional)"></div><button class="btn btn-primary" id="addSponsor">Agregar patrocinador</button><div class="admin-list">'+rows+'</div></div>';
   }
-  async function setJSON(key,value){if(key==='accounts')await hfaMergeAccounts(value);const text=JSON.stringify(value);try{localStorage.setItem('hfa:'+key,text)}catch(error){}try{await hfaRemoteSet(key,text);return}catch(error){}try{if(window.storage)await window.storage.set(key,text,true)}catch(error){}}
+  async function setJSON(key,value){if(key==='accounts')await hfaMergeAccounts(value);const text=JSON.stringify(value);try{localStorage.setItem('hfa:'+key,key==='accounts'&&Array.isArray(value)?JSON.stringify(value.map(a=>{const c=Object.assign({},a);delete c.passHash;delete c.ip;delete c.lastIp;delete c.ips;return c})):text)}catch(error){}try{await hfaRemoteSet(key,text);return}catch(error){}try{if(window.storage)await window.storage.set(key,text,true)}catch(error){}}
+  async function hfaApi(body){try{const r=await fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return await r.json().catch(()=>({ok:false}))}catch(error){return {ok:false,reason:'network'}}}
+  let hfaPrivateCache={at:0,rows:null};
+  async function hfaAttachPrivate(list){try{if(!Array.isArray(list)||!session||!['admin','moderador','prueba_moderador'].includes(session.role))return;const hash=localStorage.getItem('hfa:adminAuth')||'';if(!hash)return;if(!hfaPrivateCache.rows||Date.now()-hfaPrivateCache.at>20000){const r=await hfaApi({action:'privateAccounts',adminUser:session.username,adminHash:hash});if(!r.ok)return;hfaPrivateCache={at:Date.now(),rows:r.accounts||[]}}const map={};hfaPrivateCache.rows.forEach(a=>{map[String(a.username).toLowerCase()]=a});list.forEach(a=>{const p=map[String(a.username).toLowerCase()];if(p){a.ip=p.ip;a.lastIp=p.lastIp;a.ips=p.ips||[]}})}catch(error){}}
   async function hashPassword(text){try{const buffer=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));return Array.from(new Uint8Array(buffer)).map(byte=>byte.toString(16).padStart(2,'0')).join('')}catch(error){return text}}
   function notificationMarkup(){const pending=state.offers.filter(offer=>offer.player.toLowerCase()===session.username.toLowerCase()&&offer.status==='pendiente').length;return '<div class="notification-wrap"><button class="nav-notification" id="sectionNotification" title="Notificaciones">🔔'+(pending?' '+pending:'')+'</button><div class="notification-panel" id="sectionNotificationPanel"><div class="notification-head">Notificaciones recientes</div><button class="notification-item" type="button" data-notification-target="seccion.html?view=partidos">⚽ <p>Novedades de partidos y juegos de la competición.</p></button><button class="notification-item" type="button" data-notification-target="seccion.html?view=estadisticas">🏷️ <p>Nuevas ofertas y promociones de la asociación.</p></button>'+(pending?'<button class="notification-item" type="button" data-notification-target="seccion.html?view=buzon">📄 <p>Tienes '+pending+' oferta(s) de contrato pendiente(s).</p></button>':'')+'</div></div>'}
   function nav(){let links=session?[['/','Inicio',''],['seccion.html?view=comunidad','Comunidad','comunidad'],['clasificacion.html','Clasificación','clasificacion'],['seccion.html?view=torneos','Torneos','torneos'],['seccion.html?view=estadisticas','Estadísticas','estadisticas'],['seccion.html?view=partidos','Partidos','partidos'],['seccion.html?view=mispartidos','Mis partidos','mispartidos'],['https://cards.hfasociacion.com/','Álbum','album'],['seccion.html?view=cuenta','Cuenta','cuenta'],['seccion.html?view=buzon','Buzón','buzon'],['seccion.html?view=admin','Admin','admin']]:[['/','Inicio','']];if(!session||!['admin','prueba_moderador','moderador','arbitro'].includes(session.role))links=links.filter(item=>item[2]!=='admin');const isCommunityPage=view==='comunidad';const menu=links.map(item=>{
@@ -2088,7 +2093,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     if(!roleSaved)window.alert('No se pudo guardar el rol en la base de datos. Comprueba que tu sesión de administrador sea válida e inténtalo de nuevo.');
     await setJSON('accounts',accounts);
     await hfaSaveUserRoles();
-    if(session?.username===username){session.role=account.role;session.roles=account.roles;localStorage.setItem('hfa:session',JSON.stringify(session));if(['admin','moderador','prueba_moderador'].includes(session.role))localStorage.setItem('hfa:adminAuth',account.passHash);else localStorage.removeItem('hfa:adminAuth');nav()}
+    if(session?.username===username){session.role=account.role;session.roles=account.roles;localStorage.setItem('hfa:session',JSON.stringify(session));nav()}
     content();prepareAdminDivisions();
   }
   document.addEventListener('click',function(event){
@@ -2414,13 +2419,10 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     if(next===current){fail('La nueva contraseña debe ser distinta de la actual.');return}
     button.disabled=true;
     try{
-      accounts=await getJSON('accounts',accounts);
-      const account=accounts.find(item=>String(item.username).toLowerCase()===String(session.username).toLowerCase());
-      if(!account){fail('No encontramos tu cuenta. Vuelve a iniciar sesión.');return}
-      if(account.passHash!==await hashPassword(current)){fail('La contraseña actual no es correcta.');return}
-      account.passHash=await hashPassword(next);
-      await setJSON('accounts',accounts);
-      if(['admin','moderador','prueba_moderador'].includes(session.role)){try{localStorage.setItem('hfa:adminAuth',account.passHash)}catch(error){}}
+      const oldHash=await hashPassword(current),newHash=await hashPassword(next);
+      const changed=await hfaApi({action:'changePassword',username:session.username,oldHash:oldHash,newHash:newHash});
+      if(!changed.ok){fail(changed.reason==='bad_credentials'?'La contraseña actual no es correcta.':'No se pudo cambiar la contraseña. Inténtalo de nuevo.');return}
+      try{localStorage.setItem('hfa:adminAuth',newHash)}catch(error){}
       hfaClosePasswordModal();
       hfaModal({title:'Contraseña cambiada',text:'Tu contraseña se actualizó. Úsala la próxima vez que inicies sesión.',buttons:[{label:'Entendido'}]});
     }catch(error){fail('No se pudo cambiar la contraseña. Inténtalo de nuevo.')}
@@ -3431,7 +3433,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     if(saveRoleButton){
       if(session?.role!=='admin')return;
       const username=saveRoleButton.dataset.saveUserRole,roleSelect=document.querySelector('[data-user-role="'+CSS.escape(username)+'"]'),row=saveRoleButton.closest('.admin-player-row'),account=accounts.find(item=>item.username===username);
-      if(account&&roleSelect){account.role=roleSelect.value;account.roles=account.role==='pendiente'?[]:[account.role];const roleSaved=await hfaSetRoleRemote(account.username,account.role,account.roles);if(!roleSaved)window.alert('No se pudo guardar el rol en la base de datos. Comprueba que tu sesión de administrador sea válida e inténtalo de nuevo.');if(row?.querySelector('[data-user-division-choice]')){const divisionButton=row.querySelector('[data-user-division-choice].active');account.division=divisionButton?.dataset.division||'';account.enabledDivisions=[...row.querySelectorAll('[data-user-enabled-choice].active')].map(button=>button.dataset.division)}await setJSON('accounts',accounts);if(session?.username===username){session.role=account.role;session.roles=account.roles;localStorage.setItem('hfa:session',JSON.stringify(session));if(['admin','moderador','prueba_moderador'].includes(session.role))localStorage.setItem('hfa:adminAuth',account.passHash);else localStorage.removeItem('hfa:adminAuth');nav()}content();prepareAdminDivisions()}
+      if(account&&roleSelect){account.role=roleSelect.value;account.roles=account.role==='pendiente'?[]:[account.role];const roleSaved=await hfaSetRoleRemote(account.username,account.role,account.roles);if(!roleSaved)window.alert('No se pudo guardar el rol en la base de datos. Comprueba que tu sesión de administrador sea válida e inténtalo de nuevo.');if(row?.querySelector('[data-user-division-choice]')){const divisionButton=row.querySelector('[data-user-division-choice].active');account.division=divisionButton?.dataset.division||'';account.enabledDivisions=[...row.querySelectorAll('[data-user-enabled-choice].active')].map(button=>button.dataset.division)}await setJSON('accounts',accounts);if(session?.username===username){session.role=account.role;session.roles=account.roles;localStorage.setItem('hfa:session',JSON.stringify(session));nav()}content();prepareAdminDivisions()}
       return;
     }
     const saveDivisionButton=event.target.closest('[data-save-user-division]');
@@ -3660,11 +3662,16 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
       await setJSON('accounts',accounts);
       hint.classList.remove('error');hint.textContent='';authMode='login';content();showAccountCreated();return;
     }
-    accounts=await getJSON('accounts',accounts);
-    const accountRecord=accounts.find(account=>account.username.toLowerCase()===username.toLowerCase());
-    hint.textContent='';hint.classList.remove('error');if(!accountRecord){hfaModal({error:true,title:'No encontramos esa cuenta',text:'Revisa el nombre de usuario o crea una cuenta nueva.',buttons:[{label:'Reintentar'},{label:'Crear cuenta',ghost:true,action:function(){authMode='register';content();prepareAccountForm()}}]});return}if(accountRecord.passHash!==await hashPassword(password)){hfaModal({error:true,title:'Tu contraseña no es correcta',text:'Revísala e inténtalo de nuevo, o contacta con un administrador para recuperarla.',buttons:[{label:'Reintentar',action:function(){const f=document.getElementById('authPassword');if(f){f.value='';f.focus()}}},{label:'Recuperar contraseña',ghost:true,action:function(){hfaRecovery(username)}}]});return}{const ip=await hfaGetIp();if(ip&&hfaTrackIp(accountRecord,ip)){try{await setJSON('accounts',accounts)}catch(error){}}}
+    const loginHash=await hashPassword(password);
+    const authResult=await hfaApi({action:'auth',username:username,hash:loginHash});
+    hint.textContent='';hint.classList.remove('error');
+    if(!authResult.ok&&authResult.reason==='no_account'){hfaModal({error:true,title:'No encontramos esa cuenta',text:'Revisa el nombre de usuario o crea una cuenta nueva.',buttons:[{label:'Reintentar'},{label:'Crear cuenta',ghost:true,action:function(){authMode='register';content();prepareAccountForm()}}]});return}
+    if(!authResult.ok&&authResult.reason==='too_many'){hint.textContent='Demasiados intentos. Espera unos minutos e inténtalo de nuevo.';hint.classList.add('error');return}
+    if(!authResult.ok&&(authResult.reason==='network'||authResult.reason==='no_db'||authResult.reason===undefined)){hint.textContent='No se pudo conectar con el servidor. Inténtalo de nuevo.';hint.classList.add('error');return}
+    if(!authResult.ok){hfaModal({error:true,title:'Tu contraseña no es correcta',text:'Revísala e inténtalo de nuevo, o contacta con un administrador para recuperarla.',buttons:[{label:'Reintentar',action:function(){const f=document.getElementById('authPassword');if(f){f.value='';f.focus()}}},{label:'Recuperar contraseña',ghost:true,action:function(){hfaRecovery(username)}}]});return}
+    const accountRecord=authResult.account;
     session={username:accountRecord.username,role:accountRecord.role,roles:hfaRolesOf(accountRecord)};
-    try{localStorage.setItem('hfa:session',JSON.stringify(session));localStorage.setItem('hfa:loginWelcome',accountRecord.username);if(['admin','moderador','prueba_moderador'].includes(session.role))localStorage.setItem('hfa:adminAuth',accountRecord.passHash);else localStorage.removeItem('hfa:adminAuth')}catch(error){}
+    try{localStorage.setItem('hfa:session',JSON.stringify(session));localStorage.setItem('hfa:loginWelcome',accountRecord.username);localStorage.setItem('hfa:adminAuth',loginHash)}catch(error){}
     location.href='/';
   });
   document.addEventListener('input',function(event){
@@ -3822,7 +3829,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
     accounts=loadedAccounts;await hfaLoadUserRoles();state.teams=teams;state.matches=matches;state.competition=competition;state.sponsors=sponsors;state.offers=offers;state.palmares=palmares;state.news=news;hfaPins=(loadedPins&&typeof loadedPins==='object'&&!Array.isArray(loadedPins))?loadedPins:{};
     state.tournaments=tournaments===null||tournaments===undefined?[{id:'default',name:state.competition,season:'Temporada actual'}]:tournaments;
     try{activeTournamentId=localStorage.getItem('hfa:activeTournament')||String(state.tournaments[0]?.id||'');session=JSON.parse(localStorage.getItem('hfa:session')||'null')}catch(error){}
-    try{if(session&&session.username){const fresh=accounts.find(item=>String(item.username).toLowerCase()===String(session.username).toLowerCase());if(fresh){const freshRole=fresh.role||'pendiente';if(session.role!==freshRole||session.username!==fresh.username||JSON.stringify(session.roles||[])!==JSON.stringify(hfaRolesOf(fresh))){session={username:fresh.username,role:freshRole,roles:hfaRolesOf(fresh)};localStorage.setItem('hfa:session',JSON.stringify(session))}if(['admin','moderador','prueba_moderador'].includes(freshRole))localStorage.setItem('hfa:adminAuth',fresh.passHash);else localStorage.removeItem('hfa:adminAuth')}}}catch(error){}
+    try{if(session&&session.username){const fresh=accounts.find(item=>String(item.username).toLowerCase()===String(session.username).toLowerCase());if(fresh){const freshRole=fresh.role||'pendiente';if(session.role!==freshRole||session.username!==fresh.username||JSON.stringify(session.roles||[])!==JSON.stringify(hfaRolesOf(fresh))){session={username:fresh.username,role:freshRole,roles:hfaRolesOf(fresh)};localStorage.setItem('hfa:session',JSON.stringify(session))}}}}catch(error){}
     try{if(window.hfaCopa&&window.hfaCopa.load)await window.hfaCopa.load()}catch(error){}hfaSyncBuilderTournament();
     nav();content();if(view==='buzon')document.getElementById('content').innerHTML=mailboxPage();prepareAccountForm();prepareAdminDivisions();
     if(session&&view==='cuenta'){await hydrateProfile();if(params.get('tab')==='buzon'){document.querySelector('.profile-layout')?.style.setProperty('display','none');document.querySelector('.mailbox-panel')?.classList.add('mailbox-visible');document.querySelector('.free-agent-block')?.classList.add('mailbox-visible')}}

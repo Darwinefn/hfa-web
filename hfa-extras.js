@@ -710,14 +710,14 @@
   function sha256(t) { return crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)).then(function (b) { return Array.prototype.map.call(new Uint8Array(b), function (x) { return x.toString(16).padStart(2, '0'); }).join(''); }); }
   function maintAdminLogin(user, pass, errEl) {
     errEl.textContent = 'Comprobando…';
-    fetch('/api/db?key=accounts', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (res) {
-      var accs = []; try { accs = JSON.parse(res.value || '[]'); } catch (e) {}
-      var acc = accs.find(function (a) { return String(a.username).toLowerCase() === String(user).trim().toLowerCase(); });
-      return sha256(pass).then(function (h) {
-        if (!acc || acc.passHash !== h || acc.role !== 'admin') { errEl.textContent = 'Acceso solo para administradores.'; return; }
-        try { localStorage.setItem('hfa:session', JSON.stringify({ username: acc.username, role: acc.role })); localStorage.setItem('hfa:adminAuth', acc.passHash); } catch (e) {}
-        location.reload();
-      });
+    sha256(pass).then(function (h) {
+      return fetch('/api/db', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'auth', username: String(user).trim(), hash: h }) })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (!res || !res.ok || !res.account || res.account.role !== 'admin') { errEl.textContent = 'Acceso solo para administradores.'; return; }
+          try { localStorage.setItem('hfa:session', JSON.stringify({ username: res.account.username, role: res.account.role })); localStorage.setItem('hfa:adminAuth', h); } catch (e) {}
+          location.reload();
+        });
     }).catch(function () { errEl.textContent = 'No se pudo conectar. Inténtalo de nuevo.'; });
   }
   function buildMaintOverlay() {
