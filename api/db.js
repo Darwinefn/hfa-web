@@ -231,7 +231,7 @@ async function saveMongoAccounts(value, req, trusted) {
 async function recordLogin(username, req) {
   if (!process.env.MONGODB_URI) return false;
   const id = String(username || '').trim().toLowerCase();
-  if (!/^[a-z0-9._-]{3,25}$/.test(id)) return false;
+  if (!/^[^\u0000-\u001f\u007f]{1,40}$/.test(id)) return false;
   const ip = clientIp(req);
   const collection = await mongoAccountsCollection();
   const update = { $set: { lastIp: ip, lastLoginAt: new Date().toISOString() } };
@@ -256,7 +256,7 @@ async function recordLogin(username, req) {
 async function authAccount(username, hash) {
   if (!process.env.MONGODB_URI) return { error: 'no_db' };
   const id = String(username || '').trim().toLowerCase();
-  if (!/^[a-z0-9._-]{3,25}$/.test(id)) return { error: 'bad_user' };
+  if (!/^[^\u0000-\u001f\u007f]{1,40}$/.test(id)) return { error: 'bad_user' };
   if (!hash) return { error: 'no_hash' };
   const doc = await (await mongoAccountsCollection()).findOne({ _id: id });
   if (!doc) return { error: 'no_account' };
@@ -288,7 +288,7 @@ async function handleSetRole(body, req) {
   const admin = await authAccount(body.adminUser, body.adminHash);
   if (!admin || admin.error || admin.roles.indexOf('admin') === -1) return { status: 403, ok: false, reason: (admin && admin.error) || 'not_admin' };
   const targetId = String(body.username || '').trim().toLowerCase();
-  if (!/^[a-z0-9._-]{3,25}$/.test(targetId)) return { status: 400, ok: false };
+  if (!/^[^\u0000-\u001f\u007f]{1,40}$/.test(targetId)) return { status: 400, ok: false };
   const list = Array.isArray(body.roles) ? normalizeRoleList(body.roles) : normalizeRoleList([body.role]);
   const primary = list[0] || 'pendiente';
   const collection = await mongoAccountsCollection();
