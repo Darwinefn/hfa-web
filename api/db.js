@@ -260,7 +260,8 @@ async function authAccount(username, hash) {
   if (!hash) return { error: 'no_hash' };
   const doc = await (await mongoAccountsCollection()).findOne({ _id: id });
   if (!doc) return { error: 'no_account' };
-  if (!doc.passHash || String(doc.passHash) !== String(hash)) return { error: 'bad_credentials' };
+  const norm = v => String(v == null ? '' : v).trim().toLowerCase();
+  if (!doc.passHash || norm(doc.passHash) !== norm(hash)) return { error: 'bad_credentials' };
   const resolved = resolveRoles(doc);
   // roles.json y la colección role_assignments también pueden asignar el rol.
   const override = fileRoles()[id] || (await dbRoles([id]))[id];
@@ -345,7 +346,8 @@ async function handleChangePassword(body) {
 async function handleResetPassword(body, req) {
   if (!HASH_RE.test(String(body.newHash || ''))) return { status: 400, ok: false };
   const admin = await authAccount(body.adminUser, body.adminHash);
-  if (!admin || admin.error || admin.roles.indexOf('admin') === -1) return { status: 403, ok: false };
+  if (!admin || admin.error) return { status: 403, ok: false, reason: (admin && admin.error) || 'bad_credentials' };
+  if (admin.roles.indexOf('admin') === -1) return { status: 403, ok: false, reason: 'not_admin' };
   const targetId = String(body.username || '').trim().toLowerCase();
   const res = await (await mongoAccountsCollection()).updateOne({ _id: targetId }, { $set: { passHash: body.newHash } });
   if (!res.matchedCount) return { status: 404, ok: false };
