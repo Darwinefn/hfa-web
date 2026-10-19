@@ -1026,7 +1026,7 @@ try{if(localStorage.getItem('hfa:session')&&!localStorage.getItem('hfa:adminAuth
       if(pass===null)return;
       if(pass.length<6){window.alert('La contraseña debe tener al menos 6 caracteres.');return}
       const reset=await hfaApi({action:'resetPassword',adminUser:session.username,adminHash:localStorage.getItem('hfa:adminAuth')||'',username:username,newHash:await hashPassword(pass)});
-      if(!reset.ok){window.alert('No se pudo restablecer la contraseña. Vuelve a iniciar sesión como admin e inténtalo de nuevo.');return}
+      if(!reset.ok){window.alert('No se pudo restablecer la contraseña ('+(reset.reason||'error del servidor')+'). '+(reset.reason==='no_account'||!reset.reason&&false?'':'Vuelve a iniciar sesión como admin e inténtalo de nuevo.'));return}
       window.alert('Contraseña restablecida. Pásale la temporal a '+username+'.');
     }
   });
