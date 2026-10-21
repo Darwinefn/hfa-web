@@ -2017,6 +2017,8 @@ try{if(localStorage.getItem('hfa:session')&&!localStorage.getItem('hfa:adminAuth
     if(['MED','MEDIO','CENTROCAMPISTA','NEUTRO'].includes(position))return 'MED';
     return position||'MED';
   }
+  /* Un jugador MED también puede ocupar huecos de BANDA en el acta */
+  function actaAllowedPositions(list){const out=list.slice();if(out.includes('MED')&&!out.includes('BANDA'))out.push('BANDA');return out}
   function openActaPlayerMenu(player,side){
     if(!session||!['admin','prueba_moderador','moderador','arbitro'].includes(session.role))return;
     closeActaPlayerMenu();
@@ -2039,7 +2041,7 @@ try{if(localStorage.getItem('hfa:session')&&!localStorage.getItem('hfa:adminAuth
     const applySubs=(lineup,side)=>{if(!(readOnly&&match&&!match.finished&&Array.isArray(match.subs)&&match.subs.length))return lineup;let list=lineup.slice();match.subs.filter(sb=>sb&&sb.side===side&&sb.out&&sb.in).forEach(sb=>{const idx=list.findIndex(pl=>toPlayerKey(playerName(pl))===toPlayerKey(sb.out));if(idx<0)return;const old=list[idx];list[idx]=Object.assign({},old,{name:sb.in,username:undefined,captain:false,_subIn:true,_forcePos:normalizeActaPosition(old.pos)})});return list};
     const lineupA=applySubs((match?.lineupA||[]).slice(0,4),'A'),lineupB=applySubs((match?.lineupB||[]).slice(0,4),'B');
     const normalizePosition=normalizeActaPosition;
-    const registeredPositions=name=>{const account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(name));return (Array.isArray(account?.position)?account.position:[account?.position].filter(Boolean)).map(normalizePosition)};
+    const registeredPositions=name=>{const account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(name));return actaAllowedPositions((Array.isArray(account?.position)?account.position:[account?.position].filter(Boolean)).map(normalizePosition))};
     const playerPosition=item=>{if(item._forcePos)return item._forcePos;const saved=normalizePosition(item.pos),registered=registeredPositions(playerName(item));return registered.includes(saved)?saved:(registered[0]||saved)};
     const badges=name=>{const k=toPlayerKey(name),g=(match?.goals||[]).filter(x=>toPlayerKey(x.player)===k&&!x.ownGoal).length,y=(match?.cards||[]).filter(x=>toPlayerKey(x.player)===k&&x.type!=='roja').length,r=(match?.cards||[]).filter(x=>toPlayerKey(x.player)===k&&x.type==='roja').length,as=(match?.goals||[]).filter(x=>x.assist&&toPlayerKey(x.assist)===k).length;const si=(match?.subs||[]).some(x=>x&&x.in&&toPlayerKey(x.in)===k)&&readOnly&&!match.finished;return (g||y||r||as||si)?'<i class="pitch-badges">'+(si?'<em class="sub-in">▲</em>':'')+(g?'<em>⚽'+(g>1?'×'+g:'')+'</em>':'')+(as?'<em class="shoe">👟'+(as>1?'×'+as:'')+'</em>':'')+(y?'<em>🟨'+(y>1?'×'+y:'')+'</em>':'')+(r?'<em>🟥</em>':'')+'</i>':''};
     const playerMarkup=(player,side)=>{const name=playerName(player),position=playerPosition(player),tone=position==='BANDA'?'position-band':position==='MED'?'position-med':position==='GK'?'position-gk':'position-del',tag=readOnly?'div':'button';return '<'+tag+' class="acta-field-player '+(side==='A'?'field-home':'field-away')+' '+tone+'"'+(readOnly?'':' type="button" draggable="'+(canDrag?'true':'false')+'" data-drag-player="'+encodeURIComponent(name)+'" data-drag-side="'+side+'" data-acta-player="'+encodeURIComponent(name)+'" data-acta-side="'+side+'" data-acta-match="'+(match?.id||'')+'" title="Arrastra para cambiar a otra posición registrada"')+'><img src="https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(name)+'&size=l&headonly=1&direction=2&head_direction=2&gesture=sml&action=std&img_format=png" alt="Cara de '+name+'"><span>'+name+'</span><small>'+position+'</small>'+badges(name)+'</'+tag+'>'};
@@ -3619,7 +3621,7 @@ try{if(localStorage.getItem('hfa:session')&&!localStorage.getItem('hfa:adminAuth
     }
     if(event.target.id==='addLineup'){
       if(!session||!['admin','prueba_moderador','moderador','arbitro'].includes(session.role))return;
-      const match=state.matches.find(item=>item.id===selectedActaMatchId),player=document.getElementById('lineupPlayer').value,side=document.getElementById('lineupSide').value,pos=normalizeActaPosition(document.getElementById('lineupPos').value),account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(player)),registered=(Array.isArray(account?.position)?account.position:[account?.position].filter(Boolean)).map(normalizeActaPosition);
+      const match=state.matches.find(item=>item.id===selectedActaMatchId),player=document.getElementById('lineupPlayer').value,side=document.getElementById('lineupSide').value,pos=normalizeActaPosition(document.getElementById('lineupPos').value),account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(player)),registered=actaAllowedPositions((Array.isArray(account?.position)?account.position:[account?.position].filter(Boolean)).map(normalizeActaPosition));
       const teamPlayers=side==='A'?(matchTeam(match,'A')?.players||[]):(matchTeam(match,'B')?.players||[]);
       if(match&&player&&teamPlayers.some(item=>toPlayerKey(playerName(item))===toPlayerKey(player))&&registered.includes(pos)){const key=side==='A'?'lineupA':'lineupB';match[key]=match[key]||[];if(match[key].length>=4)return;if(!match[key].some(item=>playerName(item).toLowerCase()===player.toLowerCase()))match[key].push({name:player,pos});await setJSON('matches',state.matches);content()}
       return;
@@ -3718,7 +3720,7 @@ try{if(localStorage.getItem('hfa:session')&&!localStorage.getItem('hfa:adminAuth
   function highlightLineupSlots(name,side,board){
     if(!board)return;
     const account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(name));
-    const positions=(Array.isArray(account?.position)?account.position:[account?.position].filter(Boolean)).map(normalizeActaPosition);
+    const positions=actaAllowedPositions((Array.isArray(account?.position)?account.position:[account?.position].filter(Boolean)).map(normalizeActaPosition));
     board.querySelectorAll('[data-drop-player-side]').forEach(slot=>{
       slot.classList.toggle('position-not-allowed',slot.dataset.dropPlayerSide!==side||!positions.includes(normalizeActaPosition(slot.dataset.dropPosition)));
     });
@@ -3728,7 +3730,7 @@ try{if(localStorage.getItem('hfa:session')&&!localStorage.getItem('hfa:adminAuth
     const board=playerSlot.closest('[data-acta-match]'),match=state.matches.find(item=>item.id===board?.dataset.actaMatch),side=playerSlot.dataset.dropPlayerSide,position=playerSlot.dataset.dropPosition,index=Number(playerSlot.dataset.dropIndex)||0;
     if(!match)return false;
     const account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(playerNameValue));
-    const registered=(Array.isArray(account?.position)?account.position:[account?.position].filter(Boolean)).map(normalizeActaPosition);
+    const registered=actaAllowedPositions((Array.isArray(account?.position)?account.position:[account?.position].filter(Boolean)).map(normalizeActaPosition));
     if(playerSide!==side||!registered.includes(normalizeActaPosition(position))){
       playerSlot.classList.add('invalid-drop');
       setTimeout(()=>playerSlot.classList.remove('invalid-drop'),450);
@@ -3782,7 +3784,7 @@ try{if(localStorage.getItem('hfa:session')&&!localStorage.getItem('hfa:adminAuth
 
     if(event.target.id==='actaDivision'){actaDivisionFilter=event.target.value;selectedActaMatchId=null;actaTab='goals';actaCollapsed=false;adminSection='acts';content();prepareAdminDivisions();return}
     if(event.target.id==='actaMatch'){selectedActaMatchId=event.target.value;actaTab='goals';actaCollapsed=false;adminSection='acts';content();prepareAdminDivisions()}
-    if(event.target.id==='lineupPlayer'){const account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(event.target.value)),positions=(Array.isArray(account?.position)?account.position:[account?.position].filter(Boolean)).map(normalizeActaPosition).filter((value,index,list)=>list.indexOf(value)===index),select=document.getElementById('lineupPos');if(select&&positions.length)select.innerHTML=positions.map(value=>'<option value="'+value+'">'+(value==='BANDA'?'Banda / ATK':value)+'</option>').join('')}
+    if(event.target.id==='lineupPlayer'){const account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(event.target.value)),positions=actaAllowedPositions((Array.isArray(account?.position)?account.position:[account?.position].filter(Boolean)).map(normalizeActaPosition).filter((value,index,list)=>list.indexOf(value)===index)),select=document.getElementById('lineupPos');if(select&&positions.length)select.innerHTML=positions.map(value=>'<option value="'+value+'">'+(value==='BANDA'?'Banda / ATK':value)+'</option>').join('')}
     if(event.target.id==='builderCupDivSel'){builderCupDiv=event.target.value;const lst=(window.hfaCopa?window.hfaCopa.cups():[]).filter(c=>builderCupDiv==='all'||(Array.isArray(c.divisions)&&c.divisions.length?c.divisions.map(String):(c.division?[String(c.division)]:['mixta'])).includes(builderCupDiv));if(lst.length&&!lst.some(c=>String(c.id)===String(builderCup)))hfaPickCup(lst[0].id);content()}
     if(event.target.id==='builderCupSel'){builderGroup='';builderCup=event.target.value;matchDivision=builderCup?'copa':'1';adminRound=1;selectedActaMatchId=null;{const _c=builderCupObj();if(_c&&_c.tournamentId){activeTournamentId=String(_c.tournamentId);try{localStorage.setItem('hfa:activeTournament',activeTournamentId)}catch(error){}}else{const _cur=activeTournament();if(_cur&&hfaCupOfTournament(_cur)){const _lg=state.tournaments.find(t=>!hfaCupOfTournament(t)&&t.type!=='copa');if(_lg){activeTournamentId=String(_lg.id);try{localStorage.setItem('hfa:activeTournament',activeTournamentId)}catch(error){}}}}}content()}
     if(event.target.id==='matchDivision'){matchDivision=event.target.value;content()}
