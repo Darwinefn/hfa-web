@@ -789,6 +789,28 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
 .public-match-card .public-match-panels{margin:0 20px 16px}
 @media(max-width:640px){.pm-tab{flex:1 1 auto;text-align:center}.pm-actions-right{width:100%}.pm-actions-right .btn{flex:1}}
 </style>
+<style>
+/* Panel de asistencia/predicción en Partidos: tarjeta en bloque, panel a todo el ancho y tamaños legibles */
+.public-match-card:not(:has(.closed-field)){display:block!important}
+.public-match-card:not(:has(.closed-field)) .fixture-score{border-right:0!important;padding:14px 16px!important;min-height:0!important}
+.public-match-card:not(:has(.closed-field)) .fixture-team strong{font-size:14px!important}
+.public-match-card:not(:has(.closed-field)) .fixture-crest{width:30px!important;height:30px!important}
+.public-match-card:not(:has(.closed-field)) .fixture-result{font-size:16px!important}
+.public-match-card:not(:has(.closed-field)) .fixture-actions{padding:10px 14px!important;gap:8px!important}
+.public-match-card:not(:has(.closed-field)) .pm-actions-left,.public-match-card:not(:has(.closed-field)) .pm-actions-right{min-width:0}
+.public-match-card:not(:has(.closed-field)) .pm-chip{white-space:nowrap}
+.public-match-card:not(:has(.closed-field)) .public-match-panels{display:grid!important;grid-column:auto!important;grid-template-columns:1fr!important;gap:10px!important;margin:0 14px 14px!important;padding:0!important;background:transparent!important;border-top:0!important}
+.public-match-card:not(:has(.closed-field)) .public-match-panels .attendance-panel{width:100%!important;box-sizing:border-box;padding:12px!important;border-radius:10px;border:1px solid var(--border);background:rgba(13,19,26,.76)}
+.public-match-card:not(:has(.closed-field)) .public-match-panels .attendance-panel>b{display:block;margin-bottom:8px;font-size:12px!important}
+.public-match-card:not(:has(.closed-field)) .public-match-panels .attendance-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:0!important;padding:6px 0!important;font-size:12px!important;border-top:1px solid rgba(255,255,255,.05)}
+.public-match-card:not(:has(.closed-field)) .public-match-panels .attendance-row>span:first-child{display:flex;align-items:center;gap:8px;min-width:0;font-size:12px!important;overflow-wrap:anywhere}
+.public-match-card:not(:has(.closed-field)) .public-match-panels .match-player-face{width:26px!important;height:26px!important;flex:0 0 26px!important}
+.public-match-card:not(:has(.closed-field)) .public-match-panels .rosters-grid{display:grid;grid-template-columns:1fr 1fr!important;gap:12px}
+.public-match-card:not(:has(.closed-field)) .public-match-panels .roster-column{min-width:0}
+.public-match-card:not(:has(.closed-field)) .public-match-panels .roster-team-name{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px}
+.public-match-card:not(:has(.closed-field)) .public-match-panels .confirmed-badge,.public-match-card:not(:has(.closed-field)) .public-match-panels .btn{flex:0 0 auto;white-space:nowrap}
+@media(max-width:520px){.public-match-card:not(:has(.closed-field)) .public-match-panels .rosters-grid{grid-template-columns:1fr!important}.public-match-card:not(:has(.closed-field)) .pm-actions-left{width:100%}.public-match-card:not(:has(.closed-field)) .pm-chip{flex:1;text-align:center}}
+</style>
 <style id="hfa-acta-ui">
 /* Editar y finalizar acta: selector arriba, cuerpo en una sola columna ordenada */
 #actaManagement .admin-acta-filters{margin-bottom:16px}
