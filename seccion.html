@@ -794,7 +794,11 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
 .public-match-card:not(:has(.closed-field)){display:block!important}
 .public-match-card:not(:has(.closed-field)) .fixture-score{border-right:0!important;padding:14px 16px!important;min-height:0!important}
 .public-match-card:not(:has(.closed-field)) .fixture-team strong{font-size:14px!important}
-.public-match-card:not(:has(.closed-field)) .fixture-crest{width:30px!important;height:30px!important}
+.public-match-card .fixture-crest{display:flex!important;align-items:center;justify-content:center;flex:0 0 auto!important;width:46px!important;height:46px!important;padding:0!important;object-fit:contain;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
+.public-match-card .fixture-crest-fallback{border-radius:50%!important;background:var(--panel-2)!important;border:1px solid var(--green-dim)!important;font:700 15px Oswald,sans-serif!important;letter-spacing:.03em;color:var(--text-mid)}
+.public-match-card .fixture-team{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;text-align:center}
+.public-match-card .fixture-team strong{overflow-wrap:anywhere}
+@media(max-width:520px){.public-match-card .fixture-crest{width:40px!important;height:40px!important}}
 .public-match-card:not(:has(.closed-field)) .fixture-result{font-size:16px!important}
 .public-match-card:not(:has(.closed-field)) .fixture-actions{padding:10px 14px!important;gap:8px!important}
 .public-match-card:not(:has(.closed-field)) .pm-actions-left,.public-match-card:not(:has(.closed-field)) .pm-actions-right{min-width:0}
