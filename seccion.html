@@ -946,7 +946,7 @@ body:has(.stats-shell) main{padding-top:24px}body:has(.stats-shell) .eyebrow,bod
   .acta-split>.acta-split-text{grid-column:1;grid-row:1;min-width:0}
   .acta-split>.acta-lineup-board{display:contents}
   .acta-split>.acta-lineup-board>.acta-roster-pool{grid-column:1;margin:0 0 8px}
-  .acta-split>.acta-lineup-board>.acta-field{grid-column:2;grid-row:1 / span 3;position:sticky;top:78px;align-self:start;margin-top:0;width:100%;min-width:0}
+  .acta-split>.acta-lineup-board>.acta-field{grid-column:2;grid-row:1 / span 4;position:sticky;top:78px;align-self:start;margin-top:0;width:100%;min-width:0}
 }
 </style>
 </head>
@@ -2061,7 +2061,8 @@ try{if(localStorage.getItem('hfa:session')&&!localStorage.getItem('hfa:adminAuth
     const slot=(lineup,position,side,className,index=0)=>{const player=pickAt(playersAt(lineup,position),index);const slotClass='acta-slot '+className+(readOnly?' readonly-slot':'');const attributes=readOnly?'':' data-drop-player-side="'+side+'" data-drop-position="'+position+'" data-drop-index="'+index+'" data-acta-match="'+(match?.id||'')+'"';const removeButton=player&&!readOnly?'<button class="remove-lineup-player" type="button" data-remove-lineup-player="'+encodeURIComponent(playerName(player))+'" data-remove-lineup-side="'+side+'" data-remove-lineup-match="'+(match?.id||'')+'" title="Quitar jugador del campo" aria-label="Quitar '+playerName(player)+' del campo">×</button>':'';return '<div class="'+slotClass+'"'+attributes+'>'+(player?playerMarkup(player,side):(readOnly?'':'<span class="field-empty"><b>+</b><em>'+({GK:'POR',BANDA:'BANDA',MED:'MED'}[position]||position)+'</em></span>'))+removeButton+'</div>'};
     const lineup=(lineupData,side)=>'<div class="acta-team-lineup '+(side==='A'?'acta-team-home':'acta-team-away')+'">'+slot(lineupData,'GK',side,'slot-gk')+slot(lineupData,'BANDA',side,'slot-band-left',0)+slot(lineupData,'BANDA',side,'slot-band-right',1)+slot(lineupData,'MED',side,'slot-med',0)+'</div>';
     const roster=(teamRecord,side,lineupData)=>{const players=[...(teamRecord?.players||[])].map(playerName).filter(Boolean),positionRank={GK:0,BANDA:1,MED:2},positionOf=name=>{const account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(name));const positions=(Array.isArray(account?.position)?account.position:[account?.position].filter(Boolean)).map(normalizeActaPosition);return positions.sort((a,b)=>(positionRank[a]??99)-(positionRank[b]??99))[0]||'MED'},orderedPlayers=players.sort((a,b)=>(positionRank[positionOf(a)]??99)-(positionRank[positionOf(b)]??99)||a.localeCompare(b,'es'));return '<div class="acta-roster-pool '+(side==='A'?'roster-home':'roster-away')+'"><strong>'+(teamRecord?.name||(side==='A'?'Local':'Visitante'))+'</strong><div class="acta-roster-players">'+(orderedPlayers.length?orderedPlayers.map(name=>{const position=positionOf(name);return '<div class="acta-roster-player '+(lineupData.some(item=>toPlayerKey(playerName(item))===toPlayerKey(name))?'is-starting':'')+'" draggable="'+(canDrag?'true':'false')+'" data-drag-player="'+encodeURIComponent(name)+'" data-drag-side="'+side+'" data-acta-roster-player="'+encodeURIComponent(name)+'" data-acta-roster-side="'+side+'" title="Pulsa para añadir una acción al acta"><img src="https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(name)+'&size=l&headonly=1&direction=2&head_direction=2&gesture=sml&action=std&img_format=png"><span>'+name+'</span><b class="acta-roster-position">'+position+'</b>'+(canDrag?'<button type="button" class="place-player-btn" data-select-lineup-player="'+encodeURIComponent(name)+'" data-select-lineup-side="'+side+'">Colocar</button>':'')+'</div>'}).join(''):'<span class="muted">Sin jugadores</span>')+'</div></div>'};
-    return '<div class="acta-lineup-board'+(readOnly?' acta-lineup-board-readonly':'')+'"'+(readOnly?'':' data-acta-match="'+(match?.id||'')+'"')+'>'+(readOnly?'':roster(teamA,'A',lineupA)+roster(teamB,'B',lineupB))+'<div class="acta-field"><span class="acta-field-corner acta-field-corner-home">'+((teamA&&teamA.name)||'Local')+'</span><span class="acta-field-corner acta-field-corner-away">'+((teamB&&teamB.name)||'Visitante')+'</span><div class="acta-field-line"></div><div class="acta-pitch-rows">'+lineup(lineupA,'A')+lineup(lineupB,'B')+'</div></div></div>';
+    const freePool=()=>{const assigned=new Set((state.teams||[]).flatMap(t=>(t.players||[]).map(playerName).filter(Boolean).map(n=>String(n).toLowerCase()))),inLineup=[...lineupA,...lineupB].map(i=>toPlayerKey(playerName(i)));const free=accounts.filter(a=>a&&a.username&&!assigned.has(String(a.username).toLowerCase())&&(Array.isArray(a.position)?a.position:[a.position]).filter(Boolean).length).map(a=>({name:a.username,pos:(Array.isArray(a.position)?a.position:[a.position]).filter(Boolean).map(normalizeActaPosition).filter((v,i,l)=>l.indexOf(v)===i).join('/')})).sort((x,y)=>x.name.localeCompare(y.name,'es'));return '<div class="acta-roster-pool roster-free"><strong>Jugadores libres (agentes libres)</strong><div class="acta-roster-players">'+(free.length?free.map(f=>'<div class="acta-roster-player '+(inLineup.includes(toPlayerKey(f.name))?'is-starting':'')+'" draggable="'+(canDrag?'true':'false')+'" data-drag-player="'+encodeURIComponent(f.name)+'" data-drag-side="L"><img src="https://www.habbo.es/habbo-imaging/avatarimage?user='+encodeURIComponent(f.name)+'&size=l&headonly=1&direction=2&head_direction=2&gesture=sml&action=std&img_format=png"><span>'+f.name+'</span><b class="acta-roster-position">'+f.pos+'</b>'+(canDrag?'<button type="button" class="place-player-btn" data-select-lineup-player="'+encodeURIComponent(f.name)+'" data-select-lineup-side="L">Colocar</button>':'')+'</div>').join(''):'<span class="muted">No hay jugadores libres</span>')+'</div></div>'};
+    return '<div class="acta-lineup-board'+(readOnly?' acta-lineup-board-readonly':'')+'"'+(readOnly?'':' data-acta-match="'+(match?.id||'')+'"')+'>'+(readOnly?'':roster(teamA,'A',lineupA)+roster(teamB,'B',lineupB)+freePool())+'<div class="acta-field"><span class="acta-field-corner acta-field-corner-home">'+((teamA&&teamA.name)||'Local')+'</span><span class="acta-field-corner acta-field-corner-away">'+((teamB&&teamB.name)||'Visitante')+'</span><div class="acta-field-line"></div><div class="acta-pitch-rows">'+lineup(lineupA,'A')+lineup(lineupB,'B')+'</div></div></div>';
   }
   function matchChronicle(match){
     const events=[];
@@ -3733,7 +3734,7 @@ try{if(localStorage.getItem('hfa:session')&&!localStorage.getItem('hfa:adminAuth
     const account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(name));
     const positions=actaAllowedPositions((Array.isArray(account?.position)?account.position:[account?.position].filter(Boolean)).map(normalizeActaPosition));
     board.querySelectorAll('[data-drop-player-side]').forEach(slot=>{
-      slot.classList.toggle('position-not-allowed',slot.dataset.dropPlayerSide!==side||!positions.includes(normalizeActaPosition(slot.dataset.dropPosition)));
+      slot.classList.toggle('position-not-allowed',(side!=='L'&&slot.dataset.dropPlayerSide!==side)||!positions.includes(normalizeActaPosition(slot.dataset.dropPosition)));
     });
   }
   async function placeLineupPlayer(playerNameValue,playerSide,playerSlot){
@@ -3742,13 +3743,13 @@ try{if(localStorage.getItem('hfa:session')&&!localStorage.getItem('hfa:adminAuth
     if(!match)return false;
     const account=accounts.find(item=>toPlayerKey(item.username)===toPlayerKey(playerNameValue));
     const registered=actaAllowedPositions((Array.isArray(account?.position)?account.position:[account?.position].filter(Boolean)).map(normalizeActaPosition));
-    if(playerSide!==side||!registered.includes(normalizeActaPosition(position))){
+    if((playerSide!=='L'&&playerSide!==side)||!registered.includes(normalizeActaPosition(position))){
       playerSlot.classList.add('invalid-drop');
       setTimeout(()=>playerSlot.classList.remove('invalid-drop'),450);
       return false;
     }
     const normalize=normalizeActaPosition;
-    const sourceKey=playerSide==='A'?'lineupA':'lineupB';
+    const sourceKey=playerSide==='A'?'lineupA':playerSide==='B'?'lineupB':(side==='A'?'lineupB':'lineupA');
     const targetKey=side==='A'?'lineupA':'lineupB';
     match[sourceKey]=match[sourceKey]||[];
     match[targetKey]=match[targetKey]||[];
