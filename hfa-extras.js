@@ -610,7 +610,7 @@
   /* ---------- Cerrar sesión (funciona en todas las secciones) + caras de los avatares ---------- */
   function doLogout() {
     try { ['hfa:session', 'hfa:adminAuth', 'hfa:loginWelcome'].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}
-    location.href = '/';
+    location.href = 'afh-liga.html';
   }
   document.addEventListener('click', function (e) {
     var t = e.target && e.target.closest ? e.target.closest('#logoutButton,#navLogoutBtn,[data-hfa-logout]') : null;
@@ -710,12 +710,14 @@
   function sha256(t) { return crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)).then(function (b) { return Array.prototype.map.call(new Uint8Array(b), function (x) { return x.toString(16).padStart(2, '0'); }).join(''); }); }
   function maintAdminLogin(user, pass, errEl) {
     errEl.textContent = 'Comprobando…';
+    var cleanUser = String(user).trim();
     sha256(pass).then(function (h) {
-      return fetch('/api/db', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'auth', username: String(user).trim(), hash: h }) })
+      // La contraseña se verifica en el servidor (nunca comparando contra un passHash que nos manden a nosotros).
+      return fetch('/api/db', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'verifyPassword', username: cleanUser, hash: h }) })
         .then(function (r) { return r.json(); })
-        .then(function (res) {
-          if (!res || !res.ok || !res.account || res.account.role !== 'admin') { errEl.textContent = 'Acceso solo para administradores.'; return; }
-          try { localStorage.setItem('hfa:session', JSON.stringify({ username: res.account.username, role: res.account.role })); localStorage.setItem('hfa:adminAuth', h); } catch (e) {}
+        .then(function (verified) {
+          if (!verified.ok || verified.role !== 'admin') { errEl.textContent = 'Acceso solo para administradores.'; return; }
+          try { localStorage.setItem('hfa:session', JSON.stringify({ username: cleanUser, role: verified.role })); localStorage.setItem('hfa:adminAuth', h); } catch (e) {}
           location.reload();
         });
     }).catch(function () { errEl.textContent = 'No se pudo conectar. Inténtalo de nuevo.'; });
