@@ -167,7 +167,7 @@
   function markSeen(id) { var t = seenTours(); t[id] = 1; try { localStorage.setItem(TOUR_KEY, JSON.stringify(t)); } catch (e) {} }
 
   function pageKey() {
-    var page = (location.pathname.split('/').pop() || 'afh-liga.html').toLowerCase();
+    var page = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
     var params = new URLSearchParams(location.search);
     if (page.indexOf('seccion') === 0) {
       var view = params.get('view') || 'comunidad';
@@ -610,7 +610,7 @@
   /* ---------- Cerrar sesión (funciona en todas las secciones) + caras de los avatares ---------- */
   function doLogout() {
     try { ['hfa:session', 'hfa:adminAuth', 'hfa:loginWelcome'].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}
-    location.href = 'afh-liga.html';
+    location.href = 'index.html';
   }
   document.addEventListener('click', function (e) {
     var t = e.target && e.target.closest ? e.target.closest('#logoutButton,#navLogoutBtn,[data-hfa-logout]') : null;
